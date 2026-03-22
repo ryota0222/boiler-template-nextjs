@@ -1,42 +1,31 @@
-# EXAMPLE USAGE:
-#
-#   Refer for explanation to following link:
-#   https://lefthook.dev/configuration/
-#
-# pre-push:
-#   jobs:
-#     - name: packages audit
-#       tags:
-#         - frontend
-#         - security
-#       run: yarn audit
-#
-#     - name: gems audit
-#       tags:
-#         - backend
-#         - security
-#       run: bundle audit
-#
-# pre-commit:
-#   parallel: true
-#   jobs:
-#     - run: yarn eslint {staged_files}
-#       glob: "*.{js,ts,jsx,tsx}"
-#
-#     - name: rubocop
-#       glob: "*.rb"
-#       exclude:
-#         - config/application.rb
-#         - config/routes.rb
-#       run: bundle exec rubocop --force-exclusion -- {all_files}
-#
-#     - name: govet
-#       files: git ls-files -m
-#       glob: "*.go"
-#       run: go vet -- {files}
-#
-#     - script: "hello.js"
-#       runner: node
-#
-#     - script: "hello.go"
-#       runner: go run
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint
+      glob: '*.{ts,tsx}'
+      exclude: '*.config.ts'
+      run: npx eslint {staged_files}
+    - name: format
+      run: npx prettier --check --ignore-unknown {staged_files}
+    - name: typecheck
+      run: npx tsc --noEmit
+    - name: knip
+      run: npx knip
+    - name: depcruise
+      run: npx depcruise src/
+    - name: markdownlint
+      glob: '*.md'
+      run: npx markdownlint-cli2 {staged_files}
+    - name: actionlint
+      glob: '.github/workflows/*.yaml'
+      run: actionlint {staged_files}
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: npx commitlint --edit {1}
+
+pre-push:
+  jobs:
+    - name: test
+      run: npx vitest run
