@@ -25,10 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>): React.JSX.Element {
   return (
-    <html
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      lang="en"
-    >
+    <html className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} lang="en">
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

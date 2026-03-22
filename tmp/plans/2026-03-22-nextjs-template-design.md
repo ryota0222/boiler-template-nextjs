@@ -39,27 +39,27 @@ nextjs-template/
 
 ## Changes from ts-script-template
 
-| Item | ts-script-template | nextjs-template |
-|---|---|---|
-| Build | tsup | next build |
-| Dev | tsx src/index.ts | next dev |
-| Entry | src/index.ts (CLI) | src/app/layout.tsx + page.tsx |
-| Added dirs | - | src/app/, src/components/, public/ |
-| Dependencies | tsup, tsx | next, react, react-dom, tailwindcss, shadcn/ui |
-| ESLint | current + check-file | current + @next/next + unicorn + check-file (tsx) |
-| tsconfig | ES2024/bundler | Next.js standard base + strict settings carried over |
-| AGENTS.md | CLI script | Next.js App Router |
+| Item         | ts-script-template   | nextjs-template                                      |
+| ------------ | -------------------- | ---------------------------------------------------- |
+| Build        | tsup                 | next build                                           |
+| Dev          | tsx src/index.ts     | next dev                                             |
+| Entry        | src/index.ts (CLI)   | src/app/layout.tsx + page.tsx                        |
+| Added dirs   | -                    | src/app/, src/components/, public/                   |
+| Dependencies | tsup, tsx            | next, react, react-dom, tailwindcss, shadcn/ui       |
+| ESLint       | current + check-file | current + @next/next + unicorn + check-file (tsx)    |
+| tsconfig     | ES2024/bundler       | Next.js standard base + strict settings carried over |
+| AGENTS.md    | CLI script           | Next.js App Router                                   |
 
 ## ESLint Configuration
 
-| Plugin | Purpose |
-|---|---|
-| @eslint/js | Base recommended rules |
-| typescript-eslint | strict + stylistic |
-| eslint-plugin-perfectionist | import/export sorting |
-| eslint-plugin-check-file | File/folder naming conventions |
-| eslint-plugin-unicorn | Modern JS/TS best practices |
-| @next/eslint-plugin-next | Next.js specific rules |
+| Plugin                      | Purpose                        |
+| --------------------------- | ------------------------------ |
+| @eslint/js                  | Base recommended rules         |
+| typescript-eslint           | strict + stylistic             |
+| eslint-plugin-perfectionist | import/export sorting          |
+| eslint-plugin-check-file    | File/folder naming conventions |
+| eslint-plugin-unicorn       | Modern JS/TS best practices    |
+| @next/eslint-plugin-next    | Next.js specific rules         |
 
 ### ESLint Adjustments for Next.js
 

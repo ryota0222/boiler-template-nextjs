@@ -15,6 +15,7 @@
 ### Task 1: Scaffold Next.js project
 
 **Files:**
+
 - Create: entire project scaffold via `create-next-app`
 
 **Step 1: Generate the project**
@@ -56,6 +57,7 @@ git commit -m "chore: create-next-appで初期スキャフォールド生成"
 ### Task 2: Clean up scaffold and configure package.json
 
 **Files:**
+
 - Modify: `package.json`
 - Delete: `src/app/page.tsx` (will be recreated), `src/app/globals.css` (will be recreated), default favicon/icons
 
@@ -93,9 +95,7 @@ Replace the generated `package.json` with the following structure. Keep the `dep
   "license": "UNLICENSED",
   "private": true,
   "knip": {
-    "ignoreBinaries": [
-      "actionlint"
-    ],
+    "ignoreBinaries": ["actionlint"],
     "next": {
       "entry": [
         "src/app/**/{layout,page,loading,error,not-found,template,default}.{ts,tsx}",
@@ -181,6 +181,7 @@ git commit -m "chore: package.jsonの整理とdevDependenciesの追加"
 ### Task 3: Configure TypeScript (tsconfig.json)
 
 **Files:**
+
 - Modify: `tsconfig.json`
 
 **Step 1: Update tsconfig.json**
@@ -235,6 +236,7 @@ git commit -m "build: tsconfig.jsonにstrict設定を追加"
 ### Task 4: Configure ESLint
 
 **Files:**
+
 - Create: `eslint.config.ts`
 
 **Step 1: Create eslint.config.ts**
@@ -393,6 +395,7 @@ export default defineConfig(
 ```
 
 Key differences from ts-script-template:
+
 - `naming-convention`: allows PascalCase for `variable` and `function` (React components)
 - `explicit-function-return-type`: `allowExpressions: true` for JSX
 - `@next/next` plugin with recommended + core-web-vitals rules
@@ -422,6 +425,7 @@ git commit -m "build: ESLint設定をNext.js用に構成"
 ### Task 5: Configure Prettier
 
 **Files:**
+
 - Create: `.prettierrc`
 - Create: `.prettierignore`
 
@@ -473,6 +477,7 @@ git commit -m "build: Prettier設定を追加"
 ### Task 6: Configure Vitest
 
 **Files:**
+
 - Create: `vitest.config.ts`
 
 **Step 1: Create vitest.config.ts**
@@ -530,6 +535,7 @@ git commit -m "build: Vitest設定を追加"
 ### Task 7: Configure lefthook, commitlint
 
 **Files:**
+
 - Create: `lefthook.yml`
 - Create: `commitlint.config.ts`
 
@@ -629,6 +635,7 @@ git commit -m "build: lefthookとcommitlintを設定"
 ### Task 8: Initialize shadcn/ui
 
 **Files:**
+
 - Create: `components.json`
 - Modify: `src/app/globals.css` (shadcn CSS variables)
 - Create: `src/libs/utils.ts`
@@ -682,6 +689,7 @@ git commit -m "build: shadcn/uiを初期化"
 ### Task 9: Configure .gitignore
 
 **Files:**
+
 - Modify: `.gitignore`
 
 **Step 1: Update .gitignore**
@@ -727,6 +735,7 @@ git commit -m "build: .gitignoreを整理"
 ### Task 10: Copy .claude/ configuration
 
 **Files:**
+
 - Create: `.claude/settings.json`
 - Create: `.claude/hooks/lint-and-test.sh`
 - Create: `.claude/hooks/record-rejection.sh`
@@ -797,6 +806,7 @@ fi
 **Step 4: Update .claude/rules/coding-standards.md**
 
 Adjust for Next.js:
+
 - Change "CLI Entry Point Constraints" section to "App Router Entry Constraints" — remove CLI-specific rules and add that App Router convention files (layout, page, etc.) should contain only component exports
 - Change "CLI output messages" in Language Policy to "UI messages" or remove the CLI-specific mention
 
@@ -817,6 +827,7 @@ git commit -m "build: .claude/設定をts-script-templateから移植・調整"
 ### Task 11: Copy docs/rules/
 
 **Files:**
+
 - Create: `docs/rules/dependency-policy.md`
 - Create: `docs/rules/implementation-patterns.md`
 - Create: `docs/rules/template.md`
@@ -840,6 +851,7 @@ git commit -m "docs: docs/rules/をts-script-templateから移植"
 ### Task 12: Create AGENTS.md and CLAUDE.md
 
 **Files:**
+
 - Create: `AGENTS.md`
 - Create: `CLAUDE.md`
 
@@ -858,12 +870,12 @@ Next.js App Router web application template for Node.js v22+ / ESM. Uses Tailwin
 
 \`\`\`text
 src/
-  app/              # App Router (layout.tsx, page.tsx, loading.tsx, error.tsx, etc.)
-  components/
-    ui/             # shadcn/ui components
-  entities/         # Type definitions & zod schemas (domain models)
-  gateways/         # I/O with external data sources (API, DB, CSV, etc.)
-  libs/             # Implementation (organized by feature subdirectories)
+app/ # App Router (layout.tsx, page.tsx, loading.tsx, error.tsx, etc.)
+components/
+ui/ # shadcn/ui components
+entities/ # Type definitions & zod schemas (domain models)
+gateways/ # I/O with external data sources (API, DB, CSV, etc.)
+libs/ # Implementation (organized by feature subdirectories)
 \`\`\`
 
 - `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found)
@@ -893,6 +905,7 @@ git commit -m "docs: AGENTS.mdとCLAUDE.mdを作成"
 ### Task 13: Create dependency-cruiser config
 
 **Files:**
+
 - Create: `.dependency-cruiser.cjs`
 
 **Step 1: Initialize dependency-cruiser**
@@ -921,6 +934,7 @@ git commit -m "build: dependency-cruiser設定を追加"
 ### Task 14: Create tmp/ and markdownlint config
 
 **Files:**
+
 - Create: `tmp/.gitkeep`
 - Create: `.markdownlint-cli2.yaml` (if not already present)
 
