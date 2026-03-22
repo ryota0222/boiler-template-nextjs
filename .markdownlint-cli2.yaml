@@ -5,3 +5,4 @@ config:
 ignores:
   - node_modules
   - dist
+  - tmp

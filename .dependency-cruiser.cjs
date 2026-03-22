@@ -14,10 +14,7 @@ module.exports = {
       severity: 'warn',
       from: {
         orphan: true,
-        pathNot: [
-          '\\.(test|spec)\\.(ts|tsx)$',
-          '\\.d\\.ts$',
-        ],
+        pathNot: ['\\.(test|spec)\\.(ts|tsx)$', '\\.d\\.ts$'],
       },
       to: {},
     },
