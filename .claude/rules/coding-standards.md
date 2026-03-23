@@ -20,8 +20,8 @@ description: Coding best practices (code quality, error handling, performance, l
   const grouped = groupBy(entries, (e) => e.member);
 
   // ALLOWED: explains why (non-obvious business reason)
-  // Toggl CSV では未設定値がハイフンで表現されるため
-  if (entry.project === '-') { ... }
+  // eslint-disable-next-line no-inline-comments
+  if (entry.project === '-') { ... } // Toggl CSV では未設定値がハイフンで表現されるため
   ```
 
   ```typescript
@@ -101,12 +101,12 @@ description: Coding best practices (code quality, error handling, performance, l
 ## App Router Entry Constraints
 
 - App Router convention files (layout.tsx, page.tsx, loading.tsx, error.tsx, not-found.tsx) should contain only component exports
-- Extract complex logic into separate files in `libs/` or `components/`
+- Extract complex logic into separate files in `helpers/`, `features/`, or `shared-components/`
 - These files should remain thin wrappers
 
   ```typescript
   // Good: layout.tsx
-  import { AppLayout } from '@/components/appLayout';
+  import { AppLayout } from '@/shared-components/appLayout';
 
   export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
     return <AppLayout>{children}</AppLayout>;

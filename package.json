@@ -20,7 +20,9 @@
     "knip": "knip",
     "depcruise": "depcruise src/",
     "lint:md": "markdownlint-cli2",
-    "lint:actions": "actionlint"
+    "lint:actions": "actionlint",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "keywords": [],
   "author": "",
@@ -57,6 +59,7 @@
     "eslint": "^10.1.0",
     "eslint-plugin-check-file": "^3.3.1",
     "eslint-plugin-perfectionist": "^5.7.0",
+    "eslint-plugin-storybook": "^10.3.1",
     "eslint-plugin-unicorn": "^63.0.0",
     "jiti": "^2.6.1",
     "jsdom": "^29.0.1",
@@ -68,21 +71,31 @@
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "storybook": "^10.3.1",
+    "@storybook/nextjs-vite": "^10.3.1",
+    "@chromatic-com/storybook": "^5.0.2",
+    "@storybook/addon-vitest": "^10.3.1",
+    "@storybook/addon-a11y": "^10.3.1",
+    "@storybook/addon-docs": "^10.3.1",
+    "@storybook/addon-onboarding": "^10.3.1",
+    "vite": "^8.0.1",
+    "playwright": "^1.58.2",
+    "@vitest/browser-playwright": "^4.1.0"
   },
   "knip": {
     "ignoreBinaries": [
       "actionlint"
     ],
     "ignoreDependencies": [
-      "lucide-react",
       "@testing-library/jest-dom",
       "@testing-library/react",
       "postcss"
     ],
     "entry": [
-      "src/components/**/*.{ts,tsx}",
-      "src/libs/**/*.{ts,tsx}"
+      "src/shared-components/**/*.{ts,tsx}",
+      "src/features/**/*.{ts,tsx}",
+      "src/helpers/**/*.{ts,tsx}"
     ],
     "next": {
       "entry": [

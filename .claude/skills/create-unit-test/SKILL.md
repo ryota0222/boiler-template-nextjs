@@ -58,7 +58,7 @@ Read the target source file to understand:
 ```typescript
 import { describe, expect, it } from 'vitest';
 
-import { targetFunction } from '#@/libs/feature/targetFunction.js';
+import { targetFunction } from '#@/helpers/feature/targetFunction.js';
 
 describe('targetFunction', () => {
   it('正常系: 期待される結果を返す', () => {
