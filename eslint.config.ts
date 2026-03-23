@@ -1,9 +1,10 @@
 import eslint from '@eslint/js';
 import nextPlugin from '@next/eslint-plugin-next';
 import checkFile from 'eslint-plugin-check-file';
-import { defineConfig } from 'eslint/config';
 import perfectionist from 'eslint-plugin-perfectionist';
+import storybook from 'eslint-plugin-storybook';
 import unicorn from 'eslint-plugin-unicorn';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
@@ -11,6 +12,9 @@ export default defineConfig(
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
   perfectionist.configs['recommended-natural'],
+  ...storybook.configs['flat/recommended'].map((config) =>
+    Object.fromEntries(Object.entries(config).filter(([, value]) => value !== undefined))
+  ),
   {
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
@@ -23,7 +27,15 @@ export default defineConfig(
     },
   },
   {
-    ignores: ['node_modules/', '.next/', 'dist/', 'coverage/', '*.config.ts', '*.config.mjs'],
+    ignores: [
+      'node_modules/',
+      '.next/',
+      'dist/',
+      'coverage/',
+      '*.config.ts',
+      '*.config.mjs',
+      '*.cjs',
+    ],
   },
   {
     plugins: { '@next/next': nextPlugin },
@@ -84,10 +96,39 @@ export default defineConfig(
           ignore: [0, 1, -1],
         },
       ],
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { attributes: false } },
+      ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/strict-boolean-expressions': [
+        'error',
+        {
+          allowAny: false,
+          allowNullableBoolean: false,
+          allowNullableEnum: false,
+          allowNullableNumber: false,
+          allowNullableObject: false,
+          allowNullableString: false,
+          allowNumber: false,
+          allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing: false,
+          allowString: false,
+        },
+      ],
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
       complexity: ['error', { max: 10 }],
+      curly: ['error', 'all'],
+      eqeqeq: ['error', 'always'],
       'func-style': ['error', 'expression'],
+      'id-length': ['error', { exceptionPatterns: ['_'] }],
+      'max-depth': ['error', { max: 2 }],
       'max-params': ['error', { max: 1 }],
+      'no-console': 'error',
+      'no-implicit-coercion': 'error',
+      'no-inline-comments': 'error',
+      'no-underscore-dangle': 'error',
+      'one-var': ['error', 'never'],
+      'prefer-template': 'error',
       'no-restricted-imports': [
         'error',
         {
@@ -117,9 +158,16 @@ export default defineConfig(
   {
     plugins: { 'check-file': checkFile },
     rules: {
+      'check-file/filename-blocklist': [
+        'error',
+        {
+          '**/*.spec.ts': '*.test.ts を使用してください',
+          '**/*.spec.tsx': '*.test.tsx を使用してください',
+        },
+      ],
       'check-file/filename-naming-convention': [
         'error',
-        { '**/*.{ts,tsx}': 'CAMEL_CASE' },
+        { '**/*.ts': 'CAMEL_CASE', '**/*.tsx': 'PASCAL_CASE' },
         { ignoreMiddleExtensions: true },
       ],
       'check-file/folder-naming-convention': ['error', { 'src/**/': 'KEBAB_CASE' }],
@@ -134,9 +182,55 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/components/**/*.tsx'],
+    files: ['src/shared-components/**/*.tsx', 'src/features/**/*.tsx'],
     rules: {
       'max-params': ['error', { max: 1 }],
+    },
+  },
+  {
+    files: ['**/*.tsx'],
+    rules: {
+      'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
+          selector:
+            'FunctionDeclaration > Identifier[optional=true], ArrowFunctionExpression > Identifier[optional=true], TSParameterProperty[parameter.optional=true]',
+        },
+        {
+          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
+          selector:
+            ':matches(FunctionDeclaration, FunctionExpression, ArrowFunctionExpression) > :matches(Identifier[optional=true], AssignmentPattern)',
+        },
+        {
+          message:
+            'TSX内で data-* 属性は使用禁止です。セマンティックな要素やロールを使用してください',
+          selector: 'JSXAttribute[name.name=/^data-/]',
+        },
+        {
+          message: 'propsのスプレッド展開は禁止です。必要なpropsを明示的に渡してください',
+          selector: 'JSXSpreadAttribute',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/shared-components/shadcn/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
+          selector:
+            'FunctionDeclaration > Identifier[optional=true], ArrowFunctionExpression > Identifier[optional=true], TSParameterProperty[parameter.optional=true]',
+        },
+        {
+          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
+          selector:
+            ':matches(FunctionDeclaration, FunctionExpression, ArrowFunctionExpression) > :matches(Identifier[optional=true], AssignmentPattern)',
+        },
+      ],
     },
   },
   {
@@ -145,6 +239,10 @@ export default defineConfig(
       '@typescript-eslint/consistent-type-assertions': 'off',
       '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/strict-boolean-expressions': 'off',
+      '@typescript-eslint/switch-exhaustiveness-check': 'off',
+      'max-lines-per-function': 'off',
+      'no-console': 'off',
     },
   }
 );
