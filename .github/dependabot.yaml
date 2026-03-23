@@ -1,0 +1,49 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 10
+    groups:
+      next:
+        patterns:
+          - next
+          - '@next/*'
+          - eslint-config-next
+      react:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+      storybook:
+        patterns:
+          - storybook
+          - '@storybook/*'
+          - '@chromatic-com/*'
+      eslint:
+        patterns:
+          - eslint
+          - eslint-plugin-*
+          - typescript-eslint
+      testing:
+        patterns:
+          - vitest
+          - '@vitest/*'
+          - '@testing-library/*'
+          - jsdom
+      tailwind:
+        patterns:
+          - tailwindcss
+          - '@tailwindcss/*'
+          - prettier-plugin-tailwindcss
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
