@@ -33,3 +33,6 @@ yarn-error.log*
 
 # tmp
 tmp/
+
+*storybook.log
+storybook-static
