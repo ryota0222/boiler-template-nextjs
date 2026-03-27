@@ -40,6 +40,14 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:coverage
 
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run e2e
+
   build:
     runs-on: ubuntu-latest
     steps:

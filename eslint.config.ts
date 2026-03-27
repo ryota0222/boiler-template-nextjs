@@ -2,6 +2,7 @@ import eslint from '@eslint/js';
 import nextPlugin from '@next/eslint-plugin-next';
 import checkFile from 'eslint-plugin-check-file';
 import perfectionist from 'eslint-plugin-perfectionist';
+import playwright from 'eslint-plugin-playwright';
 import storybook from 'eslint-plugin-storybook';
 import unicorn from 'eslint-plugin-unicorn';
 import { defineConfig } from 'eslint/config';
@@ -244,6 +245,15 @@ export default defineConfig(
       '@typescript-eslint/switch-exhaustiveness-check': 'off',
       'max-lines-per-function': 'off',
       'no-console': 'off',
+    },
+  },
+  {
+    ...playwright.configs['flat/recommended'],
+    files: ['e2e/**/*.test.ts'],
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
+      '@typescript-eslint/no-magic-numbers': 'off',
+      'max-lines-per-function': 'off',
     },
   }
 );

@@ -6,7 +6,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@e2e/*": ["./e2e/*"]
     },
     "outDir": "./dist",
     "rootDir": ".",
