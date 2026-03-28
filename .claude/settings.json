@@ -51,9 +51,12 @@
       "Read(./.env)",
       "Edit(./.env)",
       "Write(./.env)",
-      "Read(./.env.*)",
-      "Edit(./.env.*)",
-      "Write(./.env.*)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Edit(./.env.local)",
+      "Edit(./.env.*.local)",
+      "Write(./.env.local)",
+      "Write(./.env.*.local)",
       "Read(./**/.env)",
       "Read(./**/.env.*)",
       "Read(/secrets/**)",
@@ -73,6 +76,17 @@
     "disableBypassPermissionsMode": "disable"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/detect-feedback.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
