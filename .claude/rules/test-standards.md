@@ -94,7 +94,20 @@ expect(result).toBe('*******5678');
 ```
 
 - This rule applies only when using `toBe` / `toEqual`
-- Does not apply to assertions without `actual` / `expected` equivalents, such as exception tests (`toThrow`) or mock verifications (`toHaveBeenCalled`)
+- Does not apply to mock verifications (`toHaveBeenCalled`)
+- For exception tests (`toThrow`, `rejects.toThrow`) and void function tests (`resolves.not.toThrow`), wrap the call in `const actual = () => fn()` and use `await expect(actual())`
+
+```typescript
+// Good: exception test with actual variable
+const actual = (): Promise<void> => deleteTimeEntry('some-id');
+
+await expect(actual()).rejects.toThrow('DBエラー');
+
+// Good: void function test with actual variable
+const actual = (): Promise<void> => deleteTimeEntry('some-id');
+
+await expect(actual()).resolves.not.toThrow();
+```
 
 ## Test File Location
 
@@ -129,14 +142,37 @@ describe('duration schema', () => { ... });
 
 Write descriptive names in Japanese using the format **「〇〇の場合、△△であること」** (condition → expected outcome).
 
+### Naming Principles
+
+- Condition and outcome are always a pair — never omit either
+- Write both condition and outcome in Japanese
+- For exception/error tests, use 「エラーが発生すること」 as the outcome
+- For boundary value tests, include the specific value in the condition so the boundary is clear (e.g., 「hourlyRateが-1の場合」「hourlyRateが0の場合」)
+- For success tests, describe what is returned (e.g., 「プロジェクト一覧を返すこと」「論理削除が完了すること」)
+
+### Standard Outcome Phrases
+
+| Scenario                 | Outcome                  |
+| ------------------------ | ------------------------ |
+| Return value             | 「〇〇を返すこと」       |
+| Parse/validation success | 「パースが成功すること」 |
+| Parse/validation failure | 「パースが失敗すること」 |
+| Exception/error          | 「エラーが発生すること」 |
+| Side effect completion   | 「〇〇が完了すること」   |
+| Empty result             | 「空の配列を返すこと」   |
+
 ```typescript
 // Good
-it('入力が空文字の場合、空文字を返すこと', () => { ... });
-it('"15:30:00"のように2桁の時間を渡した場合、パースが成功すること', () => { ... });
+it('正常なレスポンスの場合、プロジェクト一覧を返すこと', () => { ... });
+it('hourlyRateが-1の場合、パースが失敗すること', () => { ... });
+it('hourlyRateが0の場合、パースが成功すること', () => { ... });
+it('Supabaseがエラーを返した場合、エラーが発生すること', () => { ... });
 
-// Bad: missing condition or outcome format
-it('空文字を返す', () => { ... });
-it('empty test', () => { ... });
+// Bad: missing condition
+it('プロジェクト一覧を返すこと', () => { ... });
+
+// Bad: English in outcome
+it('Supabaseがエラーを返した場合、Errorをスローすること', () => { ... });
 ```
 
 ## Independence
