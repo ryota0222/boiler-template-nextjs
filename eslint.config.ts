@@ -126,6 +126,7 @@ export default defineConfig(
       'max-depth': ['error', { max: 2 }],
       'max-params': ['error', { max: 1 }],
       'no-console': 'error',
+      'no-undefined': 'error',
       'no-implicit-coercion': 'error',
       'no-inline-comments': 'error',
       'no-underscore-dangle': 'error',
