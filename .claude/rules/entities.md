@@ -1,6 +1,6 @@
 ---
 description: Rules for entity definitions in src/entities/
-paths: ['src/entities/**/*.ts']
+paths: ['src/entities/**/*.ts', '!src/entities/**/*.test.ts']
 ---
 
 # Entity Rules
@@ -41,13 +41,11 @@ Entities contain only:
 
 No I/O, no side effects, no external service calls.
 
-## Zod Testing Guidelines
+## Entity Schema Represents Domain, Not Backend
 
-Do not test zod's built-in behavior. Only test **custom constraints** you have added:
+Entity schemas define the domain model — they are NOT a mirror of backend data structures (database columns, API responses, CSV fields, etc.). Design schemas with the most appropriate types and structure for the domain, regardless of how data is stored or transferred externally.
 
-- `z.string()` → no test needed (testing zod itself)
-- `z.string().nullable()` → test that `null` is accepted
-- `z.number().int()` → test that decimals are rejected
-- `z.enum(['OK', 'WARN'])` → test both accepted and rejected values (restricts allowed values)
-- `z.object({...}).readonly()` → no test needed for readonly
-- Custom `.refine()` / `.transform()` → always test
+- Use `z.iso.date()` / `z.iso.time()` instead of raw `z.string().regex()` when the value represents a date or time
+- Use `z.uuid()` instead of `z.string()` when the value is a UUID
+- Field names follow domain conventions (e.g., `userID`), not backend conventions (e.g., `user_id`)
+- Gateways are responsible for mapping between external data and entity schemas
