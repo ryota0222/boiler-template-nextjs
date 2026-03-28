@@ -7,7 +7,7 @@ description: Coding best practices (code quality, error handling, performance, l
 ## Code Quality
 
 - Use meaningful variable and function names that convey purpose
-- No abbreviations except widely known ones (e.g., ID, URL) — applies to variable names, function names, and directory names
+- No abbreviations except widely known ones (e.g., ID, URL) — applies to variable names, function names, and directory names. Widely known abbreviations must always be fully uppercased (e.g., `userID` not `userId`, `parseURL` not `parseUrl`)
 - **NEVER write comments that explain WHAT the code does.** Code must be self-explanatory through naming and structure. Comments are ONLY permitted when explaining WHY — the non-obvious reason or intent behind a decision that cannot be expressed through code alone. JSDoc (`/** */`), inline (`//`), and block (`/* */`) comments are all subject to this rule. If you feel the need to explain what code does, rewrite the code to be clearer instead of adding a comment.
 
   ```typescript
