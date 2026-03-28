@@ -29,3 +29,21 @@ src/
 - `presenters/` contains display formatting functions that transform data into display-ready format
 - `helpers/` contains shared utilities and library configurations (e.g. axios, dayjs)
 - Test files are co-located with their source files (`foo.ts` → `foo.test.ts`, `Foo.tsx` → `foo.test.tsx`)
+
+## Git Branch Naming
+
+- Feature branches: `feature/<kebab-case-name>` (e.g. `feature/supabase-integration`)
+- Bug fix branches: `fix/<kebab-case-name>` (e.g. `fix/login-redirect`)
+- Chore branches: `chore/<kebab-case-name>` (e.g. `chore/update-dependencies`)
+
+## Subagent Workflow
+
+PostToolUse hooks (lint, test) do not run inside subagents. After each subagent task completes, the main session MUST run verification before committing:
+
+1. Subagent reports task complete
+2. Main session: `pnpm lint`
+3. Main session: `pnpm test`
+4. Fix any errors found
+5. Commit
+
+Do NOT batch verification to the end — check after every task.
