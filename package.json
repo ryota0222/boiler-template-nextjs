@@ -93,6 +93,8 @@
       "actionlint"
     ],
     "ignoreDependencies": [
+      "@commitlint/cli",
+      "@commitlint/config-conventional",
       "@testing-library/jest-dom",
       "@testing-library/react",
       "postcss"
