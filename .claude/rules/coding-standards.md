@@ -146,6 +146,26 @@ const from: [number, number, number] = [255, 120, 200];
 const stripped = output.replace(/\u001b\[[0-9;]*m/g, '');
 ```
 
+## remeda Usage
+
+remeda is the standard utility library for this project. Prefer remeda functions over hand-rolled equivalents whenever one exists.
+
+- **Actively use remeda** for data transformation: `pick`, `omit`, `groupBy`, `sortBy`, `mapValues`, `pipe`, etc.
+- **Never compare against `undefined` directly** — ESLint enforces `no-undefined`. Use remeda type guards instead:
+  - `isDefined(x)` — true when `x` is not `undefined`
+  - `isNonNullish(x)` — true when `x` is neither `undefined` nor `null`
+
+  ```typescript
+  // Good
+  import { isDefined } from 'remeda';
+  const active = items.filter(isDefined);
+  if (isDefined(user.name)) { ... }
+
+  // Bad: forbidden by no-undefined rule
+  const active = items.filter((x) => x !== undefined);
+  if (user.name !== undefined) { ... }
+  ```
+
 ## Additional Rules
 
 - Follow all rule files under `docs/rules/` (except `template.md`)

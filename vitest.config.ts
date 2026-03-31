@@ -36,7 +36,7 @@ export default defineConfig({
         extends: true,
         test: {
           environment: 'jsdom',
-          include: ['src/**/*.test.{ts,tsx}'],
+          include: ['src/**/*.test.{ts,tsx}', 'eslint-rules/**/*.test.ts'],
         },
       },
       {

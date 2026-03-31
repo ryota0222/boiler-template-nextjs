@@ -7,6 +7,7 @@ import storybook from 'eslint-plugin-storybook';
 import unicorn from 'eslint-plugin-unicorn';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
+import noNestedIf from './eslint-rules/noNestedIf.js';
 
 export default defineConfig(
   eslint.configs.recommended,
@@ -25,6 +26,11 @@ export default defineConfig(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    plugins: {
+      local: { rules: { 'no-nested-if': noNestedIf } },
     },
   },
   {
@@ -123,6 +129,7 @@ export default defineConfig(
       eqeqeq: ['error', 'always'],
       'func-style': ['error', 'expression'],
       'id-length': ['error', { exceptionPatterns: ['_'] }],
+      'local/no-nested-if': 'error',
       'max-depth': ['error', { max: 2 }],
       'max-params': ['error', { max: 1 }],
       'no-console': 'error',
@@ -246,6 +253,12 @@ export default defineConfig(
       '@typescript-eslint/switch-exhaustiveness-check': 'off',
       'max-lines-per-function': 'off',
       'no-console': 'off',
+    },
+  },
+  {
+    files: ['eslint-rules/**/*.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
     },
   },
   {
