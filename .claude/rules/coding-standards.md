@@ -1,5 +1,5 @@
 ---
-description: Coding best practices (code quality, error handling, performance, language policy)
+description: Coding best practices (code quality, error handling)
 ---
 
 # Coding Best Practices
@@ -25,6 +25,30 @@ description: Coding best practices (code quality, error handling, performance, l
   // Bad
   const enabled = true;
   const dryRun = options.dryRun;
+  ```
+
+- File names must be noun-based (representing the concept or concern they own);
+  verb-based file names are forbidden. Follow the case conventions of the layer
+  they belong to:
+
+  | Layer                | Convention                                          | Example                                |
+  | -------------------- | --------------------------------------------------- | -------------------------------------- |
+  | `entities/`          | camelCase noun                                      | `user.ts`, `order.ts`                  |
+  | `gateways/`          | camelCase noun (suffix optional, e.g., `Gateway`)   | `userGateway.ts`, `userApi.ts`         |
+  | `presenters/`        | camelCase noun (suffix optional, e.g., `Presenter`) | `userPresenter.ts`, `userFormatter.ts` |
+  | `helpers/`           | camelCase noun                                      | `classNames.ts`                        |
+  | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
+  | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
+
+  ```typescript
+  // Good
+  // src/gateways/userGateway.ts
+  export function getUser() { ... }
+  export function updateUser() { ... }
+
+  // Bad
+  // src/gateways/getUser.ts
+  export function getUser() { ... }
   ```
 
 - **NEVER write comments that explain WHAT the code does.** Code must be self-explanatory through naming and structure. Comments are ONLY permitted when explaining WHY — the non-obvious reason or intent behind a decision that cannot be expressed through code alone. JSDoc (`/** */`), inline (`//`), and block (`/* */`) comments are all subject to this rule. If you feel the need to explain what code does, rewrite the code to be clearer instead of adding a comment.
@@ -90,32 +114,16 @@ description: Coding best practices (code quality, error handling, performance, l
 ## Error Handling & Robustness
 
 - Catch unexpected errors and log actionable diagnostics
-- Return appropriate exit codes on process termination (success: 0, failure: 1+)
-- Always release resources such as file handles and network connections
+- Clean up resources to prevent memory leaks (e.g. abort fetch requests, remove event listeners)
 
   ```typescript
-  // Good: use `using` declarations or try-finally to ensure cleanup
-  await using file = await openFile('data.csv');
+  // Good: cancel in-flight requests on unmount
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/data', { signal: controller.signal });
+    return () => controller.abort();
+  }, []);
   ```
-
-## Performance
-
-- Use streams or batch processing for large data to minimize memory usage
-
-  ```typescript
-  // Good: stream processing
-  const stream = createReadStream('large.csv');
-  // Bad: loading entire file into memory
-  const content = readFileSync('large.csv', 'utf-8');
-  ```
-
-- Avoid synchronous blocking operations; use async I/O
-- Prevent memory leaks by cleaning up object references and event listeners
-
-## Language Policy
-
-- UI messages and console output, code comments, test names, and commit messages must be written in Japanese
-- Rule files (`.claude/rules/`, `docs/rules/`) must be written in English
 
 ## App Router Entry Constraints
 
