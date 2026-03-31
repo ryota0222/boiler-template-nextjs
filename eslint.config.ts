@@ -124,6 +124,7 @@ export default defineConfig(
         },
       ],
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      'brace-style': ['error', '1tbs'],
       complexity: ['error', { max: 10 }],
       curly: ['error', 'all'],
       eqeqeq: ['error', 'always'],
