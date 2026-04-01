@@ -247,6 +247,11 @@ export default defineConfig(
   {
     files: ['src/**/*.test.{ts,tsx}'],
     rules: {
+      'check-file/filename-naming-convention': [
+        'error',
+        { '**/*.ts': 'CAMEL_CASE', '**/*.tsx': 'CAMEL_CASE' },
+        { ignoreMiddleExtensions: true },
+      ],
       '@typescript-eslint/consistent-type-assertions': 'off',
       '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -254,6 +259,7 @@ export default defineConfig(
       '@typescript-eslint/switch-exhaustiveness-check': 'off',
       'max-lines-per-function': 'off',
       'no-console': 'off',
+      'unicorn/consistent-function-scoping': 'off',
     },
   },
   {
