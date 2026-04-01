@@ -1,0 +1,66 @@
+name: Initialize Repository
+
+on: push
+
+permissions: {}
+
+jobs:
+  initialize:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.repository.is_template }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+
+      - name: Check if initialization is needed
+        id: check
+        run: |
+          set -euo pipefail
+          CURRENT_NAME=$(jq -r '.name' package.json)
+          if [ "$CURRENT_NAME" = "nextjs-template" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Replace package.json fields
+        if: steps.check.outputs.needed == 'true'
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_OWNER: ${{ github.event.repository.owner.login }}
+        run: |
+          set -euo pipefail
+          jq --arg name "$REPO_NAME" --arg author "$REPO_OWNER" \
+            '.name = $name | .author = $author' \
+            package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: Replace README.md title and description
+        if: steps.check.outputs.needed == 'true'
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_DESCRIPTION: ${{ github.event.repository.description }}
+        run: |
+          set -euo pipefail
+          if [ -z "$REPO_DESCRIPTION" ] || [ "$REPO_DESCRIPTION" = "null" ]; then
+            DESCRIPTION="<!-- プロジェクトの説明を記述してください -->"
+          else
+            DESCRIPTION="$REPO_DESCRIPTION"
+          fi
+          awk -v title="# $REPO_NAME" -v desc="$DESCRIPTION" \
+            'NR==1{print title} NR==3{print desc} NR!=1 && NR!=3{print}' \
+            README.md > README.md.tmp
+          mv README.md.tmp README.md
+
+      - name: Delete workflow and dependabot config, then commit changes
+        if: steps.check.outputs.needed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/initialize-repository.yaml
+          git rm .github/dependabot.yaml
+          git add package.json README.md
+          git commit -m "chore: initialize repository from template"
+          git push
