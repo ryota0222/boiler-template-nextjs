@@ -40,6 +40,35 @@ description: Coding best practices (code quality, error handling)
   | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
   | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
 
+  When a module has multiple co-located files (e.g., source + test), group them in a subdirectory named after the module. Use a flat file when only one file exists:
+
+  ```text
+  // Good: two files → subdirectory
+  entities/canvas/canvas.ts
+  entities/canvas/canvas.test.ts
+
+  // Good: one file → flat
+  entities/user.ts
+
+  // Bad: two files without subdirectory
+  entities/canvas.ts
+  entities/canvas.test.ts
+  ```
+
+  This applies to `entities/`, `gateways/`, `presenters/`, and `helpers/`.
+
+  For `features/` and `shared-components/`, the directory name and the component file name (without extension) must match using kebab-case ↔ PascalCase conversion:
+
+  ```text
+  // Good
+  features/login-form/LoginForm.tsx
+  shared-components/user-avatar/UserAvatar.tsx
+
+  // Bad
+  features/login/LoginForm.tsx       ← directory and component name don't match
+  features/login-form/Login.tsx      ← directory and component name don't match
+  ```
+
   ```typescript
   // Good
   // src/gateways/userGateway.ts

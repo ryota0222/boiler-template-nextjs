@@ -172,13 +172,67 @@ it('Supabaseがエラーを返した場合、エラーが発生すること', ()
 it('プロジェクト一覧を返すこと', () => { ... });
 
 // Bad: English in outcome
-it('Supabaseがエラーを返した場合、Errorをスローすること', () => { ... });
+it('Supabaseがエラーを返した場合、エラーが発生すること', () => { ... });
 ```
 
 ## Independence
 
 - Tests must be independent and not depend on execution order
 - Mock external dependencies to ensure unit test isolation
+
+## Component Tests
+
+React components with conditional rendering branches must be tested with `@testing-library/react`. Use `render()` to mount the component and assert on what is visible using `screen` queries.
+
+Follow the same AAA pattern and naming conventions as other unit tests. Always assign the queried element to an `actual` variable before asserting on it (applies to all matchers, including `toBeInTheDocument()` and `toMatchSnapshot()`).
+
+```typescript
+import { fireEvent, render, screen } from '@testing-library/react';
+
+it('editingProjectが指定されていない場合、空のフォームが表示されること', () => {
+  render(<List projects={[project]} />);
+  fireEvent.click(screen.getByRole('button', { name: '追加' }));
+
+  const actual = screen.getByLabelText('プロジェクト名');
+
+  expect(actual).toBeInTheDocument();
+});
+
+it('editingProjectが指定された場合、既存の値が入力済みのフォームが表示されること', () => {
+  render(<List projects={[project]} />);
+  fireEvent.click(screen.getByRole('button', { name: '編集' }));
+
+  const actual = screen.getByRole('textbox', { name: 'プロジェクト名' });
+
+  expect(actual).toHaveValue('プロジェクトA');
+});
+```
+
+Component tests target **rendering branches** — props combinations or state changes that produce different UI output. Do not duplicate user-flow scenarios already covered by E2E tests.
+
+### Snapshot Tests for HTML Attribute Branches
+
+When a branch only affects HTML attributes (CSS classes, ARIA attributes, `data-*`, etc.) rather than DOM structure or visible text content, use `toMatchSnapshot()` for regression testing.
+
+```typescript
+it('isActiveがtrueの場合、スタイルのスナップショットが一致すること', () => {
+  render(<CanvasNavigationItem emoji="💼" href="/canvas/work" isActive name="しごと" />);
+
+  const actual = screen.getByRole('link', { name: 'しごと' });
+
+  expect(actual).toMatchSnapshot();
+});
+
+it('isActiveがfalseの場合、スタイルのスナップショットが一致すること', () => {
+  render(<CanvasNavigationItem emoji="💼" href="/canvas/work" isActive={false} name="しごと" />);
+
+  const actual = screen.getByRole('link', { name: 'しごと' });
+
+  expect(actual).toMatchSnapshot();
+});
+```
+
+- Still follow the AAA pattern: blank line between Arrange (render) and Act (query), blank line between Act and Assert (expect)
 
 ## App Router Conventions
 

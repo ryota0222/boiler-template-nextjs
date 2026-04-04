@@ -21,6 +21,31 @@ export const formatInspectionResultArray = (resultArray: readonly InspectionResu
 };
 ```
 
+## File Naming
+
+Name presenter files after the type of value they format, not after a feature or domain. The file name should reflect the shape of the input argument.
+
+```text
+// Good
+presenters/date.ts       // formats ISO date strings
+presenters/duration.ts   // formats duration in minutes
+
+// Bad: named after a feature
+presenters/timeEntryPresenter.ts
+```
+
+## No Type Definitions
+
+Presenters must not define types. They only export pure formatting functions. UI-specific types (ViewModels) belong in the `features/` layer.
+
+```typescript
+// Good: only a function, no type export
+export const formatDuration = (durationMinutes: number): string => { ... };
+
+// Bad: type defined in a presenter
+export type MonthlySummary = { ... };
+```
+
 ## No I/O, No Business Logic
 
 Presenters contain only:
