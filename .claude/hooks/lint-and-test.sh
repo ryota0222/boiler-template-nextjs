@@ -13,18 +13,15 @@ fi
 
 RESULTS=""
 
-LINT_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx eslint "$FILE_PATH" 2>&1)
-if [ $? -ne 0 ]; then
+if ! LINT_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx eslint "$FILE_PATH" 2>&1); then
   RESULTS="ESLint errors:\n$LINT_OUTPUT"
 fi
 
-FMT_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx prettier --check "$FILE_PATH" 2>&1)
-if [ $? -ne 0 ]; then
+if ! FMT_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx prettier --check "$FILE_PATH" 2>&1); then
   RESULTS="$RESULTS\n\nPrettier errors:\n$FMT_OUTPUT"
 fi
 
-TEST_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx vitest run 2>&1)
-if [ $? -ne 0 ]; then
+if ! TEST_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx vitest run 2>&1); then
   RESULTS="$RESULTS\n\nTest failures:\n$TEST_OUTPUT"
 fi
 

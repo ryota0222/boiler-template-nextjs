@@ -23,6 +23,11 @@
     "depcruise": "depcruise src/",
     "lint:md": "markdownlint-cli2",
     "lint:actions": "actionlint",
+    "scan:secretlint": "secretlint --secretlintignore .gitignore \"**/*\"",
+    "scan:gitleaks": "gitleaks git --redact --no-banner",
+    "lint:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shellcheck",
+    "format:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shfmt -i 2 -ci -bn -sr -d",
+    "format:sh:fix": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shfmt -i 2 -ci -bn -sr -w",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "e2e": "playwright test",
@@ -53,6 +58,7 @@
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.3",
     "@playwright/test": "^1.59.1",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@storybook/addon-a11y": "^10.3.4",
     "@storybook/addon-docs": "^10.3.4",
     "@storybook/addon-onboarding": "^10.3.4",
@@ -82,6 +88,7 @@
     "markdownlint-cli2": "^0.22.0",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "secretlint": "^13.0.2",
     "storybook": "^10.3.4",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
@@ -91,14 +98,18 @@
   },
   "knip": {
     "ignoreBinaries": [
-      "actionlint"
+      "actionlint",
+      "gitleaks",
+      "shellcheck",
+      "shfmt"
     ],
     "ignoreDependencies": [
       "@commitlint/cli",
       "@commitlint/config-conventional",
       "@testing-library/jest-dom",
       "@testing-library/react",
-      "postcss"
+      "postcss",
+      "@secretlint/secretlint-rule-preset-recommend"
     ],
     "entry": [
       "src/shared-components/**/*.{ts,tsx}",
