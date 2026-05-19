@@ -50,6 +50,35 @@ e2e/
     inbucket.ts
 ```
 
+## Test Data Isolation
+
+E2E tests share a real database and run in parallel by default. Tests MUST NOT depend on global state such as total record counts.
+
+**Rules:**
+
+- Every test that creates data must use a unique name per test run. Generate it at the top of the test file using `Date.now()`:
+
+  ```typescript
+  const testProjectName = `テストプロジェクト-${Date.now()}`;
+  ```
+
+- Assertions must be scoped to the specific data created by that test — never assert on total counts of elements that include data from other tests.
+
+  ```typescript
+  // Good: scoped to the item this test created
+  const actual = page.getByText(testProjectName, { exact: true });
+
+  const expected = 0;
+  await expect(actual).toHaveCount(expected);
+
+  // Bad: depends on global state, breaks under parallel execution
+  await expect(page.getByRole('button', { name: '削除' })).toHaveCount(deleteButtonCountBefore - 1);
+  ```
+
+- `afterEach` cleanup must delete by the same unique name so it does not affect other tests' data.
+
+Do NOT add `test.describe.configure({ mode: 'serial' })` as a workaround for isolation — fix the data instead.
+
 ## Authenticated Screens
 
 Screens behind authentication require a logged-in session. Use Playwright's `storageState` to share authenticated state across tests rather than logging in on every test.

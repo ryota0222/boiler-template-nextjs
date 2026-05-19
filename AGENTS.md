@@ -44,6 +44,23 @@ When answering questions about libraries, frameworks, SDKs, APIs, CLI tools, or 
 - Use WebSearch or WebFetch to check official sites, GitHub, or release notes
 - This applies especially to version-specific behavior, configuration options, and API signatures
 
+## Secret Scanning & Shell Linting
+
+This repository runs a defense-in-depth setup to keep secrets (API keys, webhook URLs, private keys, etc.) out of the codebase, plus lint/format for shell scripts.
+
+| Layer | Mechanism                                                     | Scope                                           |
+| ----- | ------------------------------------------------------------- | ----------------------------------------------- |
+| L1    | `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` in `.claude/settings.json` | Strips credentials from subprocess environments |
+| L2    | `UserPromptSubmit` hook -> secretlint                         | Prompt text                                     |
+| L3    | `PostToolUse` hook -> secretlint                              | Files written by Claude Code                    |
+| L4    | lefthook + `PreToolUse` hook -> gitleaks                      | Staged files and git history                    |
+| L5    | `run-ci.yaml` jobs                                            | The whole repository on push / pull_request     |
+
+- secretlint is configured in `.secretlintrc.json`; run it with `pnpm run scan:secretlint`.
+- gitleaks, shellcheck, and shfmt are installed via `mise` (`.mise.toml`).
+- Shell scripts are linted with `pnpm run lint:sh` (shellcheck) and `pnpm run format:sh` (shfmt); `pnpm run format:sh:fix` applies formatting.
+- For secret-scan false positives, add an allowlist to `.gitleaks.toml` (gitleaks) or a `.secretlintignore` file (secretlint). Neither file exists by default.
+
 ## Subagent Workflow
 
 PostToolUse hooks (lint, test) do not run inside subagents. After each subagent task completes, the main session MUST run verification before committing:

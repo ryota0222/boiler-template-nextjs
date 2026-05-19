@@ -1,0 +1,4 @@
+[tools]
+gitleaks = "8"
+shellcheck = "0.11"
+shfmt = "3"

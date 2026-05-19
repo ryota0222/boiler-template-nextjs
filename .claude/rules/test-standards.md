@@ -93,7 +93,8 @@ expect(actual.success).toBe(expected);
 expect(result).toBe('*******5678');
 ```
 
-- This rule applies only when using `toBe` / `toEqual`
+- This rule applies to all matchers that take a value argument (`toBe`, `toEqual`, `toHaveCount`, `toHaveValue`, `toHaveURL`, etc.)
+- The `actual` variable rule also applies to Playwright locator assertions (`toBeVisible`, `toBeInTheDocument`, `toMatchSnapshot`) — always assign the locator to `actual` before calling `expect(actual)`
 - Does not apply to mock verifications (`toHaveBeenCalled`)
 - For exception tests (`toThrow`, `rejects.toThrow`) and void function tests (`resolves.not.toThrow`), wrap the call in `const actual = () => fn()` and use `await expect(actual())`
 
