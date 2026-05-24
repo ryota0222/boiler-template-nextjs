@@ -36,8 +36,8 @@ importers:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
       remeda:
-        specifier: ^2.33.7
-        version: 2.33.7
+        specifier: ^2.34.1
+        version: 2.34.1
       shadcn:
         specifier: ^4.7.0
         version: 4.7.0(@types/node@25.5.2)(typescript@5.9.3)
@@ -4144,8 +4144,8 @@ packages:
     resolution: {integrity: sha512-NZQZdC5wOE/H3UT28fVGL+ikOZcEzfMGk/c3iN9UGxzWHMa1op7274oyiUVrAG4B2EuFhus8SvkaYnhvW92p9Q==}
     hasBin: true
 
-  remeda@2.33.7:
-    resolution: {integrity: sha512-cXlyjevWx5AcslOUEETG4o8XYi9UkoCXcJmj7XhPFVbla+ITuOBxv6ijBrmbeg+ZhzmDThkNdO+iXKUfrJep1w==}
+  remeda@2.34.1:
+    resolution: {integrity: sha512-k5iIF3lHm2NQ+2bNGDvZTD5jZl/JZkCS6AQOfGjYBd7V4rbb3K5whHvab0/O7CqPI43vYzbnIVCQXQJqmOyI6w==}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -8780,7 +8780,7 @@ snapshots:
     dependencies:
       jsesc: 3.1.0
 
-  remeda@2.33.7: {}
+  remeda@2.34.1: {}
 
   require-directory@2.1.1: {}
 
