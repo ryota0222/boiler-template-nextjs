@@ -38,5 +38,8 @@ yarn-error.log*
 # tmp
 tmp/
 
+# git worktrees
+.worktrees/
+
 *storybook.log
 storybook-static
