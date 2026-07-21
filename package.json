@@ -62,7 +62,7 @@
     "@chromatic-com/storybook": "^5.1.2",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^21.2.0",
-    "@commitlint/types": "^20.5.0",
+    "@commitlint/types": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.9",
     "@playwright/test": "^1.59.1",

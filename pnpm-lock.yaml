@@ -58,8 +58,8 @@ importers:
         specifier: ^21.2.0
         version: 21.2.0
       '@commitlint/types':
-        specifier: ^20.5.0
-        version: 20.5.0
+        specifier: ^21.2.0
+        version: 21.2.0
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.4.0(jiti@2.7.0))
@@ -2460,11 +2460,6 @@ packages:
   conventional-changelog-conventionalcommits@10.2.1:
     resolution: {integrity: sha512-n4Kr1HFMTf3iMbES0TMxKIcYtUUv4rKqyQQp2JwfOEfFCOfGT3Tq4mCyJ8S9/YPyWhydjfKrrvnyl+gCjA+mJQ==}
     engines: {node: '>=22'}
-
-  conventional-commits-parser@6.3.0:
-    resolution: {integrity: sha512-RfOq/Cqy9xV9bOA8N+ZH6DlrDR+5S3Mi0B5kACEjESpE+AviIpAptx9a9cFpWCCvgRtWT+0BbUw+e1BZfts9jg==}
-    engines: {node: '>=18'}
-    hasBin: true
 
   conventional-commits-parser@6.4.0:
     resolution: {integrity: sha512-tvRg7FIBNlyPzjdG8wWRlPHQJJHI7DylhtRGeU9Lq+JuoPh5BKpPRX83ZdLrvXuOSu5Eo/e7SzOQhU4Hd2Miuw==}
@@ -5311,7 +5306,7 @@ snapshots:
 
   '@commitlint/types@20.5.0':
     dependencies:
-      conventional-commits-parser: 6.3.0
+      conventional-commits-parser: 6.4.0
       picocolors: 1.1.1
 
   '@commitlint/types@21.2.0':
@@ -6990,11 +6985,6 @@ snapshots:
   conventional-changelog-conventionalcommits@10.2.1:
     dependencies:
       '@conventional-changelog/template': 1.2.1
-
-  conventional-commits-parser@6.3.0:
-    dependencies:
-      '@simple-libs/stream-utils': 1.2.0
-      meow: 13.2.0
 
   conventional-commits-parser@6.4.0:
     dependencies:
