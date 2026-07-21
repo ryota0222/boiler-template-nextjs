@@ -76,6 +76,13 @@ jobs:
       - uses: ./.github/actions/setup-node
       - run: pnpm run lint:md
 
+  lint-text:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm run lint:text
+
   build-storybook:
     runs-on: ubuntu-latest
     steps:
