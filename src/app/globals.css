@@ -62,7 +62,8 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /* shadcn 既定の oklch(0.577 0.245) は bg-destructive/10 上で 3.99:1 と WCAG AA 未満。hover の /20 (4.84:1) まで満たす sRGB 域内の値に変更 */
+  --destructive: oklch(0.49 0.2 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
