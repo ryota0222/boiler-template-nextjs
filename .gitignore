@@ -14,6 +14,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+.playwright-mcp/
 
 # misc
 *.tsbuildinfo
@@ -37,6 +38,9 @@ yarn-error.log*
 
 # tmp
 tmp/
+
+# git worktrees
+.worktrees/
 
 *storybook.log
 storybook-static

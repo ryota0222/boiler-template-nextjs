@@ -94,6 +94,7 @@ export const SizeExtraSmall: Story = {
 
 export const SizeIcon: Story = {
   args: {
+    'aria-label': 'メールを送信',
     children: <Mail />,
     size: 'icon',
   },
@@ -102,6 +103,7 @@ export const SizeIcon: Story = {
 
 export const SizeIconLarge: Story = {
   args: {
+    'aria-label': 'メールを送信',
     children: <Mail />,
     size: 'icon-lg',
   },
@@ -110,6 +112,7 @@ export const SizeIconLarge: Story = {
 
 export const SizeIconSmall: Story = {
   args: {
+    'aria-label': 'メールを送信',
     children: <Mail />,
     size: 'icon-sm',
   },
@@ -118,6 +121,7 @@ export const SizeIconSmall: Story = {
 
 export const SizeIconExtraSmall: Story = {
   args: {
+    'aria-label': 'メールを送信',
     children: <Mail />,
     size: 'icon-xs',
   },
