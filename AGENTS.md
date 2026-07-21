@@ -61,6 +61,20 @@ This repository runs a defense-in-depth setup to keep secrets (API keys, webhook
 - Shell scripts are linted with `pnpm run lint:sh` (shellcheck) and `pnpm run format:sh` (shfmt); `pnpm run format:sh:fix` applies formatting.
 - For secret-scan false positives, add an allowlist to `.gitleaks.toml` (gitleaks) or a `.secretlintignore` file (secretlint). Neither file exists by default.
 
+## Accessibility Gate
+
+Storybook stories are checked by axe-core, and violations fail the test suite.
+
+| Mechanism                                                         | Scope                                                 |
+| ----------------------------------------------------------------- | ----------------------------------------------------- |
+| `a11y.test: 'error'` in `.storybook/preview.ts`                   | Turns axe violations into test failures               |
+| `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                    |
+| `PostToolUse` hook -> `lint-and-test.sh`                          | Runs `vitest run` after every file Claude Code writes |
+
+Coverage comes entirely from stories, so a component state with no story is never checked. See `.claude/rules/design-states.md` for which states require a story.
+
+There is no static (lint-time) a11y check. `eslint-plugin-jsx-a11y` was evaluated and rejected because its latest release does not declare ESLint 10 support and it adds roughly 106 transitive packages. Reconsider it, or oxlint as a complement, before adding a11y rules to `eslint.config.ts`.
+
 ## Subagent Workflow
 
 PostToolUse hooks (lint, test) do not run inside subagents. After each subagent task completes, the main session MUST run verification before committing:
