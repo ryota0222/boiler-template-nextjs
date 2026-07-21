@@ -24,12 +24,12 @@
     "lint:md": "markdownlint-cli2",
     "lint:text": "textlint \"src/**/*.tsx\"",
     "lint:text:fix": "textlint --fix \"src/**/*.tsx\"",
-    "lint:actions": "actionlint",
+    "lint:actions": "mise exec -- actionlint",
     "scan:secretlint": "secretlint --secretlintignore .gitignore \"**/*\"",
-    "scan:gitleaks": "gitleaks git --redact --no-banner",
-    "lint:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shellcheck",
-    "format:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shfmt -i 2 -ci -bn -sr -d",
-    "format:sh:fix": "git ls-files --cached --others --exclude-standard '*.sh' | xargs shfmt -i 2 -ci -bn -sr -w",
+    "scan:gitleaks": "mise exec -- gitleaks git --redact --no-banner",
+    "lint:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs mise exec -- shellcheck",
+    "format:sh": "git ls-files --cached --others --exclude-standard '*.sh' | xargs mise exec -- shfmt -i 2 -ci -bn -sr -d",
+    "format:sh:fix": "git ls-files --cached --others --exclude-standard '*.sh' | xargs mise exec -- shfmt -i 2 -ci -bn -sr -w",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "e2e": "playwright test",
@@ -111,10 +111,7 @@
   },
   "knip": {
     "ignoreBinaries": [
-      "actionlint",
-      "gitleaks",
-      "shellcheck",
-      "shfmt"
+      "mise"
     ],
     "ignoreDependencies": [
       "@commitlint/cli",
