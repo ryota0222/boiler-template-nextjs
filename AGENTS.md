@@ -17,7 +17,8 @@ src/
   entities/             # Type definitions & zod schemas (domain models)
   gateways/             # I/O with external data sources (API, DB, CSV, etc.)
   presenters/           # Display formatting functions (data → display-ready transformation)
-  helpers/                 # Implementation (organized by feature subdirectories)
+  helpers/              # Shared utilities & library configuration (e.g. axios, dayjs)
+  stores/               # Client UI state shared across the tree (Zustand)
 ```
 
 - `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found)
@@ -25,10 +26,25 @@ src/
 - `shared-components/shadcn/` contains shadcn/ui components (managed by shadcn CLI)
 - `shared-components/` (non-ui) contains domain-independent reusable UI parts shared across features
 - `entities/` contains only data structure definitions (no logic)
-- `gateways/` handles I/O with external data sources, organized by concern into subdirectories
+- `gateways/` handles I/O with external data sources, organized by concern into subdirectories, and owns the query keys, `queryOptions`, and `mutationOptions` for that data
 - `presenters/` contains display formatting functions that transform data into display-ready format
 - `helpers/` contains shared utilities and library configurations (e.g. axios, dayjs)
+- `stores/` contains Zustand stores for client UI state that must be shared across the component tree
 - Test files are co-located with their source files (`foo.ts` → `foo.test.ts`, `Foo.tsx` → `foo.test.tsx`)
+
+## State Management
+
+State is split across three tools by origin, not by convenience.
+
+| State                                  | Tool           | Location                                                    |
+| -------------------------------------- | -------------- | ----------------------------------------------------------- |
+| Server state (API, DB, CSV)            | TanStack Query | `gateways/<domain>/<domain>Query.ts`, `<domain>Mutation.ts` |
+| Client UI state shared across the tree | Zustand        | `stores/<name>/`                                            |
+| Client UI state local to one component | `useState`     | The component itself                                        |
+
+Mutations default to optimistic updates, subject to strict preconditions. `useOptimistic` is not used for server state: its optimistic value is local to the component that calls the hook, so sharing it across the tree would require lifting state and converting large subtrees into Client Components.
+
+The full rules — the mandatory four-step optimistic update, the three preconditions, the forbidden operations, and the verified type-level constraints — are in `.claude/rules/state-management.md`. See also `.claude/rules/gateways.md` and `.claude/rules/stores.md`.
 
 ## Git Branch Naming
 
