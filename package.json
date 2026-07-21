@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@tanstack/react-query": "^5.101.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
@@ -56,7 +57,8 @@
     "remeda": "^2.34.1",
     "shadcn": "^4.7.0",
     "tailwind-merge": "^3.6.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.1.2",
@@ -66,12 +68,12 @@
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.9",
     "@playwright/test": "^1.59.1",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "@storybook/addon-onboarding": "^10.3.5",
     "@storybook/addon-vitest": "^10.3.5",
     "@storybook/nextjs-vite": "^10.3.5",
-    "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -96,12 +98,12 @@
     "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "storybook": "^10.3.5",
     "secretlint": "^13.0.2",
+    "storybook": "^10.3.5",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
-    "vite": "^8.0.13",
     "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.13",
     "vitest": "^4.1.7"
   },
   "knip": {
@@ -117,7 +119,8 @@
       "@testing-library/jest-dom",
       "@testing-library/react",
       "postcss",
-      "@secretlint/secretlint-rule-preset-recommend"
+      "@secretlint/secretlint-rule-preset-recommend",
+      "zustand"
     ],
     "entry": [
       "src/shared-components/**/*.{ts,tsx}",
