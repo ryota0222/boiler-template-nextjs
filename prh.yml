@@ -1,0 +1,24 @@
+version: 1
+
+rules:
+  - expected: ユーザー
+    patterns:
+      - '/ユーザ(?![ァ-ヶー])/'
+  - expected: サーバー
+    patterns:
+      - '/サーバ(?![ァ-ヶー])/'
+  - expected: フォルダー
+    patterns:
+      - '/フォルダ(?![ァ-ヶー])/'
+  - expected: コンピューター
+    patterns:
+      - '/コンピュータ(?![ァ-ヶー])/'
+
+  - expected: ログイン
+    patterns:
+      - サインイン
+      - ログオン
+  - expected: ログアウト
+    patterns:
+      - サインアウト
+      - ログオフ
