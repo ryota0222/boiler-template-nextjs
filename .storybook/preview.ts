@@ -12,10 +12,8 @@ const preview: Preview = {
     },
 
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
-      test: 'todo',
+      // PostToolUse フックの vitest 実行で a11y 違反をブロッカーとして返すため 'error' を指定
+      test: 'error',
     },
   },
 };
