@@ -13,6 +13,8 @@ Every component in `src/shared-components/` and `src/features/` must have a co-l
 
 Create one story per prop value that causes a visual difference. For combined states (e.g., disabled + variant), add stories for meaningful combinations.
 
+UI states and content conditions also require their own stories. See `design-states.md` for which ones are mandatory and how to name them — those stories are not derived from a prop value, so the naming convention below does not apply to them.
+
 ## Naming
 
 - Export names use English PascalCase (e.g., `VariantDefault`, `SizeLarge`, `Disabled`)
