@@ -16,6 +16,9 @@ pre-commit:
     - name: markdownlint
       glob: '*.md'
       run: pnpm exec markdownlint-cli2 {staged_files}
+    - name: textlint
+      glob: 'src/**/*.tsx'
+      run: pnpm exec textlint {staged_files}
     - name: actionlint
       glob: '.github/workflows/*.yaml'
       run: actionlint {staged_files}
