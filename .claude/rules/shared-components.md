@@ -23,9 +23,27 @@ src/shared-components/
     Badge.tsx
     Badge.stories.tsx
     badge.test.ts     # if needed
+  query-provider/
+    QueryProvider.tsx # Provider: no story, see below
 ```
 
 Every component must have a co-located `.stories.tsx` file.
+
+### Exception: Providers
+
+A component that renders no markup of its own — one that only supplies context to `children` — has no story. Stories exist to be rendered and checked by axe, and a Provider contributes nothing for axe to inspect. A story for one would assert nothing.
+
+This exception covers Providers only. A component that renders any markup, however thin the wrapper, needs a story.
+
+```text
+// Good: Provider with no story
+src/shared-components/query-provider/
+  QueryProvider.tsx
+
+// Bad: a component that renders markup and has no story
+src/shared-components/page-header/
+  PageHeader.tsx
+```
 
 ## No Domain Dependencies
 

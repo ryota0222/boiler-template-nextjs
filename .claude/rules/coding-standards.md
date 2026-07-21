@@ -39,6 +39,7 @@ description: Coding best practices (code quality, error handling)
   | `helpers/`           | camelCase noun                                      | `classNames.ts`                        |
   | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
   | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
+  | `stores/`            | dir: kebab-case noun; store: camelCase noun         | `notification/notificationStore.ts`    |
 
   When a module has multiple co-located files (e.g., source + test), group them in a subdirectory named after the module. Use a flat file when only one file exists:
 

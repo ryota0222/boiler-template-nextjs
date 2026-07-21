@@ -73,6 +73,16 @@ module.exports = {
       },
     },
     {
+      name: 'no-stores-depend-on-non-entities',
+      severity: 'error',
+      from: {
+        path: '^src/stores/',
+      },
+      to: {
+        path: '^src/(app|features|shared-components|gateways|presenters|helpers)/',
+      },
+    },
+    {
       name: 'no-internal-cross-access',
       severity: 'error',
       from: {
