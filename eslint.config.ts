@@ -199,6 +199,15 @@ export default defineConfig(
     },
   },
   {
+    // queryOptions / mutationOptions の戻り値はライブラリが生成するジェネリック型で手書きできない。
+    // また onMutate / onError / onSettled は引数の数と順序がライブラリ側で固定されている
+    files: ['src/gateways/**/*Query.ts', 'src/gateways/**/*Mutation.ts'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      'max-params': 'off',
+    },
+  },
+  {
     files: ['**/*.tsx'],
     rules: {
       'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],

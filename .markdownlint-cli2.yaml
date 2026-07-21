@@ -1,6 +1,10 @@
 config:
   line-length: false
   no-inline-html: false
+  # docs/rules/template.md は各ルール見出しの下に "### Details" を置く構成のため、
+  # 1ファイルに複数ルールを書くと兄弟でない同名見出しが必ず衝突する
+  no-duplicate-heading:
+    siblings_only: true
 
 ignores:
   - node_modules
