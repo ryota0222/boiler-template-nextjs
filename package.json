@@ -99,7 +99,7 @@
     "lefthook": "^2.1.8",
     "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.3",
-    "prettier-plugin-tailwindcss": "^0.8.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "secretlint": "^13.0.2",
     "storybook": "^10.3.5",
     "tailwindcss": "^4",
