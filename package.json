@@ -21,7 +21,7 @@
     "test:coverage": "vitest run --coverage",
     "knip": "knip",
     "depcruise": "depcruise src/",
-    "lint:md": "markdownlint-cli2",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:text": "textlint \"src/**/*.tsx\"",
     "lint:text:fix": "textlint --fix \"src/**/*.tsx\"",
     "lint:actions": "mise exec -- actionlint",
