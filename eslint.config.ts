@@ -42,7 +42,6 @@ export default defineConfig(
       '*.config.ts',
       '*.config.mjs',
       '*.cjs',
-      '.storybook/',
     ],
   },
   {
@@ -231,6 +230,34 @@ export default defineConfig(
         {
           message: 'propsのスプレッド展開は禁止です。必要なpropsを明示的に渡してください',
           selector: 'JSXSpreadAttribute',
+        },
+      ],
+    },
+  },
+  {
+    // Storybook のデコレーター第一引数は <Story /> という形で JSX 要素として描画される。
+    // JSX は小文字始まりの識別子を組み込みHTML要素とみなすため、この引数は PascalCase でなければならない
+    files: ['.storybook/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          format: ['camelCase', 'PascalCase'],
+          selector: ['variable', 'function'],
+        },
+        {
+          format: ['camelCase', 'PascalCase'],
+          selector: ['parameter'],
+        },
+        {
+          format: ['camelCase'],
+          leadingUnderscore: 'allow',
+          modifiers: ['unused'],
+          selector: 'parameter',
+        },
+        {
+          format: ['PascalCase'],
+          selector: ['typeLike'],
         },
       ],
     },
