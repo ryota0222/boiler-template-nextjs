@@ -91,6 +91,8 @@ Storybook stories are checked by axe-core, and violations fail the test suite.
 
 Coverage comes entirely from stories, so a component state with no story is never checked. See `.claude/rules/design-states.md` for which states require a story.
 
+The template ships with no stories, because Radix Themes components are consumed directly rather than wrapped. Until the first `.stories.tsx` is added the gate has nothing to inspect and `pnpm test` passes on `passWithNoTests`. The first story you write is also the first thing this gate ever checks.
+
 There is no static (lint-time) a11y check. `eslint-plugin-jsx-a11y` was evaluated and rejected because its latest release does not declare ESLint 10 support and it adds roughly 106 transitive packages. Reconsider it, or oxlint as a complement, before adding a11y rules to `eslint.config.ts`.
 
 ## Subagent Workflow
