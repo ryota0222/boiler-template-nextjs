@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
+import { Theme } from '@radix-ui/themes';
 import { Geist, Geist_Mono } from 'next/font/google';
+import '@radix-ui/themes/styles.css';
 
 import '@/app/globals.css';
 import { QueryProvider } from '@/shared-components/query-provider/QueryProvider';
@@ -26,9 +28,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>): React.JSX.Element {
   return (
-    <html className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} lang="en">
-      <body className="flex min-h-full flex-col">
-        <QueryProvider>{children}</QueryProvider>
+    <html className={`${geistSans.variable} ${geistMono.variable}`} lang="en">
+      <body>
+        <Theme accentColor="indigo">
+          <QueryProvider>{children}</QueryProvider>
+        </Theme>
       </body>
     </html>
   );
