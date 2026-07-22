@@ -82,10 +82,14 @@ Layer boundaries are enforced by dependency-cruiser, not convention alone. See [
 | `pnpm format`          | Prettier                                       |
 | `pnpm lint:md`         | markdownlint                                   |
 | `pnpm lint:text`       | textlint — Japanese terminology, per `prh.yml` |
+| `pnpm lint:actions`    | actionlint over GitHub Actions workflows       |
+| `pnpm lint:sh`         | shellcheck over tracked shell scripts          |
 | `pnpm knip`            | Unused files, exports, and dependencies        |
 | `pnpm depcruise`       | Layer dependency rules                         |
 | `pnpm scan:secretlint` | Secret scanning                                |
 | `pnpm scan:gitleaks`   | Secret scanning over git history               |
+
+`lint:actions`, `lint:sh`, and `scan:gitleaks` run tools provided by mise rather than npm, so `mise install` must have been run first.
 
 ## Accessibility Gate
 
