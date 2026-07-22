@@ -4,7 +4,7 @@ This file provides guidance to LLM agents when working with code in this reposit
 
 ## Project Overview
 
-Next.js App Router web application template for Node.js v22+ / ESM. Uses Tailwind CSS and shadcn/ui for styling.
+Next.js App Router web application template for Node.js v22+ / ESM. Uses Radix Themes for styling.
 
 ## Directory Structure
 
@@ -13,7 +13,6 @@ src/
   app/                  # App Router (layout.tsx, page.tsx, loading.tsx, error.tsx, etc.)
   features/             # Domain-specific UI components (organized by feature subdirectories)
   shared-components/    # Domain-independent reusable UI parts
-    shadcn/             # shadcn/ui components (managed by shadcn CLI)
   entities/             # Type definitions & zod schemas (domain models)
   gateways/             # I/O with external data sources (API, DB, CSV, etc.)
   presenters/           # Display formatting functions (data → display-ready transformation)
@@ -23,14 +22,17 @@ src/
 
 - `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found)
 - `features/` contains domain-specific UI components, organized by feature subdirectories
-- `shared-components/shadcn/` contains shadcn/ui components (managed by shadcn CLI)
-- `shared-components/` (non-ui) contains domain-independent reusable UI parts shared across features
+- `shared-components/` contains domain-independent reusable UI parts shared across features
 - `entities/` contains only data structure definitions (no logic)
 - `gateways/` handles I/O with external data sources, organized by concern into subdirectories, and owns the query keys, `queryOptions`, and `mutationOptions` for that data
 - `presenters/` contains display formatting functions that transform data into display-ready format
 - `helpers/` contains shared utilities and library configurations (e.g. axios, dayjs)
 - `stores/` contains Zustand stores for client UI state that must be shared across the component tree
 - Test files are co-located with their source files (`foo.ts` → `foo.test.ts`, `Foo.tsx` → `foo.test.tsx`)
+
+Radix Themes components are used directly, with no wrapper components written around them. Wrapping every component would force per-component build work before the template is usable, which defeats the point of a ready-to-use template.
+
+`lucide-react` is retained as the icon library because Radix Themes does not ship icons; it is listed in `knip.ignoreDependencies` until the first component imports it.
 
 ## State Management
 
@@ -83,7 +85,7 @@ Storybook stories are checked by axe-core, and violations fail the test suite.
 
 | Mechanism                                                         | Scope                                                 |
 | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| `a11y.test: 'error'` in `.storybook/preview.ts`                   | Turns axe violations into test failures               |
+| `a11y.test: 'error'` in `.storybook/preview.tsx`                  | Turns axe violations into test failures               |
 | `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                    |
 | `PostToolUse` hook -> `lint-and-test.sh`                          | Runs `vitest run` after every file Claude Code writes |
 

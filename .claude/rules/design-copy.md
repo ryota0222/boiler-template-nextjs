@@ -13,10 +13,10 @@ A destructive or irreversible action states both the verb and the object it acts
 
 ```typescript
 // Good
-<Button variant="destructive">プロジェクトを削除</Button>
+<Button color="red">プロジェクトを削除</Button>
 
 // Bad
-<Button variant="destructive">削除</Button>
+<Button color="red">削除</Button>
 ```
 
 Non-destructive actions in an unambiguous context may use the verb alone (`保存`, `検索`).
@@ -27,11 +27,11 @@ The confirming button repeats the action. `OK` tells the user nothing about what
 
 ```typescript
 // Good
-<Button variant="destructive">削除する</Button>
+<Button color="red">削除する</Button>
 <Button variant="outline">キャンセル</Button>
 
 // Bad
-<Button variant="destructive">OK</Button>
+<Button color="red">OK</Button>
 ```
 
 ## Navigation and Headings Are Nouns
