@@ -64,7 +64,7 @@
     "@commitlint/types": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.2.11",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.61.1",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.2",
     "@storybook/addon-a11y": "^10.5.3",
     "@storybook/addon-docs": "^10.5.3",
