@@ -35,11 +35,9 @@ updates:
           - '@vitest/*'
           - '@testing-library/*'
           - jsdom
-      tailwind:
+      radix:
         patterns:
-          - tailwindcss
-          - '@tailwindcss/*'
-          - prettier-plugin-tailwindcss
+          - '@radix-ui/*'
 
   - package-ecosystem: github-actions
     directory: /

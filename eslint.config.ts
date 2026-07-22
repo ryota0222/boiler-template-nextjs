@@ -236,24 +236,6 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/shared-components/shadcn/**/*.tsx'],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
-          selector:
-            'FunctionDeclaration > Identifier[optional=true], ArrowFunctionExpression > Identifier[optional=true], TSParameterProperty[parameter.optional=true]',
-        },
-        {
-          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
-          selector:
-            ':matches(FunctionDeclaration, FunctionExpression, ArrowFunctionExpression) > :matches(Identifier[optional=true], AssignmentPattern)',
-        },
-      ],
-    },
-  },
-  {
     files: ['src/**/*.test.{ts,tsx}'],
     rules: {
       'check-file/filename-naming-convention': [
