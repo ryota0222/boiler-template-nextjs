@@ -14,13 +14,15 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   description: 'ページの説明',
-  title: 'ページタイトル | Awanotes',
+  title: 'ページ名 | アプリ名',
 };
 ```
 
 ## Title Format
 
-Use `「ページ名 | Awanotes」` as the title format.
+Use `「ページ名 | アプリ名」` as the title format.
+
+The application name is whatever the root `layout.tsx` sets as its `metadata.title`. Read it from there rather than restating it here — a second copy in this file would drift the moment the application is renamed.
 
 ## Exception
 

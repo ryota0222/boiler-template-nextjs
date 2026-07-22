@@ -1,38 +1,104 @@
 # nextjs-template
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Next.js App Router template with Radix Themes, wired for strict linting, accessibility testing, and secret scanning out of the box.
 
-## Getting Started
+## Requirements
 
-First, run the development server:
+- Node.js 24
+- pnpm 10 (pinned via `packageManager`)
+- [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, and shfmt
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+mise install
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`pnpm install` runs `playwright install chromium` afterwards, which the Storybook accessibility tests and the end-to-end tests both need.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## After Cloning This Template
 
-## Learn More
+Four things carry template defaults and need replacing before the project is yours.
 
-To learn more about Next.js, take a look at the following resources:
+| What                             | Where                           | Notes                                                                                              |
+| -------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Package name                     | `package.json` `name`           |                                                                                                    |
+| Application name and description | `src/app/layout.tsx` `metadata` | Page titles follow `「ページ名 \| アプリ名」`; the app name lives here only                        |
+| Accent color                     | `src/helpers/theme.ts`          | One constant, consumed by both the app and Storybook                                               |
+| Favicon                          | `src/app/favicon.ico`           | Still the Next.js default — it renders as the Next.js logo, so a missed replacement ships silently |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Changing the accent color to any [Radix color](https://www.radix-ui.com/colors) is a one-line edit:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```typescript
+export const themeAccentColor = 'jade' as const;
+```
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+src/
+  app/                  # App Router convention files
+  features/             # Domain-specific UI components
+  shared-components/    # Domain-independent reusable UI parts
+  entities/             # Type definitions & zod schemas
+  gateways/             # I/O with external data sources
+  presenters/           # Display formatting functions
+  helpers/              # Shared utilities & library configuration
+  stores/               # Client UI state (Zustand)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Radix Themes components are imported directly rather than wrapped, so the template is usable immediately without per-component setup work.
+
+Layer boundaries are enforced by dependency-cruiser, not convention alone. See [AGENTS.md](./AGENTS.md) for the full rules.
+
+## Scripts
+
+### Development
+
+| Command          | Purpose                        |
+| ---------------- | ------------------------------ |
+| `pnpm dev`       | Development server (Turbopack) |
+| `pnpm build`     | Production build               |
+| `pnpm storybook` | Storybook on port 6006         |
+
+### Testing
+
+| Command              | Purpose                                      |
+| -------------------- | -------------------------------------------- |
+| `pnpm test`          | Unit tests and Storybook accessibility tests |
+| `pnpm test:coverage` | Same, with coverage                          |
+| `pnpm e2e`           | Playwright end-to-end tests                  |
+
+### Checks
+
+| Command                | Purpose                                        |
+| ---------------------- | ---------------------------------------------- |
+| `pnpm lint`            | ESLint over `src/` and `.storybook/`           |
+| `pnpm typecheck`       | `tsc --noEmit`                                 |
+| `pnpm format`          | Prettier                                       |
+| `pnpm lint:md`         | markdownlint                                   |
+| `pnpm lint:text`       | textlint — Japanese terminology, per `prh.yml` |
+| `pnpm lint:actions`    | actionlint over GitHub Actions workflows       |
+| `pnpm lint:sh`         | shellcheck over tracked shell scripts          |
+| `pnpm knip`            | Unused files, exports, and dependencies        |
+| `pnpm depcruise`       | Layer dependency rules                         |
+| `pnpm scan:secretlint` | Secret scanning                                |
+| `pnpm scan:gitleaks`   | Secret scanning over git history               |
+
+`lint:actions`, `lint:sh`, and `scan:gitleaks` run tools provided by mise rather than npm, so `mise install` must have been run first.
+
+## Accessibility Gate
+
+Storybook stories are rendered in Chromium and checked by axe-core; violations fail `pnpm test`. Coverage comes entirely from stories, so a component state without a story is never checked.
+
+The template ships with no stories. Until the first `.stories.tsx` exists the gate has nothing to inspect, and `pnpm test` passes on `passWithNoTests`.
+
+## Documentation
+
+- [AGENTS.md](./AGENTS.md) — architecture, state management, and tooling, written for LLM agents but accurate for humans
+- [.claude/rules/](./.claude/rules/) — coding standards, UI design rules, and testing conventions
+- [docs/rules/](./docs/rules/) — dependency policy and implementation patterns

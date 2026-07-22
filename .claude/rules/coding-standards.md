@@ -36,7 +36,7 @@ description: Coding best practices (code quality, error handling)
   | `entities/`          | camelCase noun                                      | `user.ts`, `order.ts`                  |
   | `gateways/`          | camelCase noun (suffix optional, e.g., `Gateway`)   | `userGateway.ts`, `userApi.ts`         |
   | `presenters/`        | camelCase noun (suffix optional, e.g., `Presenter`) | `userPresenter.ts`, `userFormatter.ts` |
-  | `helpers/`           | camelCase noun                                      | `classNames.ts`                        |
+  | `helpers/`           | camelCase noun                                      | `apiClient.ts`                         |
   | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
   | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
   | `stores/`            | dir: kebab-case noun; store: camelCase noun         | `notification/notificationStore.ts`    |

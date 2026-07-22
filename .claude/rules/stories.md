@@ -17,25 +17,25 @@ UI states and content conditions also require their own stories. See `design-sta
 
 ## Naming
 
-- Export names use English PascalCase (e.g., `VariantDefault`, `SizeLarge`, `Disabled`)
+- Export names use English PascalCase (e.g., `VariantSolid`, `SizeLarge`, `Disabled`)
 - Set the `name` property to Japanese in the format `「{prop名}が{value}の場合」`
 - For combined states: `「{prop名}が{value}かつ{prop名}が{value}の場合」`
 
 ```typescript
-export const VariantDefault: Story = {
+export const VariantSolid: Story = {
   args: {
     children: 'ボタン',
-    variant: 'default',
+    variant: 'solid',
   },
-  name: 'variantがdefaultの場合',
+  name: 'variantがsolidの場合',
 };
 
-export const DisabledDestructive: Story = {
+export const DisabledColorRed: Story = {
   args: {
-    children: '削除',
+    children: 'プロジェクトを削除',
+    color: 'red',
     disabled: true,
-    variant: 'destructive',
   },
-  name: 'disabledがtrueかつvariantがdestructiveの場合',
+  name: 'disabledがtrueかつcolorがredの場合',
 };
 ```

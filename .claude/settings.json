@@ -15,8 +15,7 @@
       "Bash(npx depcruise *)",
       "Bash(npx commitlint *)",
       "Bash(npx lefthook *)",
-      "Bash(npx next *)",
-      "Bash(npx shadcn *)"
+      "Bash(npx next *)"
     ],
     "deny": [
       "Bash(rm *)",

@@ -1,4 +1,5 @@
 [tools]
+actionlint = "1"
 gitleaks = "8"
 shellcheck = "0.11"
 shfmt = "3"

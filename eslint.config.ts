@@ -42,7 +42,6 @@ export default defineConfig(
       '*.config.ts',
       '*.config.mjs',
       '*.cjs',
-      '.storybook/',
     ],
   },
   {
@@ -236,19 +235,29 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/shared-components/shadcn/**/*.tsx'],
+    // Storybook のデコレーター第一引数は <Story /> という形で JSX 要素として描画される。
+    // JSX は小文字始まりの識別子を組み込みHTML要素とみなすため、この引数は PascalCase でなければならない
+    files: ['.storybook/**/*.tsx'],
     rules: {
-      'no-restricted-syntax': [
+      '@typescript-eslint/naming-convention': [
         'error',
         {
-          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
-          selector:
-            'FunctionDeclaration > Identifier[optional=true], ArrowFunctionExpression > Identifier[optional=true], TSParameterProperty[parameter.optional=true]',
+          format: ['camelCase', 'PascalCase'],
+          selector: ['variable', 'function'],
         },
         {
-          message: 'オプショナル引数は禁止です。引数は常に必須にしてください',
-          selector:
-            ':matches(FunctionDeclaration, FunctionExpression, ArrowFunctionExpression) > :matches(Identifier[optional=true], AssignmentPattern)',
+          format: ['camelCase', 'PascalCase'],
+          selector: ['parameter'],
+        },
+        {
+          format: ['camelCase'],
+          leadingUnderscore: 'allow',
+          modifiers: ['unused'],
+          selector: 'parameter',
+        },
+        {
+          format: ['PascalCase'],
+          selector: ['typeLike'],
         },
       ],
     },

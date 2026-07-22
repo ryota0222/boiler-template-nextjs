@@ -15,10 +15,6 @@ Components are organized in subdirectories with co-located stories.
 
 ```text
 src/shared-components/
-  shadcn/
-    button/
-      Button.tsx
-      Button.stories.tsx
   badge/
     Badge.tsx
     Badge.stories.tsx
