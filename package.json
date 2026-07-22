@@ -128,7 +128,12 @@
       "zustand",
       "shadcn",
       "tw-animate-css",
-      "tailwindcss"
+      "tailwindcss",
+      "lucide-react",
+      "@base-ui/react",
+      "class-variance-authority",
+      "clsx",
+      "tailwind-merge"
     ],
     "entry": [
       "src/shared-components/**/*.{ts,tsx}",
