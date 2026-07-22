@@ -92,7 +92,7 @@
     "knip": "^6.14.1",
     "lefthook": "^2.1.10",
     "markdownlint-cli2": "^0.22.1",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.6",
     "secretlint": "^13.0.4",
     "storybook": "^10.3.5",
     "textlint": "^15.7.1",
