@@ -97,7 +97,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-node
-      - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea
+      - uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204
         with:
           install: true
       - run: pnpm run scan:secretlint
@@ -108,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
-      - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea
+      - uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204
         with:
           install: true
       - run: pnpm run lint:sh
