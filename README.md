@@ -28,14 +28,22 @@ Four things carry template defaults and need replacing before the project is you
 | -------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Package name                     | `package.json` `name`           |                                                                                                    |
 | Application name and description | `src/app/layout.tsx` `metadata` | Page titles follow `「ページ名 \| アプリ名」`; the app name lives here only                        |
-| Accent color                     | `src/helpers/theme.ts`          | One constant, consumed by both the app and Storybook                                               |
+| Design baseline                  | `src/helpers/theme.ts`          | Accent color, radius, appearance, and voice & tone — set via `/setup-theme`                        |
 | Favicon                          | `src/app/favicon.ico`           | Still the Next.js default — it renders as the Next.js logo, so a missed replacement ships silently |
 
-Changing the accent color to any [Radix color](https://www.radix-ui.com/colors) is a one-line edit:
+The design baseline — **accent color, corner radius, appearance mode, and voice & tone** — is decided before any UI work. Run `/setup-theme` in Claude Code; it asks four impression-based questions and writes `src/helpers/theme.ts`:
 
 ```typescript
-export const themeAccentColor = 'jade' as const;
+export const themeConfig = {
+  accentColor: 'jade',
+  appearance: 'light',
+  isConfigured: true,
+  radius: 'medium',
+  voiceAndTone: 'friendly',
+} as const;
 ```
+
+`accentColor` (any [Radix color](https://www.radix-ui.com/colors)), `radius`, and `appearance` are applied to Radix `<Theme>` in both the app and Storybook; `voiceAndTone` guides UI copy only. Until `isConfigured` is `true`, a Claude Code hook blocks edits to `src/` (except `theme.ts`), so implementation never starts on undecided styling.
 
 ## Project Structure
 
