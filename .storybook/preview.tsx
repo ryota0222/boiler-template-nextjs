@@ -6,12 +6,16 @@ import type { Preview } from '@storybook/nextjs-vite';
 
 import { Theme } from '@radix-ui/themes';
 
-import { themeAccentColor } from '@/helpers/theme';
+import { themeConfig } from '@/helpers/theme';
 
 const preview: Preview = {
   decorators: [
     (Story) => (
-      <Theme accentColor={themeAccentColor}>
+      <Theme
+        accentColor={themeConfig.accentColor}
+        appearance={themeConfig.appearance}
+        radius={themeConfig.radius}
+      >
         <Story />
       </Theme>
     ),
