@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import '@radix-ui/themes/styles.css';
 
 import '@/app/globals.css';
-import { themeAccentColor } from '@/helpers/theme';
+import { themeConfig } from '@/helpers/theme';
 import { QueryProvider } from '@/shared-components/query-provider/QueryProvider';
 
 const geistSans = Geist({
@@ -31,7 +31,11 @@ export default function RootLayout({
   return (
     <html className={`${geistSans.variable} ${geistMono.variable}`} lang="en">
       <body>
-        <Theme accentColor={themeAccentColor}>
+        <Theme
+          accentColor={themeConfig.accentColor}
+          appearance={themeConfig.appearance}
+          radius={themeConfig.radius}
+        >
           <QueryProvider>{children}</QueryProvider>
         </Theme>
       </body>

@@ -6,6 +6,15 @@ This file provides guidance to LLM agents when working with code in this reposit
 
 Next.js App Router web application template for Node.js v22+ / ESM. Uses Radix Themes for styling.
 
+## Design System Setup (run before any implementation)
+
+Before any `src/` implementation, the design baseline must be decided: **accent color, corner radius, appearance mode, and voice & tone**. Until it is, a `PreToolUse` hook (`require-theme-setup.sh`) blocks Edit/Write to `src/` (except `src/helpers/theme.ts`).
+
+- Decide it with the `/setup-theme` command, which asks four impression-based questions and writes `src/helpers/theme.ts`.
+- The gate releases when `themeConfig.isConfigured` becomes `true`.
+- `src/helpers/theme.ts` is the single source of truth: `accentColor`, `radius`, and `appearance` are passed to Radix `<Theme>`; `voiceAndTone` is a recorded decision that guides UI copy (`.claude/rules/design-copy.md`) and has no runtime effect.
+- `.claude/.template-dev` disables the gate for maintaining this template itself; it is not distributed to projects scaffolded from the template.
+
 ## Directory Structure
 
 ```text

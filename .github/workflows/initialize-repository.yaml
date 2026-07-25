@@ -53,7 +53,7 @@ jobs:
             README.md > README.md.tmp
           mv README.md.tmp README.md
 
-      - name: Delete workflow and dependabot config, then commit changes
+      - name: Delete template-only files, then commit changes
         if: steps.check.outputs.needed == 'true'
         run: |
           set -euo pipefail
@@ -61,6 +61,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/initialize-repository.yaml
           git rm .github/dependabot.yaml
+          git rm .claude/.template-dev
           git add package.json README.md
           git commit -m "chore: initialize repository from template"
           git push
