@@ -90,3 +90,17 @@ export const Empty: Story = {
 ## Why Stories Matter Here
 
 Every story is checked by axe through the Storybook a11y gate. A state that has no story is a state whose accessibility is never verified.
+
+## A Disabled-Only Story Hides Contrast Failures
+
+axe skips colour-contrast checks on disabled controls. A story whose only interactive element is disabled therefore passes the gate while saying nothing about the enabled appearance — which is the one users actually see.
+
+Give any component with a submit button at least one story where that button is enabled.
+
+```typescript
+// Bad: the only story leaves the form empty, so the button is always disabled
+export const Ideal: Story = {};
+
+// Good: a story that fills the form and exercises the enabled button
+export const Filled: Story = { args: { defaultName: '田中' } };
+```
