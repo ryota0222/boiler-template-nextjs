@@ -180,7 +180,15 @@ export default defineConfig(
         { '**/*.ts': 'CAMEL_CASE', '**/*.tsx': 'PASCAL_CASE' },
         { ignoreMiddleExtensions: true },
       ],
-      'check-file/folder-naming-convention': ['error', { 'src/**/': 'KEBAB_CASE' }],
+      // App Router の動的セグメント（[id] など）は kebab-case に適合しないため、
+      // プラグインがこの用途に用意している専用の値を使う
+      'check-file/folder-naming-convention': [
+        'error',
+        {
+          'src/!(app)/**/': 'KEBAB_CASE',
+          'src/app/**/': 'NEXT_JS_APP_ROUTER_CASE',
+        },
+      ],
     },
   },
   {
@@ -237,7 +245,7 @@ export default defineConfig(
   {
     // Storybook のデコレーター第一引数は <Story /> という形で JSX 要素として描画される。
     // JSX は小文字始まりの識別子を組み込みHTML要素とみなすため、この引数は PascalCase でなければならない
-    files: ['.storybook/**/*.tsx'],
+    files: ['.storybook/**/*.tsx', 'src/**/*.stories.tsx'],
     rules: {
       '@typescript-eslint/naming-convention': [
         'error',
@@ -277,6 +285,10 @@ export default defineConfig(
       '@typescript-eslint/switch-exhaustiveness-check': 'off',
       'max-lines-per-function': 'off',
       'no-console': 'off',
+      // test-standards.md が Act の結果を actual、期待値を expected と命名することを必須にしており、
+      // 真偽値を返すテストではこのルールと必ず衝突する。off にすると他の真偽値まで
+      // 素通りするため、この2語だけを除外する
+      'unicorn/consistent-boolean-name': ['error', { ignore: ['^actual$', '^expected$'] }],
       'unicorn/consistent-function-scoping': 'off',
     },
   },

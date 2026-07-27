@@ -98,3 +98,19 @@ Feature components may depend on:
 - `src/shared-components/` (shared UI parts)
 
 Feature components must not depend on other features. Cross-feature logic should be lifted to a shared layer.
+
+## Do Not Name a ViewModel After Its Component
+
+macOS and Windows resolve module paths case-insensitively. `voteSummary.ts` and `VoteSummary.tsx` in one directory therefore collide: an import of `.../voteSummary` can resolve to the component file instead, and the failure surfaces as a confusing `'VoteSummary' only refers to a type` error.
+
+Give the ViewModel a different stem.
+
+```text
+// Bad
+features/room-board/vote-summary/voteSummary.ts
+features/room-board/vote-summary/VoteSummary.tsx
+
+// Good
+features/room-board/vote-summary/voteAggregate.ts
+features/room-board/vote-summary/VoteSummary.tsx
+```

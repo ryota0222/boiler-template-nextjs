@@ -36,6 +36,7 @@ export default defineConfig({
         extends: true,
         test: {
           environment: 'jsdom',
+          setupFiles: ['./vitest.setup.ts'],
           include: ['src/**/*.test.{ts,tsx}', 'eslint-rules/**/*.test.ts'],
         },
       },
