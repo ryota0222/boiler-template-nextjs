@@ -36,6 +36,22 @@ Most objects need both, and App Router maps them onto routes:
 
 A feature that has only a single view and no way to browse instances is usually missing its entry point.
 
+### A Child Segment May Name a View of the Parent Object
+
+The rule above asks every screen to name its object. A child segment satisfies it through its parent: the object is the parent segment, and the child names one view of that object. `/r/[workspace]/[room]/settings` and `/r/[workspace]/[room]/present` are both views of one room, so neither needs an entity of its own.
+
+This holds only while the child is a view. A child that introduces a second object, or that is named after a procedure rather than a view, is the case the rule forbids.
+
+```text
+// Good: one object, three views
+/r/[workspace]/[room]
+/r/[workspace]/[room]/present
+/r/[workspace]/[room]/settings
+
+// Bad: named after a procedure, and the object is no longer the room
+/r/[workspace]/[room]/start-estimation-wizard
+```
+
 ## Actions Follow Selection
 
 Actions belong to the object and appear once it is selected. An action must not be the entry point that then asks what to act on.
