@@ -30,10 +30,10 @@ A gateway may import from `helpers/` only when the file is a library client, nam
 
 ```typescript
 // Good: a configured library instance
-// src/gateways/user/userGateway.ts → src/helpers/apiClient.ts
+// src/gateways/user/user.ts → src/helpers/apiClient.ts
 
 // Bad: an arbitrary utility
-// src/gateways/user/userGateway.ts → src/helpers/formatting.ts
+// src/gateways/user/user.ts → src/helpers/formatting.ts
 ```
 
 A client typed with the application's own schema — a generated database type, for example — is not domain-independent and therefore does not belong in `helpers/` at all (`helpers.md`: "no entity references"). Keep it in `gateways/`.

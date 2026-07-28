@@ -305,6 +305,9 @@ export default defineConfig(
       ...playwright.configs['flat/recommended'].rules,
       '@typescript-eslint/no-magic-numbers': 'off',
       'max-lines-per-function': 'off',
+      // src のテストと同じ理由。test-standards.md が期待値を expected と命名することを
+      // 必須にしており、真偽値を検査するテストではこのルールと必ず衝突する
+      'unicorn/consistent-boolean-name': ['error', { ignore: ['^actual$', '^expected$'] }],
     },
   }
 );

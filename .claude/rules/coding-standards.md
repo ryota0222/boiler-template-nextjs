@@ -34,7 +34,7 @@ description: Coding best practices (code quality, error handling)
   | Layer                | Convention                                          | Example                                |
   | -------------------- | --------------------------------------------------- | -------------------------------------- |
   | `entities/`          | camelCase noun                                      | `user.ts`, `order.ts`                  |
-  | `gateways/`          | camelCase noun (suffix optional, e.g., `Gateway`)   | `userGateway.ts`, `userApi.ts`         |
+  | `gateways/`          | camelCase noun, no `Gateway` suffix                 | `user.ts`, `userQuery.ts`              |
   | `presenters/`        | camelCase noun (suffix optional, e.g., `Presenter`) | `userPresenter.ts`, `userFormatter.ts` |
   | `helpers/`           | camelCase noun                                      | `apiClient.ts`                         |
   | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
@@ -72,7 +72,7 @@ description: Coding best practices (code quality, error handling)
 
   ```typescript
   // Good
-  // src/gateways/userGateway.ts
+  // src/gateways/user/user.ts
   export function getUser() { ... }
   export function updateUser() { ... }
 

@@ -36,9 +36,21 @@ A domain directory holds up to three files, split by concern:
 
 | File                  | Contents                                           |
 | --------------------- | -------------------------------------------------- |
-| `<domain>Gateway.ts`  | The actual I/O and conversion to entity types      |
+| `<domain>.ts`         | The actual I/O and conversion to entity types      |
 | `<domain>Query.ts`    | The query key and `queryOptions`                   |
 | `<domain>Mutation.ts` | `mutationOptions`, including the optimistic update |
+
+The I/O file carries no suffix. `src/gateways/` already states that the file performs I/O, so `Gateway` repeats the directory and adds nothing a reader did not already know. `Query` and `Mutation` do carry a suffix because they distinguish two further concerns inside the same domain.
+
+```text
+// Good
+src/gateways/user/user.ts
+src/gateways/user/userQuery.ts
+src/gateways/user/userMutation.ts
+
+// Bad: the suffix repeats the directory
+src/gateways/user/userGateway.ts
+```
 
 The query key belongs here, not in the component that reads it. A key duplicated across features drifts silently — nothing throws, the cache just stops updating.
 

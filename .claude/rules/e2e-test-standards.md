@@ -56,11 +56,15 @@ E2E tests share a real database and run in parallel by default. Tests MUST NOT d
 
 **Rules:**
 
-- Every test that creates data must use a unique name per test run. Generate it at the top of the test file using `Date.now()`:
+- Every test that creates data must use a unique name per test run. Generate it with `randomUUID()`:
 
   ```typescript
-  const testProjectName = `テストプロジェクト-${Date.now()}`;
+  import { randomUUID } from 'node:crypto';
+
+  const testProjectName = `テストプロジェクト-${randomUUID()}`;
   ```
+
+  `Date.now()` is not sufficient. Playwright runs tests in parallel across workers, and two workers reading the same millisecond produce the same name — measured, with the second test failing on a unique constraint far from the line that caused it. `test.info().testId` does not fix it either: it is prefixed with a per-file hash, so truncating it to fit a length limit leaves tests in the same file sharing a value.
 
 - Assertions must be scoped to the specific data created by that test — never assert on total counts of elements that include data from other tests.
 
