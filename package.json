@@ -89,7 +89,7 @@
     "eslint-plugin-storybook": "^10.5.5",
     "eslint-plugin-unicorn": "^72.0.0",
     "jiti": "^2.7.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.0",
     "knip": "^6.29.0",
     "lefthook": "^2.1.10",
     "markdownlint-cli2": "^0.23.1",
