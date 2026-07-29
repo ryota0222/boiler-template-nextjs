@@ -21,3 +21,14 @@ ul {
   margin: 0;
   padding: 0;
 }
+
+/* iOS Safari は font-size が 16px 未満の入力欄にフォーカスするとページ全体を
+   拡大する。Radix Themes の既定 size="2" は 14px にあたるため入力欄だけ引き上げる */
+.radix-themes :where(input, textarea) {
+  font-size: 16px;
+}
+
+/* 上の引き上げで textarea の行送りが 1.25 まで詰まり、折り返した行が読みにくくなる */
+.radix-themes :where(textarea) {
+  line-height: var(--line-height-3);
+}
