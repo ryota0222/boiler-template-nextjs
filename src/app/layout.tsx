@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>): React.JSX.Element {
   return (
-    <html className={`${geistSans.variable} ${geistMono.variable}`} lang="en">
+    <html className={`${geistSans.variable} ${geistMono.variable}`} lang="ja">
       <body>
         <Theme
           accentColor={themeConfig.accentColor}
