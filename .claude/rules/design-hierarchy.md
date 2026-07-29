@@ -72,6 +72,36 @@ Place them apart spatially and give them the weakest weight the screen has. An a
 
 Express a group by putting it in one row or one container, and vary the gap between groups and within them. If a screen is a single `Flex direction="column"` with one `gap`, it has no grouping.
 
+The gap between groups is at least twice the gap within a group. Below that ratio the difference reads as an inconsistency rather than as a boundary, which is worse than a uniform gap.
+
+Radix spacing is not linear, so doubling the `gap` number does not double the space. Read the pair off this table instead:
+
+| Gap within a group | Gap between groups |
+| ------------------ | ------------------ |
+| `gap="1"` (4px)    | `gap="2"` (8px)    |
+| `gap="2"` (8px)    | `gap="4"` (16px)   |
+| `gap="3"` (12px)   | `gap="5"` (24px)   |
+| `gap="4"` (16px)   | `gap="6"` (32px)   |
+| `gap="5"` (24px)   | `gap="8"` (48px)   |
+
+```typescript
+// Good: 8px within the group, 16px between groups
+<Flex direction="column" gap="4">
+  <Flex direction="column" gap="2">
+    <Heading size="3">配送先</Heading>
+    <Text>東京都渋谷区</Text>
+  </Flex>
+  <Flex direction="column" gap="2">
+    <Heading size="3">支払い方法</Heading>
+    <Text>クレジットカード</Text>
+  </Flex>
+</Flex>
+
+// Bad: gap="3" against gap="2" is a 1.5x difference, which reads as a mistake
+<Flex direction="column" gap="3">
+  <Flex direction="column" gap="2">
+```
+
 ## Count the Controls
 
 - **Type**: MUST

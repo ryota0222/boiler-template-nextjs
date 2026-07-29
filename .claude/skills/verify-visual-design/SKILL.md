@@ -53,12 +53,15 @@ Docs pages (`--docs`) only exist when `tags: ['autodocs']` is set on the meta. I
 
 ### Step 3: Capture
 
-For each story, capture at two viewports. Light mode only — dark mode tokens exist in `globals.css` but no mechanism applies the `.dark` class, so there is nothing to verify.
+For each story, capture at three viewports. Light mode only — dark mode tokens exist in `globals.css` but no mechanism applies the `.dark` class, so there is nothing to verify.
 
-| Viewport | Width | Height |
-| -------- | ----- | ------ |
-| Compact  | 375   | 812    |
-| Wide     | 1440  | 900    |
+| Viewport | Width | Height | What it answers                                            |
+| -------- | ----- | ------ | ---------------------------------------------------------- |
+| Reflow   | 320   | 812    | Does anything scroll horizontally or escape its container? |
+| Compact  | 375   | 812    | Does the layout read correctly on a real phone?            |
+| Wide     | 1440  | 900    | Does the layout hold when there is room to spare?          |
+
+320px is the width WCAG 2.1 reflow requires, and it is narrower than any phone the Compact viewport represents. Capture it for the overflow question only — judge spacing, hierarchy, and touch targets at Compact, where the layout is meant to look right rather than merely survive.
 
 Use the Playwright MCP tools: `browser_resize`, then `browser_navigate`, then `browser_take_screenshot`. Write screenshots under `tmp/` — it is gitignored. Never write them to the repository root.
 
@@ -68,15 +71,22 @@ Also take `browser_snapshot` to read the accessibility tree, which exposes headi
 
 Look for these, in order of how often they occur:
 
-1. **Overflow** — text or content escaping its container at 375px
+1. **Overflow** — text or content escaping its container, or the page scrolling horizontally, at 320px
 2. **Collapsed layout** — an element with no height or width because its content is empty
 3. **Missing state** — the story set does not cover the states required by `design-states.md`
-4. **Touch target size** — interactive elements smaller than roughly 44px at the compact viewport
+4. **Touch target size** — icon-only controls below `size="3"` at the compact viewport, per `design-a11y.md`
 5. **Heading order** — a level skipped, or more than one `h1`
 
 ### Step 5: Report
 
 State what was checked and what was found. If nothing was found, say which stories and viewports were captured — a bare "looks fine" is not a result.
+
+Then list what was inspected and deliberately left alone:
+
+| Location | Candidate | Rejected because |
+| -------- | --------- | ---------------- |
+
+A candidate belongs here when the layout looked irregular but a rule permits it, when the evidence was too thin to call, or when the change would have cost more than it returned. Without this table a short report is indistinguishable from a shallow one, and the next reviewer re-examines everything already settled here. Only list candidates actually inspected; if there were none, say so rather than inventing them.
 
 Fix findings in the component, then re-run from Step 3.
 
