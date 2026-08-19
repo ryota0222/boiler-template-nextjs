@@ -33,6 +33,17 @@ src/features/order-list/
   OrderList.stories.tsx   ← Ideal / Empty / Partial の3ストーリーを持つ
 ```
 
+### Empty has two causes, and they are different screens
+
+"Your filter matched nothing" and "nothing has been registered yet" lead to opposite next actions. Showing one message for both sends half the users the wrong way.
+
+| Cause                             | Message names   | Action offered          |
+| --------------------------------- | --------------- | ----------------------- |
+| A filter excluded everything      | The condition   | Clear the conditions    |
+| The collection is genuinely empty | What is missing | Create the first record |
+
+Both are the `Empty` state and share the `空の場合` story name. Wording follows `design-copy.md`; the conditions themselves are `design-collection.md`.
+
 ### Empty is not Not Found
 
 `Empty` means the resource exists and holds zero items. `Not Found` means the resource itself does not exist. They differ in HTTP status, in copy, and in what the user is expected to do next. Rendering an empty list for a deleted resource hides a broken link from the user.
@@ -57,6 +68,8 @@ Independent of state. Apply to whichever states render content.
 | Mixed scripts   | Japanese and Latin glyph widths differ; fixed widths break          |
 
 Cover these as additional stories on the component. They are not UI Stack states and must not be added to the table above.
+
+A horizontal scrollbar belongs to the element that overflows — a table, a diagram, a code block. The page body must never scroll horizontally, which is the reflow requirement in `design-a11y.md`.
 
 ```typescript
 export const ChildrenLongText: Story = {

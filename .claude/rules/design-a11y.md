@@ -30,6 +30,15 @@ Anything that responds to a click is a `Button`, an `IconButton`, or a `Link`. L
 
 Overlays are `Dialog` or `AlertDialog`, never a hand-built one. Those components trap focus, restore it to the trigger on close, and close on Escape through `@radix-ui/react-focus-scope`. A hand-built overlay has to reimplement all three, and usually reimplements none.
 
+Radix does not decide the order the controls come in, so these remain the author's:
+
+- Tab order follows the visual order. Do not set `tabIndex` above 0 to repair an order — fix the DOM order instead.
+- `Enter` in a search field runs the search. `Enter` in a form field does not submit when submitting is guarded by a confirmation dialog (`design-feedback.md`).
+- A focus outline is always visible on `:focus-visible`. Never remove it without replacing it with something at least as visible.
+- Focus never lands on a hidden element, which is one more reason inapplicable sections are hidden rather than disabled (`design-form.md`).
+
+Walk the screen with the keyboard alone before calling it done. No gate performs this walk.
+
 ## Touch Targets Follow the Radix Size Scale
 
 - **Type**: MUST
@@ -45,6 +54,27 @@ Overlays are `Dialog` or `AlertDialog`, never a hand-built one. Those components
 | `4`    | 48px   | Icon-only controls reachable by touch             |
 
 An icon-only control below `size="3"` needs a reason. `size="1"` is for dense, pointer-only surfaces where the controls are already separated by spacing.
+
+## Text Meets WCAG AA, and the Step Is Chosen for That
+
+- **Type**: MUST
+- **Reason**: axe measures the pairs a story actually renders. It cannot tell you that the step you reached for is the wrong step, and the accent is a runtime decision (`themeConfig.accentColor`) so the ratio changes with the theme rather than with the code.
+
+### Details
+
+4.5:1 for every text pair, including `size="1"` notes and bold `Badge` labels. Radix Colors assigns each step a role, and only two of them are for text:
+
+| Step | Role                                                         |
+| ---- | ------------------------------------------------------------ |
+| 3    | Tinted surface                                               |
+| 6    | Border on a tinted surface                                   |
+| 9    | Solid fill — no text sits on it unless the pair was measured |
+| 11   | Text on white                                                |
+| 12   | Text on a step-3 surface                                     |
+
+Steps below 11 are for borders, disabled states, and decoration — never for text on white. Two pairs are worth measuring whenever the accent changes, because both look correct and neither is guaranteed: white on step 9, and step-11 text on a step-3 surface.
+
+Disabled controls are exempt from the ratio, which is exactly why a screen must have at least one state where the submit button is enabled before anyone claims the palette passes — see the disabled-only story trap in `design-states.md`.
 
 ## State Is Never Carried by Colour Alone
 
@@ -69,6 +99,35 @@ Selected, error, warning, and success states each carry a second cue — an icon
   <Callout.Text>メールアドレスの形式が正しくありません</Callout.Text>
 </Callout.Root>
 ```
+
+## Every Control Has an Accessible Name
+
+- **Type**: MUST
+- **Reason**: axe reports a control with no name, but it cannot report a control whose name is technically present and useless. A column of twelve buttons all announced as `編集` passes the gate and is unusable.
+
+### Details
+
+- Every input is associated with a `label` element through `htmlFor` / `id`. A placeholder is not a label.
+- A control repeated per row names its row: `注文 #1024 を編集`, not `編集`. Use `aria-label` for the full name and keep the visible text short.
+- Images and icons that carry no meaning are hidden with `aria-hidden`.
+
+The `aria-label` on an icon-only control is `design-affordance.md`; this rule is about the names of everything else.
+
+## State Is Announced, Not Only Drawn
+
+- **Type**: MUST
+- **Reason**: The section above covers state a sighted reader can see. These attributes are the only way the same state reaches a screen reader, and none of them has a visual side effect that would reveal its absence.
+
+### Details
+
+| What                           | Attribute                               |
+| ------------------------------ | --------------------------------------- |
+| Current page in the navigation | `aria-current="page"`                   |
+| Sorted column                  | `aria-sort="ascending" \| "descending"` |
+| Selected row                   | `aria-selected` on the row              |
+| Radio group                    | A group with an accessible name         |
+
+The interactions these describe are `design-collection.md`. Content that appears without focus moving is the next rule.
 
 ## Hand-Written Motion Is Opt-In
 

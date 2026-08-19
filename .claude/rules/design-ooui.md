@@ -34,7 +34,14 @@ Most objects need both, and App Router maps them onto routes:
 | Collection | Every instance, filterable and sortable | `/orders`           |
 | Single     | One instance in full, with its actions  | `/orders/[orderID]` |
 
-A feature that has only a single view and no way to browse instances is usually missing its entry point.
+A feature that has only a single view and no way to browse instances is usually missing its entry point. How the collection behaves once it holds real volume is `design-collection.md`.
+
+### The Three Screens Are List, Detail, and Edit
+
+- **Type**: MUST
+- **Reason**: A user who learns the shape once can predict where an action lives for every object in the system. Mixing a modal into that chain for one object breaks the prediction for all of them.
+
+List → detail → edit, as pages. Within one feature, do not implement the same job as a modal on one screen and a page on another. When a modal is justified at all, `design-feedback.md` says under which conditions.
 
 ### A Child Segment May Name a View of the Parent Object
 
@@ -74,6 +81,18 @@ A multi-step wizard usually means the interface was designed around a process ra
 
 Genuine exceptions exist where ordering is transactional or legal — checkout and payment flows are the common case. Treat a wizard as a decision that needs a reason, not a default.
 
+A numbered sequence on one page is not a wizard, and it is the right shape when a later step is constrained by an earlier one. Keep the steps to the ones that carry a real decision: if a step's answer is derivable from the data, delete the step (`design-form.md`).
+
+## The Menu Names Objects, Not Tasks
+
+- **Type**: MUST
+- **Reason**: The menu is the system's object model made visible. A menu of tasks tells the user what the system does; a menu of objects tells them where their work lives.
+
+- Two levels at most, three as the absolute ceiling. The first level groups; the second level is the objects.
+- The label, the route, the page title, and the breadcrumb root are the same string. When they drift, either the object was renamed halfway through or two objects were conflated. This is the table below, seen from the user's side.
+- Name the collection after what it contains, not after its most common member. A collection that holds two kinds of record takes the noun that covers both.
+- Prefer the term the business already uses, unless that term is ambiguous inside the system. Where the ambiguity is a spelling variant rather than a meaning, `prh.yml` settles it (`design-copy.md`).
+
 ## The Object Keeps One Name Across Every Layer
 
 | Layer            | Name                           |
@@ -84,3 +103,16 @@ Genuine exceptions exist where ordering is transactional or legal — checkout a
 | Navigation label | `注文`                         |
 
 A mismatch in this table means either the object was renamed halfway through or two objects were conflated into one screen. Check it whenever a feature is added.
+
+## Navigation Icons Are Chosen From the Work, Not the Word
+
+- **Type**: MUST
+
+Pick a glyph the user could guess from what the object is, not from the letters of its label. Never repeat one glyph for two objects. The icon set itself is fixed by `design-layout.md`.
+
+## Hiding a Menu Entry and Removing It Are Different
+
+- **Type**: MUST
+- **Reason**: A screen that is hidden still exists and can be reached by URL. Treating the two as one leaves a route with no access control.
+
+Define them separately: hidden means the entry is not rendered but the route resolves; removed means the route does not resolve. When both could apply, removal wins. Decide which one applies before the first conditional entry is built, so it does not invent its own semantics.

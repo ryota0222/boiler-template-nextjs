@@ -5,7 +5,7 @@ paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'src/shared-components/**/*
 
 # Affordance Rules
 
-An element that can be operated must look operable. This is separate from `design-hierarchy.md`, which decides which of several operable elements comes first. Here the question is whether the user can tell there is anything to press at all.
+An element that can be operated must look operable. This is separate from `design-hierarchy.md`, which decides which of several operable elements comes first. Here the question is whether the user can tell there is anything to press at all. Whether it can be reached without a mouse is `design-a11y.md`.
 
 ## Interactivity Never Rests on Colour Alone
 
@@ -27,6 +27,8 @@ This is not hypothetical. A `Link` placed in body text under an accent of `gray`
 </Link>
 ```
 
+In a table, the cell that opens the record is underlined, not merely coloured. A whole row that responds to a click still needs one cue inside it that says so.
+
 ## The Element Follows the Meaning, the Appearance Follows the Role
 
 Navigation renders as `a`, state change renders as `button`. Radix `asChild` keeps the element correct while the appearance is chosen freely, so there is never a reason to swap one for the other to get a look.
@@ -44,6 +46,31 @@ An icon-only control has no text node, so it needs an `aria-label`. Without one 
   <Share2 size={18} />
 </IconButton>
 ```
+
+## A Badge Means State, and Nothing Else
+
+A record's current state is always visible on the row and on the single-object screen, as a `Badge` carrying a label. `design-a11y.md` requires the second, non-colour cue; this rule adds which elements are allowed to be badges at all.
+
+A record's kind or category is an attribute, not a state — render it as plain text. When both are badges, the badge stops meaning anything and the row has no state indicator left.
+
+```typescript
+// Good: state as a badge, kind as text
+<Table.Cell>通常配送</Table.Cell>
+<Table.Cell>
+  <Badge color="amber">未発送</Badge>
+</Table.Cell>
+
+// Bad: the kind competes with the state
+<Table.Cell>
+  <Badge color="gray">通常配送</Badge>
+</Table.Cell>
+```
+
+## Editing Context Is Shown Where the Edit Lands
+
+When a form and its result sit side by side, the user must be able to tell which pair they are working in without tracing the layout. Mark the record being edited — a border and a tinted surface on that pair — and move the mark on focus.
+
+Never mark it with colour alone on a wide surface; the border carries it.
 
 ## Neither axe Nor the End-to-End Tests Catch This
 
