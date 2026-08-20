@@ -34,11 +34,21 @@ COPY package.json pnpm-lock.yaml ./
 # dependencies を「migrate deploy に必要な prisma と dotenv（prisma.config.ts が
 # import する）だけ」に書き換えてから prune --prod することで、next / react /
 # @radix-ui/themes などアプリ本体の依存も含め、migrator に不要なものを
-# すべて取り除く
+# すべて取り除く。この書き換えは prisma と dotenv が devDependencies にある
+# ことを前提にしており、片方でも dependencies 側へ移動されると
+# pkg.devDependencies.xxx が undefined になり JSON.stringify でキーごと
+# 消える。dotenv が消えると build は成功するが prisma.config.ts の
+# `import 'dotenv/config'` がデプロイ実行時に初めて失敗するため、
+# ビルド時点で検知できるよう明示的にチェックする
 RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN node -e "\
   const pkg = require('./package.json'); \
-  pkg.dependencies = { prisma: pkg.devDependencies.prisma, dotenv: pkg.devDependencies.dotenv }; \
+  const prismaVersion = pkg.devDependencies.prisma; \
+  const dotenvVersion = pkg.devDependencies.dotenv; \
+  if (!prismaVersion || !dotenvVersion) { \
+    throw new Error('prisma と dotenv は devDependencies にある前提です。dependencies 側へ移動した場合はこの書き換えスクリプトを更新してください'); \
+  } \
+  pkg.dependencies = { prisma: prismaVersion, dotenv: dotenvVersion }; \
   pkg.devDependencies = {}; \
   require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2)); \
   " \
