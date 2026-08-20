@@ -147,7 +147,8 @@
       "src/features/**/*.{ts,tsx}",
       "src/helpers/**/*.{ts,tsx}",
       "src/gateways/**/*.ts",
-      "src/entities/**/*.ts"
+      "src/entities/**/*.ts",
+      "prisma/seed.ts"
     ],
     "next": {
       "entry": [
