@@ -66,6 +66,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "remeda": "^2.39.0",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -144,7 +145,8 @@
       "src/shared-components/**/*.{ts,tsx}",
       "src/features/**/*.{ts,tsx}",
       "src/helpers/**/*.{ts,tsx}",
-      "src/gateways/**/*.ts"
+      "src/gateways/**/*.ts",
+      "src/entities/**/*.ts"
     ],
     "next": {
       "entry": [
