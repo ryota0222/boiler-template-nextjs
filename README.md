@@ -13,8 +13,8 @@ Next.js App Router template with Radix Themes, wired for strict linting, accessi
 
 ```bash
 mise install
-pnpm install          # postinstall runs `prisma generate`
 cp .env.example .env
+pnpm install          # postinstall runs `prisma generate`
 pnpm run db:up        # start PostgreSQL (waits for healthcheck)
 pnpm run db:migrate   # apply migrations
 pnpm run db:seed      # insert development data
@@ -94,7 +94,7 @@ Layer boundaries are enforced by dependency-cruiser, not convention alone. See [
 | -------------------- | ------------------------------------------------------------------------- |
 | `pnpm test`          | Unit tests and Storybook accessibility tests (no database required)       |
 | `pnpm test:db`       | Gateway tests against a real PostgreSQL instance (`pnpm run db:up` first) |
-| `pnpm test:coverage` | Same as `pnpm test`, with coverage                                        |
+| `pnpm test:coverage` | Same as `pnpm test`, with coverage (no database required)                 |
 | `pnpm e2e`           | Playwright end-to-end tests                                               |
 
 ### Database

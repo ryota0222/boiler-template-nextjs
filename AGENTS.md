@@ -30,7 +30,7 @@ The app itself is not containerised for development — Next.js runs on the host
 | `pnpm test`    | `unit`, `storybook`                   | not required |
 | `pnpm test:db` | `db` (`src/gateways/**/*.db.test.ts`) | required     |
 
-`pnpm test` is what the `PostToolUse` hook and the pre-push git hook run, so the everyday edit loop never needs Docker. CI runs both.
+The `PostToolUse` hook runs `pnpm test` — the project-scoped command above — so the everyday edit loop never needs Docker. The pre-push git hook is different: `lefthook.yml` still runs an unqualified `pnpm exec vitest run`, which selects all three Vitest projects including `db`, so pushing currently does require Docker. This is a known pending fix — `lefthook.yml` is a protected file, tracked separately for a human to change to `pnpm run test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there.
 
 ### Migrations in production
 
