@@ -105,7 +105,7 @@ module.exports = {
   ],
   options: {
     doNotFollow: {
-      path: 'node_modules',
+      path: 'node_modules|prisma/generated',
     },
     tsPreCompilationDeps: true,
     tsConfig: {
