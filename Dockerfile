@@ -43,9 +43,21 @@ RUN node -e "\
   require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2)); \
   " \
   && pnpm prune --prod --ignore-scripts
+# --ignore-scripts により @prisma/engines の postinstall（schema engine のダウンロード）が
+# スキップされている。ここで明示的に postinstall を再実行してバイナリを
+# node_modules 内に焼き込むことで、migrate deploy 実行時に外部ネットワーク
+# （binaries.prisma.sh）へアクセスせずに済むようにする。@prisma/engines は
+# prisma の依存であり本体の直接依存ではないため `pnpm rebuild @prisma/engines`
+# は何もせず終了する（silent no-op）。prisma からの相対解決で postinstall.js を
+# 直接 require することで確実に実行する
+RUN node -e "\
+  const path = require('path'); \
+  const enginesPkg = require.resolve('@prisma/engines/package.json', { paths: [path.dirname(require.resolve('prisma/package.json'))] }); \
+  require(path.join(path.dirname(enginesPkg), 'scripts/postinstall.js')); \
+  "
 
 FROM base AS migrator
 COPY --from=deps-migrator /app/node_modules ./node_modules
 COPY prisma ./prisma
 COPY prisma.config.ts package.json ./
-CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
+CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
