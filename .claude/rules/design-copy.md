@@ -21,6 +21,8 @@ A destructive or irreversible action states both the verb and the object it acts
 
 Non-destructive actions in an unambiguous context may use the verb alone (`保存`, `検索`).
 
+When the object's kind is known at the moment of the action, put it in the label. `前払い請求を作成` tells the user which of several documents they are about to make; `請求を作成` does not.
+
 ## Confirmation Dialogs Never Use OK / Cancel
 
 The confirming button repeats the action. `OK` tells the user nothing about what they are agreeing to, which is exactly the moment they need to know.
@@ -44,6 +46,20 @@ Navigation items and headings name objects. Actions belong on buttons, presented
 
 // Bad
 <nav><Link href="/orders">注文する</Link></nav>
+```
+
+A heading names what the screen holds, not the most common case of it. Which noun to pick when a collection holds more than one kind is `design-ooui.md`.
+
+## A Heading Does Not Move While the User Types
+
+- **Type**: MUST NOT
+- **Reason**: The heading is the user's answer to "where am I". Rewriting it as a field changes makes the answer unstable at the moment the user is concentrating.
+
+When the form's subject depends on a choice inside the form, keep the heading on the collection and put the changing part in the note under it.
+
+```text
+注文の登録
+定期便として登録します。配送日は毎月の締め日から決まります
 ```
 
 ## Politeness Level
@@ -100,6 +116,21 @@ An empty state is the user's first encounter with a feature. Name what is missin
 
 // Bad
 'データがありません';
+```
+
+## Do Not State a Cause the Evidence Does Not Support
+
+- **Type**: MUST NOT
+- **Reason**: A hint that explains _why_ a field exists sounds authoritative and is repeated by the reader as fact. If the reason is unverified, the UI has manufactured a requirement.
+
+Describe what the control does and what the system will do with the value. Leave the rationale to the requirements document, where it can carry its source.
+
+```typescript
+// Good
+'どちらの方式で検算したかを注文ごとに記録します';
+
+// Bad: the requirement never said the rule varies by customer
+'顧客ごとに端数処理の方式が異なるため、注文ごとに選んで記録します';
 ```
 
 ## No First or Second Person

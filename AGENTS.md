@@ -15,6 +15,27 @@ Before any `src/` implementation, the design baseline must be decided: **accent 
 - `src/helpers/theme.ts` is the single source of truth: `accentColor`, `radius`, and `appearance` are passed to Radix `<Theme>`; `voiceAndTone` is a recorded decision that guides UI copy (`.claude/rules/design-copy.md`) and has no runtime effect.
 - `.claude/.template-dev` disables the gate for maintaining this template itself; it is not distributed to projects scaffolded from the template.
 
+## Screen Design Rules
+
+Before adding or changing a screen in `src/app/` or a component in `src/features/` or `src/shared-components/`, read the rule files in `.claude/rules/` that cover what you are changing.
+
+| File                   | The question it answers                                                     |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `design-ooui.md`       | What object does this screen operate on, and where does it sit in the menu  |
+| `design-layout.md`     | Where do things sit, and which spacing, type, colour, and icon tokens apply |
+| `design-hierarchy.md`  | Which of several operable elements comes first, and how are they grouped    |
+| `design-affordance.md` | Can the user tell there is anything to press at all                         |
+| `design-collection.md` | How is a list searched, sorted, paged, and acted on in bulk                 |
+| `design-form.md`       | When is submit enabled, and how are inputs validated, hinted, and hidden    |
+| `design-feedback.md`   | How does the system answer — toast, banner, loading, dialog                 |
+| `design-copy.md`       | What do the words say                                                       |
+| `design-states.md`     | Which states must the screen cover, and under which content conditions      |
+| `design-a11y.md`       | Can it be operated without a mouse or perfect vision                        |
+
+One concept has one home. A rule is stated in the file that owns it; other files point at it and must not restate it. Decided values (pagination sizes, the type scale, contrast steps) live in the owning file, not in a summary.
+
+Radix Themes owns the token scales and the accessible behaviour of its components. These files cover what it leaves to the author — which token to reach for, and the decisions it has no opinion about.
+
 ## Directory Structure
 
 ```text
