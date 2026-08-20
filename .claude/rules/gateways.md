@@ -9,6 +9,12 @@ paths: ['src/gateways/**/*.ts']
 
 Gateways are the I/O boundary of the application, responsible for communication with external data sources (API, DB, CSV files, etc.). They encapsulate all external access and return domain entity types.
 
+## Library Clients Are an Exception
+
+`src/gateways/prismaClient.ts` is a configured library client — the `PrismaClient` instance itself — not a gateway function. It satisfies neither rule below: it exports no async I/O function and returns no entity type, and it does not sit in a domain subdirectory named after an `entities/` concept.
+
+It lives in `src/gateways/` rather than `src/helpers/` because a client typed with the application's own generated schema is not domain-independent; see `docs/rules/dependency-policy.md` ("Gateways May Import Library Clients From Helpers") for the reasoning. Domain gateway files (`<domain>/<domain>.ts`) import this client and are the ones that must follow the rules in this document.
+
 ## Structure
 
 Each gateway file exports:

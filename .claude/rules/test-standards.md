@@ -7,6 +7,10 @@ paths: ['**/*.test.ts', '**/*.test.tsx']
 
 Follow these rules when editing `.test.ts` and `.test.tsx` files.
 
+## Exception: `*.db.test.ts`
+
+Files matching `*.db.test.ts` follow `.claude/rules/gateways.md`'s Testing Guidelines instead of this document. Two rules below conflict with that file by design and do not apply to `*.db.test.ts`: "Test Only Branches" (a query's correctness against a real database is worth testing even with no branch involved) and "Independence"'s instruction to mock external dependencies (`gateways.md` requires testing against a real PostgreSQL instance — mocking Prisma would only prove a method was called, not that the query is correct).
+
 ## AAA Pattern
 
 All tests must follow the AAA (Arrange-Act-Assert) pattern.

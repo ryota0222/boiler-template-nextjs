@@ -14,6 +14,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # このテンプレートは public/ を持たない（favicon は src/app/favicon.ico）ため、
 # runner の COPY --from=builder /app/public が失敗しないよう空ディレクトリを保証する
+# src/gateways/prismaClient.ts はモジュール評価時にDATABASE_URL未設定だと即例外を
+# 投げる。ビルド時点で実DBに接続するわけではないためダミー値でよいが、CI の
+# build ジョブ（run-ci.yaml）と同じ値を与えないと、ページや Route Handler が
+# gateway を import した瞬間に CI は通るのに docker build だけ失敗する事態になる
+ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app
 RUN mkdir -p public && pnpm exec prisma generate && pnpm run build
 
 FROM base AS runner
