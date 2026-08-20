@@ -9,3 +9,8 @@ tmp
 .worktrees
 .git
 prisma/generated
+
+# env
+.env
+.env.*
+!.env.example
