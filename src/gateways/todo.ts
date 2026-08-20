@@ -1,4 +1,4 @@
-import { schema, type Todo } from '@/entities/todo/todo';
+import { schema, type Todo } from '@/entities/todo';
 import { prisma } from '@/gateways/prismaClient';
 
 export const fetchTodoList = async (): Promise<Todo[]> => {

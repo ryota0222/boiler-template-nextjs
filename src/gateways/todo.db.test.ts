@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Todo } from '@/entities/todo/todo';
+import { type Todo } from '@/entities/todo';
 import { prisma } from '@/gateways/prismaClient';
-import { fetchTodoList } from '@/gateways/todo/todo';
+import { fetchTodoList } from '@/gateways/todo';
 
 describe('fetchTodoList', () => {
   it('Todoが1件も存在しない場合、空の配列を返すこと', async () => {

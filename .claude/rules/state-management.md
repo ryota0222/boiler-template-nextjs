@@ -96,7 +96,7 @@ Three type-level constraints apply, all verified against `@tanstack/react-query`
 // src/gateways/todo/todoMutation.ts
 import { mutationOptions } from '@tanstack/react-query';
 
-import { type Todo } from '@/entities/todo/todo';
+import { type Todo } from '@/entities/todo';
 import { putTodo } from '@/gateways/todo/todo';
 import { todoListQueryKey } from '@/gateways/todo/todoQuery';
 

@@ -132,7 +132,7 @@ Some entries in `knip.ignoreDependencies` cover a dependency knip cannot see is 
 - `lucide-react` is retained as the icon library because Radix Themes does not ship icons; it is listed until the first component imports it.
 - `@prisma/client` is retained because the generated client (`prisma/generated/`, gitignored) imports it directly — e.g. `import * as runtime from '@prisma/client/runtime/client'` — and knip honours `.gitignore` by default, so it never sees that import site.
 
-`zod` is a different case: it is genuinely imported today, by `src/entities/todo/todo.ts`. It is listed pre-emptively because that is `zod`'s only consumer, and deleting the `Todo` reference implementation (see `README.md`) removes it — without this entry, `pnpm knip` would break for anyone who follows that README section. `zod` stays the schema validation library the `entities/` convention expects for whatever entity is added next.
+`zod` is a different case: it is genuinely imported today, by `src/entities/todo.ts`. It is listed pre-emptively because that is `zod`'s only consumer, and deleting the `Todo` reference implementation (see `README.md`) removes it — without this entry, `pnpm knip` would break for anyone who follows that README section. `zod` stays the schema validation library the `entities/` convention expects for whatever entity is added next.
 
 ## State Management
 

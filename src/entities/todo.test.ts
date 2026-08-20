@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { schema } from '@/entities/todo/todo';
+import { schema } from '@/entities/todo';
 
 const validInput = {
   createdAt: '2026-01-01T00:00:00.000Z',

@@ -36,9 +36,25 @@ export const fetchAirports = async (): Promise<Airport[]> => {
 
 Subdirectories are named by domain concept, matching `entities/` naming (e.g., `entities/airport/` ↔ `gateways/airport/`).
 
+A domain gets a directory once it has more than one concern file. Until then it stays flat next to its test, so the import path reads `@/gateways/todo` rather than `@/gateways/todo/todo`:
+
+```text
+// Only I/O so far — flat
+src/gateways/todo.ts
+src/gateways/todo.db.test.ts
+
+// Query and Mutation added — move into a directory
+src/gateways/todo/todo.ts
+src/gateways/todo/todoQuery.ts
+src/gateways/todo/todoMutation.ts
+src/gateways/todo/todo.db.test.ts
+```
+
+See `.claude/rules/coding-standards.md` for the general form of this rule.
+
 ## File Layout Within a Domain
 
-A domain directory holds up to three files, split by concern:
+Once a domain has its own directory, it holds up to three files, split by concern:
 
 | File                  | Contents                                           |
 | --------------------- | -------------------------------------------------- |

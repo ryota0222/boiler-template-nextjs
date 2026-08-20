@@ -81,11 +81,11 @@ Layer boundaries are enforced by dependency-cruiser, not convention alone. See [
 Delete it once its purpose — showing the pattern end to end — has been served, by removing all of its locations:
 
 - The `Todo` model in `prisma/schema.prisma`, plus a follow-up migration (`pnpm run db:migrate`)
-- `src/entities/todo/`
-- `src/gateways/todo/`
+- `src/entities/todo.ts` and `src/entities/todo.test.ts`
+- `src/gateways/todo.ts` and `src/gateways/todo.db.test.ts`
 - `prisma/seed.ts`, its `migrations.seed` entry in `prisma.config.ts`, and its entry in `package.json`'s `knip.entry` — once `Todo` is gone there is nothing left to seed; add all three back when your own schema needs seed data
 
-`zod` loses its only consumer once `src/entities/todo/` is gone, but `package.json` already lists it in `knip.ignoreDependencies` for exactly this reason (see AGENTS.md), so `pnpm knip` stays green without any extra step.
+`zod` loses its only consumer once `src/entities/todo.ts` is gone, but `package.json` already lists it in `knip.ignoreDependencies` for exactly this reason (see AGENTS.md), so `pnpm knip` stays green without any extra step.
 
 ## Scripts
 
