@@ -88,6 +88,7 @@ See `.claude/rules/state-management.md` for the required optimistic update patte
 
 ## Testing Guidelines
 
-- Use test doubles (mock/stub) for external data sources
-- Test that external data is correctly parsed into entity types
-- Test error cases (network failure, invalid data, etc.)
+- Test the database against a real PostgreSQL instance, not a mock. Name these files `<domain>.db.test.ts`; they run in the `db` Vitest project, which `pnpm test` excludes and `pnpm test:db` runs. Mocking Prisma verifies only that a method was called — it proves nothing about whether the query is correct, while still costing a rewrite of every stubbed return value on each schema change.
+- Use test doubles (mock/stub) for other external data sources (HTTP APIs, files).
+- Test that external data is correctly parsed into entity types.
+- Test error cases (network failure, invalid data, etc.).

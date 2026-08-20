@@ -7,18 +7,25 @@ Next.js App Router template with Radix Themes, wired for strict linting, accessi
 - Node.js 24
 - pnpm 10 (pinned via `packageManager`)
 - [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, and shfmt
+- [Docker](https://www.docker.com/) — runs PostgreSQL via Docker Compose for local development
 
 ## Quick Start
 
 ```bash
 mise install
-pnpm install
+pnpm install          # postinstall runs `prisma generate`
+cp .env.example .env
+pnpm run db:up        # start PostgreSQL (waits for healthcheck)
+pnpm run db:migrate   # apply migrations
+pnpm run db:seed      # insert development data
 pnpm dev
 ```
 
 Open <http://localhost:3000>.
 
 `pnpm install` runs `playwright install chromium` afterwards, which the Storybook accessibility tests and the end-to-end tests both need.
+
+The app itself is not containerised for development — Next.js runs on the host because HMR is measurably faster there. `compose.yaml` starts PostgreSQL only.
 
 ## After Cloning This Template
 
@@ -57,11 +64,19 @@ src/
   presenters/           # Display formatting functions
   helpers/              # Shared utilities & library configuration
   stores/               # Client UI state (Zustand)
+prisma/
+  schema.prisma         # Database schema
+  migrations/           # Migration history
+  seed.ts               # Development seed data
 ```
 
 Radix Themes components are imported directly rather than wrapped, so the template is usable immediately without per-component setup work.
 
 Layer boundaries are enforced by dependency-cruiser, not convention alone. See [AGENTS.md](./AGENTS.md) for the full rules.
+
+## Removing the Todo Reference Implementation
+
+`Todo` is a working reference implementation of the gateway/entity/query/mutation pattern, not a required feature. Delete it once its purpose — showing the pattern end to end — has been served, by removing all four of its locations: the `Todo` model in `prisma/schema.prisma` (plus a follow-up migration), `src/entities/todo/`, `src/gateways/todo/`, and the seed data inside `prisma/seed.ts`.
 
 ## Scripts
 
@@ -75,11 +90,24 @@ Layer boundaries are enforced by dependency-cruiser, not convention alone. See [
 
 ### Testing
 
-| Command              | Purpose                                      |
-| -------------------- | -------------------------------------------- |
-| `pnpm test`          | Unit tests and Storybook accessibility tests |
-| `pnpm test:coverage` | Same, with coverage                          |
-| `pnpm e2e`           | Playwright end-to-end tests                  |
+| Command              | Purpose                                                                   |
+| -------------------- | ------------------------------------------------------------------------- |
+| `pnpm test`          | Unit tests and Storybook accessibility tests (no database required)       |
+| `pnpm test:db`       | Gateway tests against a real PostgreSQL instance (`pnpm run db:up` first) |
+| `pnpm test:coverage` | Same as `pnpm test`, with coverage                                        |
+| `pnpm e2e`           | Playwright end-to-end tests                                               |
+
+### Database
+
+| Command               | Purpose                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run db:up`      | Start PostgreSQL via Docker Compose (waits for healthcheck)                                                                                                                           |
+| `pnpm run db:down`    | Stop the PostgreSQL container                                                                                                                                                         |
+| `pnpm run db:migrate` | Apply migrations in development (`prisma migrate dev`)                                                                                                                                |
+| `pnpm run db:deploy`  | Apply existing migrations without generating new ones (`prisma migrate deploy`, used in CI/production)                                                                                |
+| `pnpm run db:reset`   | Reset the database (`prisma migrate reset`) — Prisma 7 requires interactive user consent when it detects an AI agent, so use `pnpm run db:seed` instead for agent-driven verification |
+| `pnpm run db:seed`    | Insert development seed data (`prisma db seed`)                                                                                                                                       |
+| `pnpm run db:studio`  | Open Prisma Studio                                                                                                                                                                    |
 
 ### Checks
 

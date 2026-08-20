@@ -138,7 +138,6 @@
       "zustand",
       "lucide-react",
       "@prisma/client",
-      "@prisma/adapter-pg",
       "pg",
       "@types/pg"
     ],
