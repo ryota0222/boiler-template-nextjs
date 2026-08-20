@@ -21,7 +21,7 @@ if ! FMT_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx prettier --check "$FILE_PATH" 
   RESULTS="$RESULTS\n\nPrettier errors:\n$FMT_OUTPUT"
 fi
 
-if ! TEST_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx vitest run 2>&1); then
+if ! TEST_OUTPUT=$(cd "$CLAUDE_PROJECT_DIR" && npx vitest run --project unit --project storybook 2>&1); then
   RESULTS="$RESULTS\n\nTest failures:\n$TEST_OUTPUT"
 fi
 

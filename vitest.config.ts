@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vitest/config';
@@ -36,9 +37,11 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'unit',
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
           include: ['src/**/*.test.{ts,tsx}', 'eslint-rules/**/*.test.ts'],
+          exclude: ['src/gateways/**/*.db.test.ts'],
         },
       },
       {
@@ -61,6 +64,19 @@ export default defineConfig({
                 browser: 'chromium',
               },
             ],
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'db',
+          environment: 'node',
+          setupFiles: ['./vitest.db.setup.ts'],
+          include: ['src/gateways/**/*.db.test.ts'],
+          fileParallelism: false,
+          env: {
+            DATABASE_URL: process.env['DATABASE_URL_TEST'],
           },
         },
       },
