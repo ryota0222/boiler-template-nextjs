@@ -4,7 +4,67 @@ This file provides guidance to LLM agents when working with code in this reposit
 
 ## Project Overview
 
-Next.js App Router web application template for Node.js v22+ / ESM. Uses Radix Themes for styling.
+Next.js App Router web application template for Node.js 24 / ESM. Uses Radix Themes for styling.
+
+## Database Setup
+
+The template assumes PostgreSQL. Docker Compose runs it for local development and CI; production is a container deployment.
+
+```bash
+cp .env.example .env
+pnpm install          # postinstall runs `prisma generate`
+pnpm run db:up        # start PostgreSQL (waits for healthcheck)
+pnpm run db:migrate   # apply migrations
+pnpm run db:seed      # insert development data
+pnpm dev
+```
+
+Creating `.env` (the first line above) is a human step: an agent's permissions deny both running `cp .env.example .env` and reading `.env.example`, so an agent cannot discover the connection strings that way. Two variables matter:
+
+- `DATABASE_URL` — the connection string the app and `prisma migrate` / `prisma generate` use, e.g. `postgresql://postgres:postgres@localhost:5432/app`
+- `DATABASE_URL_TEST` — the connection string `pnpm run test:db` (the `db` Vitest project) uses, e.g. `postgresql://postgres:postgres@localhost:5432/app_test`
+
+When a task needs them, export both inline instead of touching `.env`:
+
+```bash
+export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/app'
+export DATABASE_URL_TEST='postgresql://postgres:postgres@localhost:5432/app_test'
+```
+
+The app itself is not containerised for development — Next.js runs on the host because HMR is measurably faster there. `compose.yaml` starts PostgreSQL only.
+
+`PrismaClient` lives in `src/gateways/prismaClient.ts`, not `src/helpers/`. A client typed with the application's own schema is not domain-independent, so `docs/rules/dependency-policy.md` places it in `gateways/`.
+
+### Schema changes require a generate step
+
+Prisma 7's `migrate dev` no longer runs generators, even though `prisma migrate dev --help` still describes it as triggering them — that help text is stale. Editing `prisma/schema.prisma` and running only `pnpm run db:migrate` leaves `prisma/generated/` stale, so `pnpm typecheck` fails with errors like `Property 'x' does not exist on type 'PrismaClient'` and no hint why. Always chain a generate step after a schema change:
+
+```bash
+# 1. edit prisma/schema.prisma
+pnpm run db:migrate
+pnpm run db:generate
+```
+
+### Tests that need the database
+
+| Command        | Projects                              | Database     |
+| -------------- | ------------------------------------- | ------------ |
+| `pnpm test`    | `unit`, `storybook`                   | not required |
+| `pnpm test:db` | `db` (`src/gateways/**/*.db.test.ts`) | required     |
+
+The `PostToolUse` hook runs `pnpm test` — the project-scoped command above — so the everyday edit loop never needs Docker. The pre-push git hook is different: `lefthook.yml` still runs an unqualified `pnpm exec vitest run`, which selects all three Vitest projects including `db`, so pushing currently does require Docker. This is a known pending fix — `lefthook.yml` is a protected file, tracked separately for a human to change to `pnpm run test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there.
+
+`docker/initdb/01-create-test-db.sql`, which creates `app_test`, only runs the first time the Postgres volume is created. `pnpm run db:down` stops the container but keeps that volume, so recreating `app_test` from scratch needs `docker compose down -v` before the next `pnpm run db:up`.
+
+### Migrations in production
+
+The `migrator` image bakes Prisma's schema engine directly into its layers, so the deploy job needs no outbound network access beyond reaching the database itself. That engine binary, however, is compiled for whichever architecture built the image, not the one it eventually runs on — building on Apple Silicon and deploying to an x86_64 host requires an explicit `docker build --platform linux/amd64`, or the migrator container ships a binary the deploy target cannot execute.
+
+Never run migrations on container start. Cloud Run and ECS start several instances at once, and concurrent `migrate deploy` calls contend for the same schema. Run the `migrator` build target as a one-shot job before rolling out the app.
+
+### Agents and `prisma migrate reset`
+
+Prisma 7 detects when it is being driven by an AI agent and refuses to run `prisma migrate reset` without explicit interactive user consent. This is a deliberate safety guard against an agent silently wiping a database, not a bug to route around — when an agent needs to verify a change against a clean state, `pnpm run db:seed` is the command to reach for instead of a reset.
 
 ## Design System Setup (run before any implementation)
 
@@ -48,6 +108,11 @@ src/
   presenters/           # Display formatting functions (data → display-ready transformation)
   helpers/              # Shared utilities & library configuration (e.g. axios, dayjs)
   stores/               # Client UI state shared across the tree (Zustand)
+prisma/
+  schema.prisma         # Database schema
+  migrations/           # Migration history (generated by `prisma migrate dev`)
+  seed.ts               # Development seed data
+  generated/            # Prisma Client (gitignored, produced by `prisma generate`)
 ```
 
 - `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found)
@@ -62,7 +127,12 @@ src/
 
 Radix Themes components are used directly, with no wrapper components written around them. Wrapping every component would force per-component build work before the template is usable, which defeats the point of a ready-to-use template.
 
-`lucide-react` is retained as the icon library because Radix Themes does not ship icons; it is listed in `knip.ignoreDependencies` until the first component imports it.
+Some entries in `knip.ignoreDependencies` cover a dependency knip cannot see is used, rather than one that genuinely has no consumer yet:
+
+- `lucide-react` is retained as the icon library because Radix Themes does not ship icons; it is listed until the first component imports it.
+- `@prisma/client` is retained because the generated client (`prisma/generated/`, gitignored) imports it directly — e.g. `import * as runtime from '@prisma/client/runtime/client'` — and knip honours `.gitignore` by default, so it never sees that import site.
+
+`zod` is a different case: it is genuinely imported today, by `src/entities/todo.ts`. It is listed pre-emptively because that is `zod`'s only consumer, and deleting the `Todo` reference implementation (see `README.md`) removes it — without this entry, `pnpm knip` would break for anyone who follows that README section. `zod` stays the schema validation library the `entities/` convention expects for whatever entity is added next.
 
 ## State Management
 
@@ -113,11 +183,11 @@ This repository runs a defense-in-depth setup to keep secrets (API keys, webhook
 
 Storybook stories are checked by axe-core, and violations fail the test suite.
 
-| Mechanism                                                         | Scope                                                 |
-| ----------------------------------------------------------------- | ----------------------------------------------------- |
-| `a11y.test: 'error'` in `.storybook/preview.tsx`                  | Turns axe violations into test failures               |
-| `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                    |
-| `PostToolUse` hook -> `lint-and-test.sh`                          | Runs `vitest run` after every file Claude Code writes |
+| Mechanism                                                         | Scope                                                                                    |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `a11y.test: 'error'` in `.storybook/preview.tsx`                  | Turns axe violations into test failures                                                  |
+| `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                                                       |
+| `PostToolUse` hook -> `lint-and-test.sh`                          | Runs `vitest run --project unit --project storybook` after every file Claude Code writes |
 
 Coverage comes entirely from stories, so a component state with no story is never checked. See `.claude/rules/design-states.md` for which states require a story.
 
@@ -132,7 +202,8 @@ PostToolUse hooks (lint, test) do not run inside subagents. After each subagent 
 1. Subagent reports task complete
 2. Main session: `pnpm lint`
 3. Main session: `pnpm test`
-4. Fix any errors found
-5. Commit
+4. If the task touched `src/gateways/`: also run `pnpm test:db` (requires Docker — `pnpm run db:up` first). `pnpm test` excludes the `db` Vitest project, so it does not cover gateway changes on its own.
+5. Fix any errors found
+6. Commit
 
 Do NOT batch verification to the end — check after every task.

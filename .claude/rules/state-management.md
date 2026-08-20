@@ -28,7 +28,7 @@ Each domain directory under `src/gateways/` owns three files:
 
 | File                  | Contents                                                           |
 | --------------------- | ------------------------------------------------------------------ |
-| `<domain>Gateway.ts`  | The actual I/O (`fetch`, DB access) and conversion to entity types |
+| `<domain>.ts`         | The actual I/O (`fetch`, DB access) and conversion to entity types |
 | `<domain>Query.ts`    | The query key and `queryOptions`                                   |
 | `<domain>Mutation.ts` | `mutationOptions` including the optimistic update                  |
 
@@ -37,7 +37,7 @@ Each domain directory under `src/gateways/` owns three files:
 // src/gateways/todo/todoQuery.ts
 import { queryOptions } from '@tanstack/react-query';
 
-import { fetchTodoList } from '@/gateways/todo/todoGateway';
+import { fetchTodoList } from '@/gateways/todo/todo';
 
 export const todoListQueryKey = ['todos'];
 
@@ -96,8 +96,8 @@ Three type-level constraints apply, all verified against `@tanstack/react-query`
 // src/gateways/todo/todoMutation.ts
 import { mutationOptions } from '@tanstack/react-query';
 
-import { type Todo } from '@/entities/todo/todo';
-import { putTodo } from '@/gateways/todo/todoGateway';
+import { type Todo } from '@/entities/todo';
+import { putTodo } from '@/gateways/todo/todo';
 import { todoListQueryKey } from '@/gateways/todo/todoQuery';
 
 type TodoListSnapshot = { snapshot: Todo[] | undefined };

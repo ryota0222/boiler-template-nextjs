@@ -299,6 +299,15 @@ export default defineConfig(
     },
   },
   {
+    // "db" は DATABASE_URL / Vitest の db プロジェクト名 / *.db.test.ts という
+    // glob パターンと表記を揃えるための意図的な省略であり、
+    // unicorn/name-replacements の「database と綴るべき」という指摘は当たらない
+    files: ['vitest.db.*.ts', 'src/gateways/**/*.db.test.ts'],
+    rules: {
+      'unicorn/name-replacements': 'off',
+    },
+  },
+  {
     ...playwright.configs['flat/recommended'],
     files: ['e2e/**/*.test.ts'],
     rules: {

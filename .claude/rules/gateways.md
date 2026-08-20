@@ -9,6 +9,12 @@ paths: ['src/gateways/**/*.ts']
 
 Gateways are the I/O boundary of the application, responsible for communication with external data sources (API, DB, CSV files, etc.). They encapsulate all external access and return domain entity types.
 
+## Library Clients Are an Exception
+
+`src/gateways/prismaClient.ts` is a configured library client — the `PrismaClient` instance itself — not a gateway function. It satisfies neither rule below: it exports no async I/O function and returns no entity type, and it does not sit in a domain subdirectory named after an `entities/` concept.
+
+It lives in `src/gateways/` rather than `src/helpers/` because a client typed with the application's own generated schema is not domain-independent; see `docs/rules/dependency-policy.md` ("Gateways May Import Library Clients From Helpers") for the reasoning. Domain gateway files (`<domain>/<domain>.ts`) import this client and are the ones that must follow the rules in this document.
+
 ## Structure
 
 Each gateway file exports:
@@ -30,9 +36,25 @@ export const fetchAirports = async (): Promise<Airport[]> => {
 
 Subdirectories are named by domain concept, matching `entities/` naming (e.g., `entities/airport/` ↔ `gateways/airport/`).
 
+A domain gets a directory once it has more than one concern file. Until then it stays flat next to its test, so the import path reads `@/gateways/todo` rather than `@/gateways/todo/todo`:
+
+```text
+// Only I/O so far — flat
+src/gateways/todo.ts
+src/gateways/todo.db.test.ts
+
+// Query and Mutation added — move into a directory
+src/gateways/todo/todo.ts
+src/gateways/todo/todoQuery.ts
+src/gateways/todo/todoMutation.ts
+src/gateways/todo/todo.db.test.ts
+```
+
+See `.claude/rules/coding-standards.md` for the general form of this rule.
+
 ## File Layout Within a Domain
 
-A domain directory holds up to three files, split by concern:
+Once a domain has its own directory, it holds up to three files, split by concern:
 
 | File                  | Contents                                           |
 | --------------------- | -------------------------------------------------- |
@@ -88,6 +110,7 @@ See `.claude/rules/state-management.md` for the required optimistic update patte
 
 ## Testing Guidelines
 
-- Use test doubles (mock/stub) for external data sources
-- Test that external data is correctly parsed into entity types
-- Test error cases (network failure, invalid data, etc.)
+- Test the database against a real PostgreSQL instance, not a mock. Name these files `<domain>.db.test.ts`; they run in the `db` Vitest project, which `pnpm test` excludes and `pnpm test:db` runs. Mocking Prisma verifies only that a method was called — it proves nothing about whether the query is correct, while still costing a rewrite of every stubbed return value on each schema change.
+- Use test doubles (mock/stub) for other external data sources (HTTP APIs, files).
+- Test that external data is correctly parsed into entity types.
+- Test error cases (network failure, invalid data, etc.).

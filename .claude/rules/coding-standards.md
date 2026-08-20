@@ -41,19 +41,27 @@ description: Coding best practices (code quality, error handling)
   | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
   | `stores/`            | dir: kebab-case noun; store: camelCase noun         | `notification/notificationStore.ts`    |
 
-  When a module has multiple co-located files (e.g., source + test), group them in a subdirectory named after the module. Use a flat file when only one file exists:
+  A subdirectory groups several modules or several concerns under one name. A
+  source file and its co-located test are not a group — keep them flat, so the
+  import path stays `@/entities/todo` rather than `@/entities/todo/todo`:
 
   ```text
-  // Good: two files → subdirectory
-  entities/canvas/canvas.ts
-  entities/canvas/canvas.test.ts
-
-  // Good: one file → flat
+  // Good: flat — a module and its test
   entities/user.ts
+  entities/user.test.ts
 
-  // Bad: two files without subdirectory
-  entities/canvas.ts
-  entities/canvas.test.ts
+  // Good: subdirectory — several concerns of one domain
+  gateways/todo/todo.ts
+  gateways/todo/todoQuery.ts
+  gateways/todo/todoMutation.ts
+
+  // Good: subdirectory — sub-modules under one concept
+  entities/todo/item.ts
+  entities/todo/list.ts
+
+  // Bad: subdirectory for a lone module and its test
+  entities/user/user.ts
+  entities/user/user.test.ts
   ```
 
   This applies to `entities/`, `gateways/`, `presenters/`, and `helpers/`.

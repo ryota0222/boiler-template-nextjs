@@ -50,10 +50,63 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
       - run: pnpm run build
+
+  test-db:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/app_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - uses: ./.github/actions/setup-node
+      - run: pnpm run test:db
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - run: docker build --target runner -t nextjs-template:runner .
+      - run: docker build --target migrator -t nextjs-template:migrator .
+      # migrator はデプロイ時のワンショットジョブとして閉じた環境で動くため、
+      # 実行時に npm レジストリや binaries.prisma.sh へ到達できてはならない。
+      # DB に到達できない P1001 以外のエラーはネットワーク依存の混入を意味する
+      - run: |
+          set +e
+          output=$(docker run --rm --network none \
+            -e DATABASE_URL='postgresql://postgres:postgres@localhost:5432/app' \
+            nextjs-template:migrator 2>&1)
+          exit_code=$?
+          echo "$output"
+          if [ "$exit_code" -eq 0 ]; then
+            echo 'migrator が --network none 下で成功しました（DB 到達不可で失敗するはずです）'
+            exit 1
+          fi
+          if ! echo "$output" | grep -q 'P1001'; then
+            echo 'migrator が P1001 以外で失敗しました'
+            exit 1
+          fi
+          if echo "$output" | grep -qi 'corepack\|binaries.prisma.sh'; then
+            echo 'migrator が実行時に外部ネットワークへアクセスしています'
+            exit 1
+          fi
 
   knip:
     runs-on: ubuntu-latest
