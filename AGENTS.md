@@ -179,6 +179,20 @@ This repository runs a defense-in-depth setup to keep secrets (API keys, webhook
 - Shell scripts are linted with `pnpm run lint:sh` (shellcheck) and `pnpm run format:sh` (shfmt); `pnpm run format:sh:fix` applies formatting.
 - For secret-scan false positives, add an allowlist to `.gitleaks.toml` (gitleaks) or a `.secretlintignore` file (secretlint). Neither file exists by default.
 
+## Supply Chain Protection
+
+`pnpm install` resolves through Takumi Guard, GMO Flatt Security's npm registry proxy, which checks each package against a malware blocklist and refuses the tarball before it is downloaded. `.npmrc` pins the registry:
+
+```ini
+registry=https://npm.flatt.tech/
+```
+
+That one line covers local installs and every Docker build stage. CI additionally runs `flatt-security/setup-takumi-guard-npm` inside the `setup-node` composite action, so every job that installs dependencies goes through the proxy without per-job wiring. `docker-build` is the one job that does not use that action; it relies on `.npmrc` reaching the image instead. Both `pnpm install` stages in the `Dockerfile` (`deps` and `deps-migrator`) therefore name `.npmrc` in their `COPY`, and dropping it from either one silently returns that stage to `registry.npmjs.org` with no error to notice.
+
+The proxy runs in blocking-only mode, which needs no account or token. Turning on the dashboard and package-activity logging requires a Bot ID and `permissions: id-token: write` in `run-ci.yaml`, which currently declares no `permissions` block at all.
+
+Only npm tarballs pass through it. The two `postinstall` downloads — Chromium from the Playwright CDN and the Prisma engine binaries from `binaries.prisma.sh` — do not use the npm protocol and are never inspected.
+
 ## Accessibility Gate
 
 Storybook stories are checked by axe-core, and violations fail the test suite.
