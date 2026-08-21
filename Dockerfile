@@ -3,7 +3,7 @@ WORKDIR /app
 RUN corepack enable pnpm
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml ./
 # postinstall は playwright install chromium を含み、本番イメージには不要な
 # Chromium をビルドのたびに焼き込んでしまう。prisma generate は builder で
 # 明示的に実行するため、ここでは install スクリプトを一切走らせない
@@ -31,7 +31,7 @@ EXPOSE 3000
 CMD ["node", "server.js"]
 
 FROM base AS deps-migrator
-COPY package.json pnpm-lock.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml ./
 # frozen-lockfile は package.json の dependencies/devDependencies を
 # セクション単位で pnpm-lock.yaml と一致させる必要があるため、先に無改変の
 # package.json でフルインストールし pnpm-lock.yaml の解決結果をそのまま使う

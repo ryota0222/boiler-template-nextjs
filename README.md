@@ -1,6 +1,6 @@
 # nextjs-template
 
-Next.js App Router template with Radix Themes, wired for strict linting, accessibility testing, and secret scanning out of the box.
+Next.js App Router template with Radix Themes, wired for strict linting, accessibility testing, secret scanning, and supply chain protection out of the box.
 
 ## Requirements
 
@@ -143,6 +143,12 @@ Delete it once its purpose — showing the pattern end to end — has been serve
 Storybook stories are rendered in Chromium and checked by axe-core; violations fail `pnpm test`. Coverage comes entirely from stories, so a component state without a story is never checked.
 
 The template ships with no stories. Until the first `.stories.tsx` exists the gate has nothing to inspect, and `pnpm test` passes on `passWithNoTests`.
+
+## Supply Chain Protection
+
+`.npmrc` points pnpm at Takumi Guard, an npm registry proxy that blocks known-malicious packages before their tarballs are downloaded. It applies to local installs, Docker builds, and CI alike, and needs no account or token. Deleting `.npmrc` returns installs to `registry.npmjs.org` unprotected.
+
+Only npm packages are covered — the Chromium and Prisma engine binaries fetched during `postinstall` come from their own CDNs.
 
 ## Documentation
 
