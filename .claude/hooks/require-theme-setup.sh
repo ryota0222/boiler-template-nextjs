@@ -18,5 +18,5 @@ case "$FILE_PATH" in
   *) exit 0 ;;
 esac
 
-echo "デザインの初期設定（accentColor / radius / appearance / voice & tone）が未決定です。実装の前に /setup-theme を実行し、src/helpers/theme.ts を確定してください。" >&2
+echo "デザインの初期設定（アクセント色 / 角の丸み / 配色 / 文言の話し方）が未決定です。実装の前に /setup-theme を実行し、src/helpers/theme.ts を確定してください。" >&2
 exit 2

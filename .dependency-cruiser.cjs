@@ -88,6 +88,17 @@ module.exports = {
       },
     },
     {
+      name: 'no-packages-depend-on-app',
+      severity: 'error',
+      // packages/ui はアプリの外でも使える部品の置き場であり、アプリの層に依存すると使い回せなくなる
+      from: {
+        path: '^packages/',
+      },
+      to: {
+        path: '^src/',
+      },
+    },
+    {
       name: 'no-internal-cross-access',
       severity: 'error',
       // $1 は from.path のキャプチャグループしか参照できない（dependency-cruiser の

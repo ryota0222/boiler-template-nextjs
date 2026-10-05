@@ -245,7 +245,7 @@ export default defineConfig(
   {
     // Storybook のデコレーター第一引数は <Story /> という形で JSX 要素として描画される。
     // JSX は小文字始まりの識別子を組み込みHTML要素とみなすため、この引数は PascalCase でなければならない
-    files: ['.storybook/**/*.tsx', 'src/**/*.stories.tsx'],
+    files: ['.storybook/**/*.tsx', 'src/**/*.stories.tsx', 'packages/*/src/**/*.stories.tsx'],
     rules: {
       '@typescript-eslint/naming-convention': [
         'error',
@@ -271,7 +271,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/**/*.test.{ts,tsx}'],
+    files: ['src/**/*.test.{ts,tsx}', 'packages/*/src/**/*.test.{ts,tsx}'],
     rules: {
       'check-file/filename-naming-convention': [
         'error',
@@ -290,6 +290,29 @@ export default defineConfig(
       // 素通りするため、この2語だけを除外する
       'unicorn/consistent-boolean-name': ['error', { ignore: ['^actual$', '^expected$'] }],
       'unicorn/consistent-function-scoping': 'off',
+    },
+  },
+  {
+    // packages/ui は prototalk-enterprise の packages/ui を写したもので、写し元の ESLint の規則で整えてある。
+    // 写し元から取り込み直すたびに書き換えずに済むよう、写し元が使わない規則だけをここで外す。
+    // no-undefined は、属性を出さないときに undefined を渡す React の書き方と衝突する
+    files: ['packages/ui/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+      'no-undefined': 'off',
+      'unicorn/consistent-boolean-name': 'off',
+      'unicorn/max-nested-calls': 'off',
+      'unicorn/no-array-callback-reference': 'off',
+      'unicorn/no-await-expression-member': 'off',
+      'unicorn/no-non-function-verb-prefix': 'off',
+      'unicorn/prefer-iterator-to-array': 'off',
+    },
+  },
+  {
+    // 色の生成スクリプトは結果を標準出力に出すことが役目のため
+    files: ['packages/ui/scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   {

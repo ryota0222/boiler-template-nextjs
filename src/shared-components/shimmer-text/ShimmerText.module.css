@@ -1,0 +1,27 @@
+@media (prefers-reduced-motion: no-preference) {
+  /* 光は文字の色を少し明るくする程度にとどめ、最も明るい瞬間も白い背景と 4.5:1 以上の対比を保つ */
+  .root {
+    animation: shimmer 2s linear infinite;
+    background-clip: text;
+    background-image: linear-gradient(
+      90deg,
+      var(--mantine-color-text) 0%,
+      var(--mantine-color-text) 40%,
+      var(--mantine-color-gray-7) 50%,
+      var(--mantine-color-text) 60%,
+      var(--mantine-color-text) 100%
+    );
+    background-size: 200% 100%;
+    color: transparent;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

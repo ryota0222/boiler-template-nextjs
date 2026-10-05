@@ -1,0 +1,10 @@
+/* border-collapse: collapse の表では、固定した合計のセル（position: sticky）の背景が、下を流れる行の文字を
+   隠さない（Chromium）。separate にし、Mantine が tr に引く行の区切り線をセルに引き直す */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table :where(thead th, tbody td) {
+  border-bottom: calc(0.0625rem * var(--mantine-scale)) solid var(--table-border-color);
+}
