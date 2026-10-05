@@ -5,17 +5,17 @@
   },
   "permissions": {
     "allow": [
-      "Bash(npm *)",
-      "Bash(npx eslint *)",
-      "Bash(npx prettier *)",
-      "Bash(npx vitest *)",
-      "Bash(npx tsc *)",
-      "Bash(npx knip *)",
-      "Bash(npx knip)",
-      "Bash(npx depcruise *)",
-      "Bash(npx commitlint *)",
-      "Bash(npx lefthook *)",
-      "Bash(npx next *)"
+      "Bash(pnpm *)",
+      "Bash(pnpm exec eslint *)",
+      "Bash(pnpm exec prettier *)",
+      "Bash(pnpm exec vitest *)",
+      "Bash(pnpm exec tsc *)",
+      "Bash(pnpm exec knip *)",
+      "Bash(pnpm exec knip)",
+      "Bash(pnpm exec depcruise *)",
+      "Bash(pnpm exec commitlint *)",
+      "Bash(pnpm exec lefthook *)",
+      "Bash(pnpm exec next *)"
     ],
     "deny": [
       "Bash(rm *)",

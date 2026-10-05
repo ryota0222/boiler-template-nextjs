@@ -54,7 +54,7 @@ pnpm run db:generate
 
 `pnpm test:generators` runs the `generators` project (`generators/*.generators.test.ts`) on its own; see Code Generators below.
 
-The `PostToolUse` hook runs `pnpm test` — the project-scoped command above — so the everyday edit loop never needs Docker. The pre-push git hook is different: `lefthook.yml` still runs an unqualified `pnpm exec vitest run`, which selects every Vitest project including `db` and `generators`, so pushing currently does require Docker. This is a known pending fix — `lefthook.yml` is a protected file, tracked separately for a human to change to `pnpm run test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there.
+The `PostToolUse` hook and the pre-push git hook both run `pnpm test` — the project-scoped command above — so neither the everyday edit loop nor pushing needs Docker. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there, and the generator suite in `test-generators`.
 
 `docker/initdb/01-create-test-db.sql`, which creates `app_test`, only runs the first time the Postgres volume is created. `pnpm run db:down` stops the container but keeps that volume, so recreating `app_test` from scratch needs `docker compose down -v` before the next `pnpm run db:up`.
 
