@@ -12,7 +12,7 @@ pre-commit:
     - name: knip
       run: pnpm exec knip
     - name: depcruise
-      run: pnpm exec depcruise src/
+      run: pnpm run depcruise
     - name: markdownlint
       glob: '*.md'
       run: pnpm exec markdownlint-cli2 {staged_files}
@@ -39,6 +39,6 @@ commit-msg:
 pre-push:
   jobs:
     - name: test
-      run: pnpm exec vitest run
+      run: pnpm run test
     - name: gitleaks
       run: mise exec -- pnpm run scan:gitleaks
