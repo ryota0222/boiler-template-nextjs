@@ -6,7 +6,7 @@ Next.js App Router template with Radix Themes, wired for strict linting, accessi
 
 - Node.js 24
 - pnpm 10 (pinned via `packageManager`)
-- [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, and shfmt
+- [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, shfmt, and codegraph
 - [Docker](https://www.docker.com/) — runs PostgreSQL via Docker Compose for local development
 
 ## Quick Start
@@ -18,12 +18,15 @@ pnpm install          # postinstall runs `prisma generate`
 pnpm run db:up        # start PostgreSQL (waits for healthcheck)
 pnpm run db:migrate   # apply migrations
 pnpm run db:seed      # insert development data
+codegraph init        # build the code index for the codegraph MCP server
 pnpm dev
 ```
 
 Open <http://localhost:3000>.
 
 `pnpm install` runs `playwright install chromium` afterwards, which the Storybook accessibility tests and the end-to-end tests both need.
+
+`codegraph init` indexes symbols, call paths, and impact into `.codegraph/`, which the codegraph MCP server (`.mcp.json`) hands to agents. The index is built per clone, kept out of git, and updated automatically as files change.
 
 The app itself is not containerised for development — Next.js runs on the host because HMR is measurably faster there. `compose.yaml` starts PostgreSQL only.
 

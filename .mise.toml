@@ -1,5 +1,7 @@
 [tools]
 actionlint = "1"
+# 1.6.1 は公開から日が浅いため、prototalk-enterprise と同じ 1.6.0 に固定する
+codegraph = "1.6.0"
 gitleaks = "8"
 shellcheck = "0.11"
 shfmt = "3"

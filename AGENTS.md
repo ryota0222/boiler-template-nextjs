@@ -154,6 +154,10 @@ The full rules — the mandatory four-step optimistic update, the three precondi
 - Bug fix branches: `fix/<kebab-case-name>` (e.g. `fix/login-redirect`)
 - Chore branches: `chore/<kebab-case-name>` (e.g. `chore/update-dependencies`)
 
+## Code Index
+
+The codegraph MCP server (`.mcp.json`) answers symbol, call-path, and impact questions from an index under `.codegraph/`. Run `codegraph init` once per clone; the index is not committed.
+
 ## Information Sources
 
 When answering questions about libraries, frameworks, SDKs, APIs, CLI tools, or cloud services, always consult official documentation or up-to-date sources before responding — even for well-known tools. Do not rely solely on training data.
