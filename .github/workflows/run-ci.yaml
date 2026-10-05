@@ -42,10 +42,26 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # トップページの Todo の一覧が API から DB を読むため、e2e でも PostgreSQL を立ててスキーマを適用する
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run db:deploy
       - run: pnpm run e2e
 
   build:

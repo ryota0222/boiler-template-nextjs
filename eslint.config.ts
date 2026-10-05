@@ -208,7 +208,7 @@ export default defineConfig(
   {
     // queryOptions / mutationOptions の戻り値はライブラリが生成するジェネリック型で手書きできない。
     // また onMutate / onError / onSettled は引数の数と順序がライブラリ側で固定されている
-    files: ['src/gateways/**/*Query.ts', 'src/gateways/**/*Mutation.ts'],
+    files: ['src/api/**/queries.ts', 'src/api/**/mutations.ts'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
       'max-params': 'off',
@@ -313,6 +313,25 @@ export default defineConfig(
     files: ['packages/ui/scripts/**/*.ts'],
     rules: {
       'no-console': 'off',
+    },
+  },
+  {
+    // エンドポイントの定義は usecase の操作と同じ動詞で <verb><Concept>Endpoint と名付ける（usecases.md）ため、
+    // 動詞で始まる名前の値を関数とみなす規則と衝突する。defineEndpoint に渡す zod のスキーマは入れ子になるのが自然な形のため、
+    // 呼び出しの深さの規則も外す
+    files: ['src/api/**/*.ts'],
+    rules: {
+      'unicorn/max-nested-calls': 'off',
+      'unicorn/no-non-function-verb-prefix': 'off',
+    },
+  },
+  {
+    // controller はエンドポイントの定義（<verb><Concept>Endpoint）を import して usecase に渡すため。
+    // 動的な区切りを持つ Route Handler は Next.js が区切りの値を第 2 引数で渡すため、controller の関数だけ引数を 2 つまで許す
+    files: ['src/controllers/**/*.ts'],
+    rules: {
+      'max-params': ['error', { max: 2 }],
+      'unicorn/no-non-function-verb-prefix': 'off',
     },
   },
   {
