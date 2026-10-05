@@ -116,7 +116,7 @@
     "node-plop": "0.32.3",
     "plop": "4.0.5",
     "prettier": "^3.9.6",
-    "prisma": "^7.9.1",
+    "prisma": "^7.10.0",
     "secretlint": "^13.0.4",
     "storybook": "^10.6.1",
     "textlint": "^15.7.1",
