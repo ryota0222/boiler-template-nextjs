@@ -87,7 +87,7 @@ module.exports = {
         path: '^src/stores/',
       },
       to: {
-        path: '^src/(app|features|shared-components|gateways|presenters|helpers)/',
+        path: '^src/(api|app|controllers|features|shared-components|gateways|presenters|helpers|usecases)/',
       },
     },
     {

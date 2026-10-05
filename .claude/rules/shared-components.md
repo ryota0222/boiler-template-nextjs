@@ -47,7 +47,7 @@ Shared components must not depend on:
 
 - `src/features/` (domain-specific components)
 - `src/entities/` (domain models)
-- `src/gateways/` (I/O layer)
-- `src/presenters/` (display formatting)
+- `src/api/` (calls to this application's API)
+- the server layers: `src/controllers/`, `src/usecases/`, `src/gateways/`, `src/presenters/`
 
 They may only depend on `src/helpers/` and external libraries.
