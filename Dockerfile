@@ -3,7 +3,10 @@ WORKDIR /app
 RUN corepack enable pnpm
 
 FROM base AS deps
-COPY .npmrc package.json pnpm-lock.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# packages/ui は workspace のパッケージで、pnpm-lock.yaml にその依存も載っているため、
+# frozen-lockfile で入れるにはパッケージの package.json も先に置く必要がある
+COPY packages/ui/package.json ./packages/ui/
 # postinstall は playwright install chromium を含み、本番イメージには不要な
 # Chromium をビルドのたびに焼き込んでしまう。prisma generate は builder で
 # 明示的に実行するため、ここでは install スクリプトを一切走らせない
@@ -11,6 +14,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 COPY . .
 # このテンプレートは public/ を持たない（favicon は src/app/favicon.ico）ため、
 # runner の COPY --from=builder /app/public が失敗しないよう空ディレクトリを保証する
@@ -31,20 +35,23 @@ EXPOSE 3000
 CMD ["node", "server.js"]
 
 FROM base AS deps-migrator
-COPY .npmrc package.json pnpm-lock.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/ui/package.json ./packages/ui/
 # frozen-lockfile は package.json の dependencies/devDependencies を
 # セクション単位で pnpm-lock.yaml と一致させる必要があるため、先に無改変の
 # package.json でフルインストールし pnpm-lock.yaml の解決結果をそのまま使う
 # （新規解決なしでバージョンが完全固定される）。インストール後に package.json の
 # dependencies を「migrate deploy に必要な prisma と dotenv（prisma.config.ts が
 # import する）だけ」に書き換えてから prune --prod することで、next / react /
-# @radix-ui/themes などアプリ本体の依存も含め、migrator に不要なものを
+# @mantine/core などアプリ本体の依存も含め、migrator に不要なものを
 # すべて取り除く。この書き換えは prisma と dotenv が devDependencies にある
 # ことを前提にしており、片方でも dependencies 側へ移動されると
 # pkg.devDependencies.xxx が undefined になり JSON.stringify でキーごと
 # 消える。dotenv が消えると build は成功するが prisma.config.ts の
 # `import 'dotenv/config'` がデプロイ実行時に初めて失敗するため、
 # ビルド時点で検知できるよう明示的にチェックする
+# workspace では依存を書き換えた後の prune が node_modules を作り直そうとし、TTY のない
+# docker build では確認待ちで止まるため、確認なしで作り直させる
 RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN node -e "\
   const pkg = require('./package.json'); \
@@ -57,7 +64,7 @@ RUN node -e "\
   pkg.devDependencies = {}; \
   require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2)); \
   " \
-  && pnpm prune --prod --ignore-scripts
+  && pnpm prune --prod --ignore-scripts --config.confirm-modules-purge=false
 # --ignore-scripts により @prisma/engines の postinstall（schema engine のダウンロード）が
 # スキップされている。ここで明示的に postinstall を再実行してバイナリを
 # node_modules 内に焼き込むことで、migrate deploy 実行時に外部ネットワーク
