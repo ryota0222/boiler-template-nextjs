@@ -93,10 +93,12 @@ module.exports = {
     {
       name: 'zod-only-in-entities-gateways-and-endpoints',
       severity: 'error',
-      // 外から来るデータの検証は、エンティティ、gateway、エンドポイントの定義（とそのテスト）でだけ行う
+      // 外から来るデータの検証は、エンティティ、gateway、エンドポイントの定義（とそのテスト）でだけ行う。
+      // client のテストは特定の概念に頼らないよう、自前のエンドポイントを定めるため zod を使う
       from: {
         path: '^src/',
-        pathNot: '^src/(entities|gateways)/|^src/api/(endpoint|[^/]+/endpoints)(\\.test)?\\.ts$',
+        pathNot:
+          '^src/(entities|gateways)/|^src/api/(endpoint(\\.test)?|client\\.test|[^/]+/endpoints(\\.test)?)\\.ts$',
       },
       to: {
         path: '(^|/)node_modules/zod/',

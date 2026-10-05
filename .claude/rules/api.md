@@ -61,7 +61,7 @@ export const updateTodoEndpoint = defineEndpoint({
 
 Name a definition after the usecase operation it serves: `<verb><Concept><Rest>Endpoint`, with the concept in the singular (`listTodoEndpoint`, `updateTodoEndpoint`; see `usecases.md`, Naming).
 
-`src/api/endpoint.ts` and the `endpoints.ts` files are the only files under `src/api/` that may import zod, and an `endpoints.ts` file may import nothing under `src/api/` except `src/api/endpoint.ts`. dependency-cruiser enforces both, because the server imports these files and must not pull browser code into its bundle.
+`src/api/endpoint.ts` and the `endpoints.ts` files are the only files under `src/api/` that may import zod (besides `client.test.ts`, which defines its own endpoints so that it does not depend on any one concept), and an `endpoints.ts` file may import nothing under `src/api/` except `src/api/endpoint.ts`. dependency-cruiser enforces both, because the server imports these files and must not pull browser code into its bundle.
 
 An `endpoints.ts` file is a declaration without branches. It is exercised by the controller test and the query test rather than by its own test file.
 
