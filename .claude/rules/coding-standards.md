@@ -198,7 +198,7 @@ description: Coding best practices (code quality, error handling)
 
 ## Error Handling & Robustness
 
-Functions never throw. They return a discriminated union that the caller narrows before use; the type lives in `src/helpers/result.ts`.
+Functions never throw. They return a discriminated union that the caller narrows before use; the type is `Result` in `src/entities/result.ts`, so every layer can import it.
 
 ```typescript
 type Result<T> =
