@@ -15,13 +15,14 @@ Each controller is a single file named `<concept>Controller.ts` (camelCase), pla
 
 The Route Handler only re-exports the controller's handler under the method name Next.js requires. It holds no conditional logic and no other code. dependency-cruiser rejects any import from `src/app/**/route.ts` other than `src/controllers/`.
 
+Write it as `export { … as GET } from`; ESLint's `unicorn/prefer-export-from` rejects an `import` followed by `export const GET = …`.
+
 ```typescript
 // src/app/api/todos/route.ts
-import { handleCreateTodoRequest, handleListTodoRequest } from '@/controllers/todoController';
-
-export const GET = handleListTodoRequest;
-
-export const POST = handleCreateTodoRequest;
+export {
+  handleListTodoRequest as GET,
+  handleCreateTodoRequest as POST,
+} from '@/controllers/todoController';
 ```
 
 ## Dependency Injection

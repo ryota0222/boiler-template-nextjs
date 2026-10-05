@@ -1,0 +1,37 @@
+
+export type {{dataTypeName}} = {
+  readonly id: string;
+  readonly name: string;
+};
+
+// エンドポイントをつなぐまでは、画面が読み込みの失敗を出すよう、つながっていないことを失敗として返す。
+// つなぐときは queryFn で requestEndpoint に src/api/{{concept}}/endpoints.ts の定義を渡す
+{{#if hasParameters}}
+export const {{queryOptionsName}} = (
+  parameters: {{{parametersTypeCode}}},
+): ReturnType<
+  typeof queryOptions<
+    Result<{{{valueTypeCode}}}, ApiFailure>,
+    Error,
+    Result<{{{valueTypeCode}}}, ApiFailure>,
+    readonly ['{{concept}}', '{{kind}}', {{{parametersTypeCode}}}]
+  >
+> =>
+  queryOptions({
+    queryFn: (): Promise<Result<{{{valueTypeCode}}}, ApiFailure>> =>
+      Promise.resolve({
+        error: { kind: 'internal', message: 'この画面の API はまだつながっていません' },
+        ok: false,
+      }),
+    queryKey: ['{{concept}}', '{{kind}}', parameters] as const,
+  });
+{{else}}
+export const {{queryOptionsName}} = queryOptions({
+  queryFn: (): Promise<Result<{{{valueTypeCode}}}, ApiFailure>> =>
+    Promise.resolve({
+      error: { kind: 'internal', message: 'この画面の API はまだつながっていません' },
+      ok: false,
+    }),
+  queryKey: ['{{concept}}', '{{kind}}'] as const,
+});
+{{/if}}

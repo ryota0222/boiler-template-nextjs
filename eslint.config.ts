@@ -271,7 +271,11 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/**/*.test.{ts,tsx}', 'packages/*/src/**/*.test.{ts,tsx}'],
+    files: [
+      'src/**/*.test.{ts,tsx}',
+      'packages/*/src/**/*.test.{ts,tsx}',
+      'generators/**/*.test.ts',
+    ],
     rules: {
       'check-file/filename-naming-convention': [
         'error',

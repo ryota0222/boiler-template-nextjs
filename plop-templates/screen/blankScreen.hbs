@@ -1,0 +1,89 @@
+'use client';
+
+import { EmptyState, EmptyStateDescription, EmptyStateTitle, Stack, Text } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { CollectionSkeleton } from '@template/ui/blocks/collection-skeleton/CollectionSkeleton';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import Link from 'next/link';
+import { isDefined } from 'remeda';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+const skeletonRowCount = 5;
+
+const renderContent = ({
+  onRetry,
+  result,
+}: {
+  readonly onRetry: () => void;
+  readonly result: Result<{{{valueTypeCode}}}, ApiFailure>;
+}): React.JSX.Element => {
+  if (!result.ok) {
+    return (
+      <ErrorBanner
+        description="時間をおいてから、もう一度読み込んでください。"
+        onRetry={onRetry}
+        retryLabel="もう一度読み込む"
+        title="{{concept}} を読み込めませんでした"
+      />
+    );
+  }
+
+  if (result.value.length === 0) {
+    return (
+      <EmptyState>
+        <EmptyStateTitle order={2}>{{concept}} はまだありません</EmptyStateTitle>
+        <EmptyStateDescription>{{concept}} を登録すると、ここに表示されます</EmptyStateDescription>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <Stack gap="xs">
+      {result.value.map((item) => (
+        <Text key={item.id} size="sm">
+          {item.name}
+        </Text>
+      ))}
+    </Stack>
+  );
+};
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{screenOptionsCode}}});
+  // 読み込み中は読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
+  if (!isDefined(query.data)) {
+    return <CollectionSkeleton loadingLabel="{{concept}} を読み込み中" rowCount={skeletonRowCount} />;
+  }
+
+  return (
+    <Stack gap="xl">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {renderContent({
+        onRetry: () => {
+          void query.refetch();
+        },
+        result: query.data,
+      })}
+    </Stack>
+  );
+};

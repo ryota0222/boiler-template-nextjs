@@ -1,0 +1,68 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { expect, userEvent, within } from 'storybook/test';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+// 送信の結果を story の間で持ち越さないよう、story ごとに QueryClient を作る
+const createQueryClientDecorator = (): Decorator => {
+  const queryClient = new QueryClient();
+  return (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+};
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Ideal: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '理想状態の場合',
+};
+
+// 送信のボタンが押せる状態の色の対比を axe に確かめさせる（design-states.md）
+export const Filled: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '入力した場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await userEvent.type(within(canvasElement).getByRole('textbox', { name: '名前' }), '見本');
+  },
+};
+
+export const InvalidInput: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '入力エラーの場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    const nameInput = within(canvasElement).getByRole('textbox', { name: '名前' });
+    await userEvent.click(nameInput);
+    await userEvent.tab();
+
+    await expect(nameInput).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+export const Error: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: 'エラーの場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await userEvent.type(canvas.getByRole('textbox', { name: '名前' }), '見本');
+    await userEvent.click(canvas.getByRole('button', { name: '送信する' }));
+
+    await expect(await canvas.findByRole('alert')).toBeVisible();
+  },
+};

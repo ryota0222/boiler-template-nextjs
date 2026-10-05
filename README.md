@@ -62,14 +62,20 @@ export const themeConfig = {
 
 ```text
 src/
-  app/                  # App Router convention files
+  app/                  # App Router convention files and Route Handlers
+  api/                  # Endpoint definitions and TanStack Query options
+  controllers/          # Request handlers (composition root)
+  usecases/             # Business logic
+  gateways/             # Server-side I/O (DB, external services)
+  presenters/           # Usecase results → HTTP responses
   features/             # Domain-specific UI components
   shared-components/    # Domain-independent reusable UI parts
   entities/             # Type definitions & zod schemas
-  gateways/             # I/O with external data sources
-  presenters/           # Display formatting functions
   helpers/              # Shared utilities & library configuration
   stores/               # Client UI state (Zustand)
+generators/             # Tests for the code generators
+plop-templates/         # Templates the generators write from
+plopfile.ts             # Code generators (`pnpm run generate`)
 packages/
   ui/                   # @template/ui: Mantine theme, UiProvider, test helpers, shared blocks
 prisma/
@@ -84,16 +90,22 @@ Layer boundaries are enforced by dependency-cruiser, not convention alone. See [
 
 ## Removing the Todo Reference Implementation
 
-`Todo` is a working reference implementation of the gateway and entity pattern (I/O plus zod validation), not a required feature. It does not include `todoQuery.ts` / `todoMutation.ts` — see [.claude/rules/state-management.md](./.claude/rules/state-management.md) and [.claude/rules/gateways.md](./.claude/rules/gateways.md) for how those fit in once your own gateway needs them.
+`Todo` is a working reference implementation of every layer — a list (GET), an add form (POST), and a completion toggle (PATCH) with an optimistic update, from the screen through route → controller → usecase → gateway to PostgreSQL — not a required feature.
 
 Delete it once its purpose — showing the pattern end to end — has been served, by removing all of its locations:
 
 - The `Todo` model in `prisma/schema.prisma`, plus a follow-up migration (`pnpm run db:migrate`)
 - `src/entities/todo.ts` and `src/entities/todo.test.ts`
-- `src/gateways/todo.ts` and `src/gateways/todo.db.test.ts`
+- `src/api/todo/`
+- `src/app/api/todos/`
+- `src/controllers/todoController.ts` and `src/controllers/todoController.test.ts`
+- `src/usecases/todo/`
+- `src/gateways/todoGateway.ts` and `src/gateways/todoGateway.db.test.ts`
+- `src/features/todo-list/`, and the `<TodoList />` in `src/app/page.tsx`
+- `e2e/todo.test.ts`, and the Todo locators and actions in `e2e/models/homePage.ts`
 - `prisma/seed.ts`, its `migrations.seed` entry in `prisma.config.ts`, and its entry in `package.json`'s `knip.workspaces["."].entry` — once `Todo` is gone there is nothing left to seed; add all three back when your own schema needs seed data
 
-`zod` loses its only consumer once `src/entities/todo.ts` is gone, but `package.json` already lists it in `knip.ignoreDependencies` for exactly this reason (see AGENTS.md), so `pnpm knip` stays green without any extra step.
+Keep the shared parts every endpoint uses: `src/api/endpoint.ts`, `src/api/client.ts`, `src/usecases/api-request/`, `src/gateways/requestInputGateway.ts`, `src/gateways/errorLogGateway.ts`, `src/gateways/prismaClient.ts`, `src/presenters/apiResponsePresenter.ts`, `src/entities/apiFailure.ts`, and `src/entities/result.ts`.
 
 ## Scripts
 
@@ -108,12 +120,22 @@ Delete it once its purpose — showing the pattern end to end — has been serve
 
 ### Testing
 
-| Command              | Purpose                                                                   |
-| -------------------- | ------------------------------------------------------------------------- |
-| `pnpm test`          | Unit tests and Storybook accessibility tests (no database required)       |
-| `pnpm test:db`       | Gateway tests against a real PostgreSQL instance (`pnpm run db:up` first) |
-| `pnpm test:coverage` | Same as `pnpm test`, with coverage (no database required)                 |
-| `pnpm e2e`           | Playwright end-to-end tests                                               |
+| Command                | Purpose                                                                   |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `pnpm test`            | Unit tests and Storybook accessibility tests (no database required)       |
+| `pnpm test:db`         | Gateway tests against a real PostgreSQL instance (`pnpm run db:up` first) |
+| `pnpm test:generators` | Runs every code generator on a copy of the project and checks the output  |
+| `pnpm test:coverage`   | Same as `pnpm test`, with coverage (no database required)                 |
+| `pnpm e2e`             | Playwright end-to-end tests                                               |
+
+### Code Generators
+
+| Command                                                                                                    | Purpose                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run generate api -- --concept inventory-item --action list --method GET --path /api/inventory-items` | Endpoint definition, controller, Route Handler, usecase operation, and tests                                               |
+| `pnpm run generate screen -- --concept inventory-item --kind collection --path /inventory-items`           | Page, feature component, query or mutation options, stories, and tests (`--kind`: `blank`, `collection`, `detail`, `form`) |
+
+Run without arguments in a terminal to be asked for each one. The `add-web-api-endpoint` and `add-web-screen` skills in `.claude/skills/` describe every argument.
 
 ### Database
 

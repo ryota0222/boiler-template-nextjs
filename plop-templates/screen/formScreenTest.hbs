@@ -1,0 +1,74 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithUi } from '@template/ui/testing/TestRendering';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const renderScreen = (queryClient: QueryClient): void => {
+  renderWithUi(
+    <QueryClientProvider client={queryClient}>
+      <{{componentName}}{{#if hasParameters}} parameters={ {{{sampleParametersCode}}} }{{/if}} />
+    </QueryClientProvider>,
+  );
+};
+
+const submitName = async (name: string): Promise<void> => {
+  fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+    target: { value: name },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '送信する' }));
+  await screen.findByRole('alert');
+};
+
+describe('{{componentName}}', () => {
+  it('やめるボタンを押した場合、前の画面に戻ること', () => {
+    const back = vi.spyOn(globalThis.history, 'back').mockImplementation(() => null);
+    renderScreen(new QueryClient());
+
+    fireEvent.click(screen.getByRole('button', { name: 'やめる' }));
+
+    expect(back).toHaveBeenCalledOnce();
+  });
+
+  it('名前の欄を空のまま離れた場合、名前の欄をaria-invalidにすること', () => {
+    renderScreen(new QueryClient());
+    const nameInput = screen.getByRole('textbox', { name: '名前' });
+
+    fireEvent.blur(nameInput);
+
+    expect(nameInput).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('名前を入力して送信するボタンを押し、mutationFnが失敗のResultを返した場合、送信できなかったことを表示すること', async () => {
+    renderScreen(new QueryClient());
+    fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+      target: { value: '見本' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '送信する' }));
+
+    const actual = await screen.findByRole('alert');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('送信に失敗した後に名前を書き換えてもう一度送信するボタンを押した場合、失敗したときの値を送ること', async () => {
+    const queryClient = new QueryClient();
+    renderScreen(queryClient);
+    await submitName('見本');
+    fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+      target: { value: '' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'もう一度送信する' }));
+
+    const expected = [{ name: '見本' }, { name: '見本' }];
+    await waitFor(() => {
+      const actual = queryClient
+        .getMutationCache()
+        .getAll()
+        .map((mutation) => mutation.state.variables);
+      expect(actual).toEqual(expected);
+    });
+  });
+});

@@ -8,6 +8,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@e2e/*": ["./e2e/*"],
+      "@generators/*": ["./generators/*"],
       "@prisma-client": ["./prisma/generated/client"]
     },
     "outDir": "./dist",

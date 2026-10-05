@@ -5,3 +5,5 @@ coverage
 pnpm-lock.yaml
 package-lock.json
 prisma/generated
+# Handlebars の雛形は生成した後に plopfile.ts が ESLint と Prettier で整えるため、雛形そのものは検査しない
+plop-templates

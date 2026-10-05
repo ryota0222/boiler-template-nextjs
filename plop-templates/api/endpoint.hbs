@@ -1,0 +1,12 @@
+
+{{#if shouldDeclareStatusConstant}}
+const {{statusConstantName}} = {{successStatus}};
+
+{{/if}}
+export const {{endpointName}} = defineEndpoint({
+  inputSchema: {{{inputSchemaCode}}},
+  method: '{{method}}',
+  outputSchema: {{{outputSchemaCode}}},
+  path: '{{{path}}}',
+  successStatus: {{statusConstantName}},
+});

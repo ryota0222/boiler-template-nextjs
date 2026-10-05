@@ -1,0 +1,10 @@
+
+it('{{usecaseFactoryName}}の{{operationName}}を呼んだ場合、kindがinternalの失敗を返すこと', async () => {
+  const actual = await {{{usecaseConstructionCode}}}.{{operationName}}();
+
+  const expected = {
+    error: { kind: 'internal', message: 'この機能はまだ実装されていません' },
+    ok: false,
+  };
+  expect(actual).toEqual(expected);
+});

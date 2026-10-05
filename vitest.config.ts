@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import react from '@vitejs/plugin-react';
+import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { searchForWorkspaceRoot } from 'vite';
 import { configDefaults, defineConfig } from 'vitest/config';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +11,9 @@ import { playwright } from '@vitest/browser-playwright';
 const dirname =
   typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+// generator のテストは写した先で tsc・ESLint・Vitest を実行するため、1 件に数分かかる
+const generatorTestTimeoutMilliseconds = 600_000;
+
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
@@ -16,6 +21,16 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
       '@prisma-client': resolve(__dirname, './prisma/generated/client'),
+    },
+  },
+  server: {
+    fs: {
+      // generator のテストはプロジェクトを一時ディレクトリに写し、node_modules の中身を元のものへのシンボリックリンクにする。
+      // Vite は依存を実体のパスで配信し、既定ではワークスペースの外を配信しないため、storybook が依存を読めるよう実体の側も許す
+      allow: [
+        searchForWorkspaceRoot(dirname),
+        searchForWorkspaceRoot(realpathSync(resolve(dirname, 'node_modules', '.pnpm'))),
+      ],
     },
   },
   test: {
@@ -85,6 +100,21 @@ export default defineConfig({
           env: {
             DATABASE_URL: process.env['DATABASE_URL_TEST'],
           },
+        },
+      },
+      {
+        extends: true,
+        resolve: {
+          alias: {
+            '@generators': resolve(dirname, 'generators'),
+          },
+        },
+        test: {
+          name: 'generators',
+          environment: 'node',
+          include: ['generators/**/*.generators.test.ts'],
+          testTimeout: generatorTestTimeoutMilliseconds,
+          hookTimeout: generatorTestTimeoutMilliseconds,
         },
       },
     ],

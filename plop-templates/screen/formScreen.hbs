@@ -1,0 +1,92 @@
+'use client';
+
+import { Stack, TextInput } from '@mantine/core';
+import { useMutation } from '@tanstack/react-query';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { FormCard } from '@template/ui/blocks/form-card/FormCard';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import Link from 'next/link';
+import { useState } from 'react';
+import { isNonNullish } from 'remeda';
+
+import { type {{dataTypeName}}, {{mutationOptionsName}} } from '@/api/{{concept}}/mutations';
+import { {{validateFunctionName}} } from '{{{validationImportPath}}}';
+
+// 変更があるかは、読み込んだときの値と比べて決める（design-form.md）
+const initialValues: {{dataTypeName}} = { name: '' };
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const mutation = useMutation({{{screenOptionsCode}}});
+  const [values, setValues] = useState(initialValues);
+  // 入力の途中で誤りを出さないよう、欄を離れてから検証の結果を出す（design-form.md）
+  const [isNameTouched, setIsNameTouched] = useState(false);
+  const errors = {{validateFunctionName}}(values);
+  // もう一度送るのは、検証を通って送信した値。失敗の後に書き換えた、検証していない値は送らない
+  const failedValues = mutation.data?.ok === false ? mutation.variables : null;
+
+  return (
+    <Stack gap="xl">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {isNonNullish(failedValues) ? (
+        <ErrorBanner
+          description="時間をおいてから、もう一度送信してください。"
+          onRetry={() => {
+            mutation.mutate(failedValues);
+          }}
+          retryLabel="もう一度送信する"
+          title="{{concept}} を送信できませんでした"
+        />
+      ) : null}
+      <FormCard
+        cancelLabel="やめる"
+        isDirty={values.name !== initialValues.name}
+        isSubmitting={mutation.isPending}
+        isValid={errors.name === null}
+        onCancel={() => {
+          globalThis.history.back();
+        }}
+        onSubmit={() => {
+          mutation.mutate(values);
+        }}
+        requiresConfirmation={false}
+        statusMessages=\{{
+          changed: '変更があります',
+          invalid: '入力に誤りがあります。赤い説明の項目を直してください',
+          submitting: '送信しています',
+          unchanged: '変更はまだありません',
+        }}
+        submitLabel="送信する"
+        submittingLabel="送信中…"
+        title="{{concept}}"
+      >
+        <TextInput
+          error={isNameTouched ? errors.name : null}
+          label="名前"
+          onBlur={() => {
+            setIsNameTouched(true);
+          }}
+          onChange={(event) => {
+            setValues({ ...values, name: event.currentTarget.value });
+          }}
+          required
+          value={values.name}
+        />
+      </FormCard>
+    </Stack>
+  );
+};

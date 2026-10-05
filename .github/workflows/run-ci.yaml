@@ -40,6 +40,16 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:coverage
 
+  test-generators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - uses: ./.github/actions/setup-node
+      # 生成した story を Chromium で描いて axe の検査を通す
+      - run: pnpm exec playwright install --with-deps chromium
+      # plop の generator が作るファイルが lint・型検査・テストを通ることを、プロジェクトを写した一時ディレクトリで確かめる
+      - run: pnpm run test:generators
+
   e2e:
     runs-on: ubuntu-latest
     # トップページの Todo の一覧が API から DB を読むため、e2e でも PostgreSQL を立ててスキーマを適用する

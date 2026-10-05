@@ -1,0 +1,141 @@
+'use client';
+
+import type { DataTableLabels } from '@template/ui/table/dataTableLabels';
+
+import { Stack } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { CollectionSkeleton } from '@template/ui/blocks/collection-skeleton/CollectionSkeleton';
+import { DataTable } from '@template/ui/blocks/data-table/DataTable';
+import { EmptyCollection } from '@template/ui/blocks/empty-collection/EmptyCollection';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import { createDataTableColumnHelper } from '@template/ui/table/dataTableFeatures';
+import Link from 'next/link';
+import { isDefined } from 'remeda';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+const columnHelper = createDataTableColumnHelper<{{dataTypeName}}>();
+
+// TanStack Table は columns の参照が変わるたびにページと開閉の状態を戻すため、描画の外で 1 度だけ作る
+const columns = columnHelper.columns([
+  columnHelper.accessor('name', {
+    header: '名前',
+    meta: { filterVariant: 'text', label: '名前' },
+  }),
+]);
+
+// 数と単位、日本語と半角の英数字の間には空白を入れない（design-copy.md）
+const labels: DataTableLabels<{{dataTypeName}}> = {
+  clearConditions: '条件をすべて解除',
+  clearSelection: '選択を解除',
+  columnFilter: (columnLabel) => `${columnLabel}で絞り込む`,
+  columnFilterCondition: ({ columnLabel, values }) => `${columnLabel}: ${values.join('、')}`,
+  columnVisibility: '表示する列',
+  conditions: '適用中の条件',
+  // 本当に 0 件のときは画面が EmptyCollection を出すため、DataTable が空になるのは条件で絞り込んだときだけ
+  empty: '条件に一致する{{concept}}はありません',
+  groupBy: 'グループ化する列',
+  groupByNone: 'グループ化しない',
+  groupCount: (count) => `${String(count)}件`,
+  pageSize: '1ページの件数',
+  pageSizeAll: 'すべて',
+  pagination: { next: '次のページ', previous: '前のページ' },
+  range: ({ first, last, total }) =>
+    `${String(first)}〜${String(last)}件を表示\u{3000}全${String(total)}件`,
+  search: '{{concept}}を検索',
+  searchCondition: (search) => `検索: ${search}`,
+  searchPlaceholder: '名前',
+  selectAll: '表示中の{{concept}}をすべて選択',
+  selectGroup: ({ count, value }) => `${value}の{{concept}}${String(count)}件を選択`,
+  selection: (count) => `${String(count)}件を選択中`,
+  selectRow: (row) => `{{concept}}${row.name}を選択`,
+  total: '合計',
+};
+
+const skeletonRowCount = 5;
+
+const renderContent = ({
+  onRetry,
+  result,
+}: {
+  readonly onRetry: () => void;
+  readonly result: Result<{{{valueTypeCode}}}, ApiFailure>;
+}): React.JSX.Element => {
+  if (!result.ok) {
+    return (
+      <ErrorBanner
+        description="時間をおいてから、もう一度読み込んでください。"
+        onRetry={onRetry}
+        retryLabel="もう一度読み込む"
+        title="{{concept}} を読み込めませんでした"
+      />
+    );
+  }
+
+  // 画面の側に絞り込みの条件がまだないため、0 件は本当に 0 件のときだけ。DataTable の中の絞り込みで 0 件になったときは DataTable が labels.empty を出す
+  if (result.value.length === 0) {
+    return (
+      <EmptyCollection
+        empty=\{{
+          action: null,
+          description: '{{concept}} を登録すると、ここに一覧で表示されます',
+          title: '{{concept}} はまだありません',
+        }}
+        filtered={null}
+      />
+    );
+  }
+
+  return (
+    <DataTable
+      columns={columns}
+      data={result.value}
+      getRowId={(row) => row.id}
+      hasColumnVisibility
+      hasGrouping
+      initialGroupingColumnId={null}
+      labels={labels}
+      // 一括の操作をまだ持たないため、行を選んでも選択の件数と解除のボタンだけを出す
+      selectionActions={() => null}
+    />
+  );
+};
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{screenOptionsCode}}});
+  // 読み込み中は読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
+  if (!isDefined(query.data)) {
+    return <CollectionSkeleton loadingLabel="{{concept}} を読み込み中" rowCount={skeletonRowCount} />;
+  }
+
+  return (
+    <Stack gap="xl">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {renderContent({
+        onRetry: () => {
+          void query.refetch();
+        },
+        result: query.data,
+      })}
+    </Stack>
+  );
+};

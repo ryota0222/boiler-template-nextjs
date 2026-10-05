@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+
+import { {{validateFunctionName}} } from '{{{validationImportPath}}}';
+
+describe('{{validateFunctionName}}', () => {
+  it('nameが空白だけの場合、nameの誤りを返すこと', () => {
+    const actual = {{validateFunctionName}}({ name: ' ' }).name;
+
+    const expected = '名前を入力してください';
+    expect(actual).toBe(expected);
+  });
+
+  it('nameが101文字の場合、nameの誤りを返すこと', () => {
+    const actual = {{validateFunctionName}}({ name: 'あ'.repeat(101) }).name;
+
+    const expected = '名前は100文字以内で入力してください';
+    expect(actual).toBe(expected);
+  });
+
+  it('nameが100文字の場合、nameの誤りを返さないこと', () => {
+    const actual = {{validateFunctionName}}({ name: 'あ'.repeat(100) }).name;
+
+    const expected = null;
+    expect(actual).toBe(expected);
+  });
+});

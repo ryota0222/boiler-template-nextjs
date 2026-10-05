@@ -345,9 +345,7 @@ type AddTodoGateways = BaseGateways & { readonly saveTodo: SaveTodo };
 
   ```typescript
   // Good: src/app/api/todos/route.ts
-  import { handleListTodoRequest } from '@/controllers/todoController';
-
-  export const GET = handleListTodoRequest;
+  export { handleListTodoRequest as GET } from '@/controllers/todoController';
 
   // Bad: logic in the Route Handler
   export const GET = async (): Promise<Response> => {
