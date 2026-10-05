@@ -7,50 +7,32 @@ paths: ['src/presenters/**/*.ts']
 
 ## What is a Presenter
 
-Presenters are responsible for display-related processing — converting domain data into strings or other presentation formats for output. They are pure functions with no I/O and no business logic.
+Presenters turn the result of a usecase into an HTTP `Response`: they decide the status code, the JSON body shape, and any headers.
 
 ## Structure
 
-Each presenter file exports pure functions that take domain entity types and return formatted strings.
+Each presenter is a single file named `<concept>Presenter.ts` (camelCase), placed directly under `src/presenters/`. It exports functions that take domain entity types and return a `Response`. `apiResponsePresenter.ts` maps every `ApiFailure` kind to its status and serves every endpoint.
 
 ```typescript
-import type { ResultMessage } from '@/entities/resultMessage';
-
-export const formatInspectionResultArray = (resultArray: readonly InspectionResult[]): string => {
-  // formatting logic only
-};
+export const presentFailure = (failure: ApiFailure): Response =>
+  Response.json({ error: failure } satisfies FailureResponseBody, {
+    status: statusByFailureKind[failure.kind],
+  });
 ```
 
-## File Naming
+## Interface Types
 
-Name presenter files after the type of value they format, not after a feature or domain. The file name should reflect the shape of the input argument.
+Presenter interface types are defined in `src/usecases/<concept>/presenters/`, not in presenter implementation files.
 
-```text
-// Good
-presenters/date.ts       // formats ISO date strings
-presenters/duration.ts   // formats duration in minutes
+## Server Responses Only
 
-// Bad: named after a feature
-presenters/timeEntryPresenter.ts
-```
+Presenters format what the API returns. Formatting data for display in the browser belongs to `src/features/` (ViewModels in `internal/`, `features.md`), not here — presenters run on the server and the UI layers must not import them. dependency-cruiser enforces this.
 
-## No Type Definitions
-
-Presenters must not define types. They only export pure formatting functions. UI-specific types (ViewModels) belong in the `features/` layer.
-
-```typescript
-// Good: only a function, no type export
-export const formatDuration = (durationMinutes: number): string => { ... };
-
-// Bad: type defined in a presenter
-export type MonthlySummary = { ... };
-```
-
-## No I/O, No Business Logic
+## No Business Logic
 
 Presenters contain only:
 
-- String formatting and layout logic
-- Display-related decisions (e.g., prefix labels, separators)
+- Status code, header, and body shape decisions
+- Conversion from domain entity types to the response body
 
-No file reads/writes, no HTTP requests, no domain rules, no orchestration.
+No I/O, no domain rules, no orchestration.

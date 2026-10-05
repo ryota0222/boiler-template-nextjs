@@ -1,0 +1,15 @@
+
+it('{{operationName}}が未実装の失敗を返す場合、{{handlerName}}がステータス500のResponseを返すこと', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => null);
+
+  const response = await {{handlerName}}(
+    new Request('http://localhost{{{samplePath}}}'{{{requestInitCode}}}),
+{{#if hasParameters}}
+    { params: Promise.resolve({{{sampleParametersCode}}}) },
+{{/if}}
+  );
+  const actual = response.status;
+
+  const expected = 500;
+  expect(actual).toBe(expected);
+});

@@ -71,7 +71,7 @@ This rule is enforced by the `no-internal-cross-access` depcruise rule, which fo
 
 ## ViewModels
 
-UI-specific types that are not domain entities — such as aggregated display data — are ViewModels. Define them in `internal/` within the feature that uses them, not in `src/presenters/`.
+UI-specific types that are not domain entities — such as aggregated display data — are ViewModels. Define them in `internal/` within the feature that uses them. `src/presenters/` builds server responses and is out of reach of the UI layers.
 
 ```typescript
 // Good: MonthlySummary is a display-only aggregate, lives in features/
@@ -82,8 +82,8 @@ export type MonthlySummary = {
   totalTaxIncludedAmount: number;
 };
 
-// Bad: defining a UI-only type in presenters/
-// src/presenters/timeEntryPresenter.ts
+// Bad: defining a UI-only type in entities/
+// src/entities/timeEntry.ts
 export type MonthlySummary = { ... };
 ```
 
@@ -92,10 +92,11 @@ export type MonthlySummary = { ... };
 Feature components may depend on:
 
 - `src/entities/` (domain models)
-- `src/gateways/` (data fetching)
-- `src/presenters/` (display formatting)
+- `src/api/<concept>/queries.ts` and `src/api/<concept>/mutations.ts` (server state through TanStack Query, `api.md`)
 - `src/helpers/` (utilities)
 - `src/shared-components/` (shared UI parts)
+
+Feature components must not depend on `src/controllers/`, `src/usecases/`, `src/gateways/`, or `src/presenters/`: those run on the server, and importing them pulls server-only code such as Prisma into the browser bundle. dependency-cruiser enforces this.
 
 Feature components must not depend on other features. Cross-feature logic should be lifted to a shared layer.
 

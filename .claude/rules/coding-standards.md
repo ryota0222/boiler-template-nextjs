@@ -35,15 +35,18 @@ description: Coding best practices (code quality, error handling)
   verb-based file names are forbidden. Follow the case conventions of the layer
   they belong to:
 
-  | Layer                | Convention                                          | Example                                |
-  | -------------------- | --------------------------------------------------- | -------------------------------------- |
-  | `entities/`          | camelCase noun                                      | `user.ts`, `order.ts`                  |
-  | `gateways/`          | camelCase noun, no `Gateway` suffix                 | `user.ts`, `userQuery.ts`              |
-  | `presenters/`        | camelCase noun (suffix optional, e.g., `Presenter`) | `userPresenter.ts`, `userFormatter.ts` |
-  | `helpers/`           | camelCase noun                                      | `apiClient.ts`                         |
-  | `features/`          | dir: kebab-case noun; component: PascalCase         | `user-profile/UserProfile.tsx`         |
-  | `shared-components/` | dir: kebab-case noun; component: PascalCase         | `button/Button.tsx`                    |
-  | `stores/`            | dir: kebab-case noun; store: camelCase noun         | `notification/notificationStore.ts`    |
+  | Layer                | Convention                                     | Example                                |
+  | -------------------- | ---------------------------------------------- | -------------------------------------- |
+  | `entities/`          | camelCase noun                                 | `user.ts`, `order.ts`                  |
+  | `api/`               | dir: kebab-case concept; file: role noun       | `todo/endpoints.ts`, `todo/queries.ts` |
+  | `controllers/`       | camelCase noun + `Controller`                  | `todoController.ts`                    |
+  | `usecases/`          | dir: kebab-case concept; factory: `usecase.ts` | `todo/usecase.ts`                      |
+  | `gateways/`          | camelCase noun + `Gateway`                     | `todoGateway.ts`                       |
+  | `presenters/`        | camelCase noun + `Presenter`                   | `apiResponsePresenter.ts`              |
+  | `helpers/`           | camelCase noun                                 | `apiClient.ts`                         |
+  | `features/`          | dir: kebab-case noun; component: PascalCase    | `user-profile/UserProfile.tsx`         |
+  | `shared-components/` | dir: kebab-case noun; component: PascalCase    | `button/Button.tsx`                    |
+  | `stores/`            | dir: kebab-case noun; store: camelCase noun    | `notification/notificationStore.ts`    |
 
   A subdirectory groups several modules or several concerns under one name. A
   source file and its co-located test are not a group — keep them flat, so the
@@ -55,9 +58,9 @@ description: Coding best practices (code quality, error handling)
   entities/user.test.ts
 
   // Good: subdirectory — several concerns of one domain
-  gateways/todo/todo.ts
-  gateways/todo/todoQuery.ts
-  gateways/todo/todoMutation.ts
+  api/todo/endpoints.ts
+  api/todo/queries.ts
+  api/todo/mutations.ts
 
   // Good: subdirectory — sub-modules under one concept
   entities/todo/item.ts
@@ -68,7 +71,7 @@ description: Coding best practices (code quality, error handling)
   entities/user/user.test.ts
   ```
 
-  This applies to `entities/`, `gateways/`, `presenters/`, and `helpers/`.
+  This applies to `entities/`, `api/`, `gateways/`, `presenters/`, and `helpers/`.
 
   When a word in a file name could be read as either a verb or a noun (`retry`, `run`, `update`, `read`, `parse`), use the gerund (`retrying`, `running`, `updating`, `reading`, `parsing`). A file names a unit of work, and the gerund names that activity without ambiguity; the functions inside still follow the verb-phrase convention.
 
@@ -96,13 +99,13 @@ description: Coding best practices (code quality, error handling)
 
   ```typescript
   // Good
-  // src/gateways/user/user.ts
-  export function getUser() { ... }
-  export function updateUser() { ... }
+  // src/gateways/userGateway.ts
+  export const getUser = ...;
+  export const updateUser = ...;
 
   // Bad
   // src/gateways/getUser.ts
-  export function getUser() { ... }
+  export const getUser = ...;
   ```
 
 - **NEVER write comments that explain WHAT the code does.** Code must be self-explanatory through naming and structure. Comments are ONLY permitted when explaining WHY — the non-obvious reason or intent behind a decision that cannot be expressed through code alone. JSDoc (`/** */`), inline (`//`), and block (`/* */`) comments are all subject to this rule. If you feel the need to explain what code does, rewrite the code to be clearer instead of adding a comment.
@@ -335,16 +338,32 @@ type AddTodoGateways = BaseGateways & { readonly saveTodo: SaveTodo };
   }
   ```
 
+## Route Handler Constraints
+
+- A Route Handler (`src/app/**/route.ts`) only re-exports a controller's handler under the HTTP method name
+- No conditional logic (`if`, `switch`, ternary) and no other logic in a Route Handler — it belongs in controllers, usecases, and presenters (`controllers.md`)
+
+  ```typescript
+  // Good: src/app/api/todos/route.ts
+  export { handleListTodoRequest as GET } from '@/controllers/todoController';
+
+  // Bad: logic in the Route Handler
+  export const GET = async (): Promise<Response> => {
+    const todos = await prisma.todo.findMany();
+    return Response.json(todos);
+  };
+  ```
+
 ## Internal Directory Placement
 
 Place each `internal/` directory directly under the module directory it belongs to, not under any ancestor directory shared by multiple modules.
 
 ```typescript
 // Good: formatPrefix belongs to inspection-output, so internal/ lives there
-// src/presenters/inspection-output/internal/formatPrefix.ts
+// src/features/inspection-output/internal/formatPrefix.ts
 
 // Bad: internal/ placed at a shared ancestor, leaking to siblings
-// src/presenters/internal/formatPrefix.ts
+// src/features/internal/formatPrefix.ts
 // src/internal/formatPrefix.ts
 ```
 

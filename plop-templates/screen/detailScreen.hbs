@@ -1,0 +1,102 @@
+'use client';
+
+import {
+  EmptyState,
+  EmptyStateDescription,
+  EmptyStateTitle,
+  Skeleton,
+  Stack,
+  VisuallyHidden,
+} from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { DetailCard } from '@template/ui/blocks/detail-card/DetailCard';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import Link from 'next/link';
+import { isDefined } from 'remeda';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+// 読み込み後の PageHeader の見出しと DetailCard と同じ高さにし、データが届いたときに配置がずれないようにする
+const titleSkeletonHeight = 28;
+const titleSkeletonWidth = 240;
+const cardSkeletonHeight = 160;
+
+const renderContent = ({
+  onRetry,
+  result,
+}: {
+  readonly onRetry: () => void;
+  readonly result: Result<{{{valueTypeCode}}}, ApiFailure>;
+}): React.JSX.Element => {
+  // 存在しないものを空の詳細として出すと壊れたリンクが隠れるため、読み込みの失敗と分けて出す（design-states.md）
+  if (!result.ok && result.error.kind === 'not-found') {
+    return (
+      <EmptyState>
+        <EmptyStateTitle order={2}>{{concept}} が見つかりません</EmptyStateTitle>
+        <EmptyStateDescription>
+          削除されたか、URL が間違っている可能性があります。
+        </EmptyStateDescription>
+      </EmptyState>
+    );
+  }
+
+  if (!result.ok) {
+    return (
+      <ErrorBanner
+        description="時間をおいてから、もう一度読み込んでください。"
+        onRetry={onRetry}
+        retryLabel="もう一度読み込む"
+        title="{{concept}} を読み込めませんでした"
+      />
+    );
+  }
+
+  return (
+    <DetailCard action={null} items={[{ label: '名前', value: result.value.name }]} title="基本情報" />
+  );
+};
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{screenOptionsCode}}});
+  if (!isDefined(query.data)) {
+    return (
+      <Stack aria-busy aria-label="{{concept}} を読み込み中" gap="xl" role="status">
+        {/* aria-label はライブリージョンでは読み上げられないことが多いため、同じ文言を画面外の文字でも置く */}
+        <VisuallyHidden>{{concept}} を読み込み中</VisuallyHidden>
+        <Skeleton h={titleSkeletonHeight} w={titleSkeletonWidth} />
+        <Skeleton h={cardSkeletonHeight} />
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack gap="xl">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {renderContent({
+        onRetry: () => {
+          void query.refetch();
+        },
+        result: query.data,
+      })}
+    </Stack>
+  );
+};

@@ -1,0 +1,34 @@
+import type { Metadata } from 'next';
+
+import { Container } from '@mantine/core';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+export const metadata: Metadata = {
+  description: {{{metadataDescriptionCode}}},
+  title: {{{metadataTitleCode}}},
+};
+
+{{#if hasParameters}}
+const Page = async ({
+  params,
+}: {
+  readonly params: Promise<{{{parametersTypeCode}}}>;
+}): Promise<React.JSX.Element> => (
+  <main>
+    <Container py="xl">
+      <{{componentName}} parameters={await params} />
+    </Container>
+  </main>
+);
+{{else}}
+const Page = (): React.JSX.Element => (
+  <main>
+    <Container py="xl">
+      <{{componentName}} />
+    </Container>
+  </main>
+);
+{{/if}}
+
+export default Page;

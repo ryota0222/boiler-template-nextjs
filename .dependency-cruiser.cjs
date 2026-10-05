@@ -39,7 +39,7 @@ module.exports = {
         path: '^src/entities/',
       },
       to: {
-        path: '^src/(app|features|shared-components|gateways|helpers)/',
+        path: '^src/(api|app|controllers|features|shared-components|gateways|helpers|presenters|usecases)/',
       },
     },
     {
@@ -53,8 +53,9 @@ module.exports = {
         path: '^src/gateways/',
       },
       to: {
-        path: '^src/(app|features|shared-components|presenters|helpers)/',
-        pathNot: '^src/helpers/[^/]*Client\\.ts$',
+        path: '^src/(api|app|controllers|features|shared-components|presenters|helpers|usecases)/',
+        // gateway は usecase が定めた型（usecases/<concept>/gateways/）を実装する
+        pathNot: '^src/helpers/[^/]*Client\\.ts$|^src/usecases/[^/]+/gateways/',
       },
     },
     {
@@ -64,7 +65,9 @@ module.exports = {
         path: '^src/presenters/',
       },
       to: {
-        path: '^src/(app|features|shared-components|gateways|helpers)/',
+        path: '^src/(api|app|controllers|features|shared-components|gateways|helpers|usecases)/',
+        // presenter は usecase が定めた型（usecases/<concept>/presenters/）を実装する
+        pathNot: '^src/usecases/[^/]+/presenters/',
       },
     },
     {
@@ -84,7 +87,125 @@ module.exports = {
         path: '^src/stores/',
       },
       to: {
-        path: '^src/(app|features|shared-components|gateways|presenters|helpers)/',
+        path: '^src/(api|app|controllers|features|shared-components|gateways|presenters|helpers|usecases)/',
+      },
+    },
+    {
+      name: 'zod-only-in-entities-gateways-and-endpoints',
+      severity: 'error',
+      // 外から来るデータの検証は、エンティティ、gateway、エンドポイントの定義（とそのテスト）でだけ行う。
+      // client のテストは特定の概念に頼らないよう、自前のエンドポイントを定めるため zod を使う
+      from: {
+        path: '^src/',
+        pathNot:
+          '^src/(entities|gateways)/|^src/api/(endpoint(\\.test)?|client\\.test|[^/]+/endpoints(\\.test)?)\\.ts$',
+      },
+      to: {
+        path: '(^|/)node_modules/zod/',
+      },
+    },
+    {
+      name: 'route-handlers-call-controllers-only',
+      severity: 'error',
+      // Route Handler は controller の関数を HTTP メソッドの名前で書き出すだけにする（controllers.md）
+      from: {
+        path: '^src/app/.*/route\\.ts$',
+      },
+      to: {
+        path: '^(src|packages)/',
+        pathNot: '^src/controllers/',
+      },
+    },
+    {
+      name: 'features-must-not-depend-on-server-layers',
+      severity: 'error',
+      // サーバーの層を import すると Prisma などのサーバー専用のコードが画面のバンドルに入るため
+      from: {
+        path: '^src/(app|features|shared-components)/',
+        pathNot: '^src/app/.*/route\\.ts$',
+      },
+      to: {
+        path: '^src/(controllers|usecases|gateways|presenters)/',
+      },
+    },
+    {
+      name: 'api-depends-on-entities-only',
+      severity: 'error',
+      from: {
+        path: '^src/api/',
+      },
+      to: {
+        path: '^(src|packages)/',
+        pathNot: '^src/(api|entities)/',
+      },
+    },
+    {
+      name: 'endpoints-must-not-depend-on-browser-code',
+      severity: 'error',
+      // エンドポイントの定義はサーバーからも import されるため、queries や mutations などの画面用のコードに依存できない
+      from: {
+        path: '^src/api/[^/]+/endpoints\\.ts$',
+      },
+      to: {
+        path: '^src/api/',
+        pathNot: '^src/api/endpoint\\.ts$',
+      },
+    },
+    {
+      name: 'api-helpers-stay-inside-api',
+      severity: 'error',
+      from: {
+        path: '^src/',
+        pathNot: '^src/api/',
+      },
+      to: {
+        path: '^src/api/(endpoint|client)\\.ts$',
+      },
+    },
+    {
+      name: 'controllers-use-endpoint-definitions-only',
+      severity: 'error',
+      // controller が src/api/ から使えるのはエンドポイントの定義だけ
+      from: {
+        path: '^src/controllers/',
+      },
+      to: {
+        path: '^src/api/',
+        pathNot: '^src/api/[^/]+/endpoints\\.ts$',
+      },
+    },
+    {
+      name: 'only-controllers-use-endpoints',
+      // サーバーの層で src/api/ を使えるのは controller だけ
+      severity: 'error',
+      from: {
+        path: '^src/(usecases|gateways|presenters)/',
+      },
+      to: {
+        path: '^src/api/',
+      },
+    },
+    {
+      name: 'usecases-must-not-depend-on-implementations',
+      severity: 'error',
+      // usecase は gateway と presenter の実装ではなく、usecases/<concept>/ に置いた型を介して使う
+      from: {
+        path: '^src/usecases/',
+      },
+      to: {
+        path: '^src/(api|app|controllers|features|shared-components|gateways|presenters|stores)/',
+      },
+    },
+    {
+      name: 'only-gateways-use-database',
+      severity: 'error',
+      // DB のテストは、行を用意するなどの準備に Prisma のクライアントを直接使う
+      from: {
+        path: '^src/',
+        pathNot: '^src/gateways/|\\.db\\.test\\.ts$',
+      },
+      to: {
+        path: '^src/gateways/prismaClient\\.ts$|^prisma/generated/',
       },
     },
     {

@@ -71,9 +71,9 @@ Stores may depend on:
 - `src/entities/` (domain models)
 - External libraries
 
-Stores must not depend on `src/gateways/`, `src/presenters/`, `src/helpers/`, `src/features/`, `src/shared-components/`, or `src/app/`. This is enforced by the `no-stores-depend-on-non-entities` depcruise rule.
+Stores must not depend on `src/api/`, `src/controllers/`, `src/usecases/`, `src/gateways/`, `src/presenters/`, `src/helpers/`, `src/features/`, `src/shared-components/`, or `src/app/`. This is enforced by the `no-stores-depend-on-non-entities` depcruise rule.
 
-A store that needs data from a gateway is a sign the state belongs in TanStack Query instead.
+A store that needs data from the server is a sign the state belongs in TanStack Query instead.
 
 ## Testing Guidelines
 

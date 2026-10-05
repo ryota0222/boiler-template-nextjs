@@ -1,0 +1,15 @@
+
+const createRequestUsecase = ({
+  parameters,
+  request,
+}: {
+  readonly parameters: Promise<Readonly<Record<string, string>>>;
+  readonly request: Request;
+}): ReturnType<typeof createApiRequestUsecase> =>
+  createApiRequestUsecase({
+    gateways: {
+      printErrorLog,
+      readRequestInput: createReadingRequestInput({ parameters, request }),
+    },
+    presenters: { presentFailure, presentSuccess },
+  });

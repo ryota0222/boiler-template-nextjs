@@ -52,7 +52,9 @@ pnpm run db:generate
 | `pnpm test`    | `unit`, `storybook`                   | not required |
 | `pnpm test:db` | `db` (`src/gateways/**/*.db.test.ts`) | required     |
 
-The `PostToolUse` hook runs `pnpm test` — the project-scoped command above — so the everyday edit loop never needs Docker. The pre-push git hook is different: `lefthook.yml` still runs an unqualified `pnpm exec vitest run`, which selects all three Vitest projects including `db`, so pushing currently does require Docker. This is a known pending fix — `lefthook.yml` is a protected file, tracked separately for a human to change to `pnpm run test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there.
+`pnpm test:generators` runs the `generators` project (`generators/*.generators.test.ts`) on its own; see Code Generators below.
+
+The `PostToolUse` hook runs `pnpm test` — the project-scoped command above — so the everyday edit loop never needs Docker. The pre-push git hook is different: `lefthook.yml` still runs an unqualified `pnpm exec vitest run`, which selects every Vitest project including `db` and `generators`, so pushing currently does require Docker. This is a known pending fix — `lefthook.yml` is a protected file, tracked separately for a human to change to `pnpm run test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there.
 
 `docker/initdb/01-create-test-db.sql`, which creates `app_test`, only runs the first time the Postgres volume is created. `pnpm run db:down` stops the container but keeps that volume, so recreating `app_test` from scratch needs `docker compose down -v` before the next `pnpm run db:up`.
 
@@ -103,13 +105,16 @@ Mantine owns the token scales and the accessible behaviour of its components. Th
 
 ```text
 src/
-  app/                  # App Router (layout.tsx, page.tsx, loading.tsx, error.tsx, etc.)
+  app/                  # App Router (layout.tsx, page.tsx, route.ts, etc.)
+  api/                  # Endpoint definitions and browser-side TanStack Query options
+  controllers/          # Request handlers: compose gateways and presenters into a usecase
+  usecases/             # Business logic, plus the gateway and presenter types it needs
+  gateways/             # Server-side I/O (DB, external services, console)
+  presenters/           # Usecase results → HTTP responses
   features/             # Domain-specific UI components (organized by feature subdirectories)
   shared-components/    # Domain-independent reusable UI parts
   entities/             # Type definitions & zod schemas (domain models)
-  gateways/             # I/O with external data sources (API, DB, CSV, etc.)
-  presenters/           # Display formatting functions (data → display-ready transformation)
-  helpers/              # Shared utilities & library configuration (e.g. axios, dayjs)
+  helpers/              # Shared utilities & library configuration (e.g. dayjs)
   stores/               # Client UI state shared across the tree (Zustand)
 packages/
   ui/                   # @template/ui: Mantine theme, UiProvider, test helpers, shared blocks
@@ -120,14 +125,15 @@ prisma/
   generated/            # Prisma Client (gitignored, produced by `prisma generate`)
 ```
 
-- `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found)
+- `app/` contains Next.js App Router convention files (layout, page, loading, error, not-found) and Route Handlers that only re-export a controller's handlers
+- `api/` holds each endpoint's definition (method, path, input and output schemas), shared by the server and the browser, and the `queryOptions` / `mutationOptions` that features use
+- `controllers/`, `usecases/`, `gateways/`, and `presenters/` are the server side of a request: route → controller → usecase → gateway, with the presenter building the response. Usecases depend only on the types under `usecases/<concept>/gateways/` and `presenters/`; the controller is the only place that wires in the implementations
 - `features/` contains domain-specific UI components, organized by feature subdirectories
 - `shared-components/` contains domain-independent reusable UI parts shared across features
 - `entities/` contains only data structure definitions (no logic)
-- `gateways/` handles I/O with external data sources, organized by concern into subdirectories, and owns the query keys, `queryOptions`, and `mutationOptions` for that data
-- `presenters/` contains display formatting functions that transform data into display-ready format
-- `helpers/` contains shared utilities and library configurations (e.g. axios, dayjs)
+- `helpers/` contains shared utilities and library configurations (e.g. dayjs)
 - `stores/` contains Zustand stores for client UI state that must be shared across the component tree
+- The layer boundaries are enforced by dependency-cruiser (`.dependency-cruiser.cjs`) and ESLint; each layer's rules are in `.claude/rules/<layer>.md`
 - Test files are co-located with their source files (`foo.ts` → `foo.test.ts`, `Foo.tsx` → `foo.test.tsx`)
 
 Mantine components are used directly, with no wrapper components written around them. Wrapping every component would force per-component build work before the template is usable, which defeats the point of a ready-to-use template. Shapes that screens repeat are blocks in `packages/ui`, used instead of being rebuilt (`.claude/rules/ui-blocks.md`). `packages/ui` imports nothing from `src/` (dependency-cruiser's `no-packages-depend-on-app`).
@@ -136,21 +142,23 @@ Some entries in `knip.ignoreDependencies` cover a dependency knip cannot see is 
 
 - `@prisma/client` is retained because the generated client (`prisma/generated/`, gitignored) imports it directly — e.g. `import * as runtime from '@prisma/client/runtime/client'` — and knip honours `.gitignore` by default, so it never sees that import site.
 
-`zod` is a different case: it is genuinely imported today, by `src/entities/todo.ts`. It is listed pre-emptively because that is `zod`'s only consumer, and deleting the `Todo` reference implementation (see `README.md`) removes it — without this entry, `pnpm knip` would break for anyone who follows that README section. `zod` stays the schema validation library the `entities/` convention expects for whatever entity is added next.
+## Code Generators
+
+Start a new API endpoint or screen from the plop generators rather than by hand: the `add-web-api-endpoint` and `add-web-screen` skills (`.claude/skills/`) say which arguments to pass to `pnpm run generate api` / `pnpm run generate screen`. The generators live in `plopfile.ts` and `plop-templates/`. After changing either, run `pnpm test:generators`, which copies the project to a temporary directory, runs every generator variant, and checks the output with tsc, ESLint, Prettier, dependency-cruiser, textlint, and the unit and Storybook tests (CI job `test-generators`).
 
 ## State Management
 
 State is split across three tools by origin, not by convenience.
 
-| State                                  | Tool           | Location                                                    |
-| -------------------------------------- | -------------- | ----------------------------------------------------------- |
-| Server state (API, DB, CSV)            | TanStack Query | `gateways/<domain>/<domain>Query.ts`, `<domain>Mutation.ts` |
-| Client UI state shared across the tree | Zustand        | `stores/<name>/`                                            |
-| Client UI state local to one component | `useState`     | The component itself                                        |
+| State                                  | Tool           | Location                                   |
+| -------------------------------------- | -------------- | ------------------------------------------ |
+| Server state (API, DB, CSV)            | TanStack Query | `api/<concept>/queries.ts`, `mutations.ts` |
+| Client UI state shared across the tree | Zustand        | `stores/<name>/`                           |
+| Client UI state local to one component | `useState`     | The component itself                       |
 
 Mutations default to optimistic updates, subject to strict preconditions. `useOptimistic` is not used for server state: its optimistic value is local to the component that calls the hook, so sharing it across the tree would require lifting state and converting large subtrees into Client Components.
 
-The full rules — the mandatory four-step optimistic update, the three preconditions, the forbidden operations, and the verified type-level constraints — are in `.claude/rules/state-management.md`. See also `.claude/rules/gateways.md` and `.claude/rules/stores.md`.
+The full rules — the mandatory four-step optimistic update, the three preconditions, the forbidden operations, and the verified type-level constraints — are in `.claude/rules/state-management.md`. See also `.claude/rules/api.md` and `.claude/rules/stores.md`.
 
 ## Git Branch Naming
 

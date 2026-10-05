@@ -1,0 +1,28 @@
+
+export const {{handlerName}} = (
+  request: Request,
+{{#if hasParameters}}
+  context: { readonly params: Promise<{{{parametersTypeCode}}}> },
+{{/if}}
+): Promise<Response> =>
+{{#if hasRequestUsecaseBuilder}}
+  createRequestUsecase({ parameters: {{#if hasParameters}}context.params{{else}}Promise.resolve({}){{/if}}, request }).handle({
+{{else}}
+  createApiRequestUsecase({
+    gateways: {
+      printErrorLog,
+      readRequestInput: createReadingRequestInput({
+{{#if hasParameters}}
+        parameters: context.params,
+{{else}}
+        parameters: Promise.resolve({}),
+{{/if}}
+        request,
+      }),
+    },
+    presenters: { presentFailure, presentSuccess },
+  }).handle({
+{{/if}}
+    endpoint: {{endpointName}},
+    execute: {{{usecaseExpressionCode}}}.{{operationName}},
+  });

@@ -1,7 +1,13 @@
 ---
 description: Rules for server state, client UI state, and optimistic updates
 paths:
-  ['src/gateways/**/*.ts', 'src/features/**/*.tsx', 'src/stores/**/*.ts', 'src/stores/**/*.tsx']
+  [
+    'src/api/**/queries.ts',
+    'src/api/**/mutations.ts',
+    'src/features/**/*.tsx',
+    'src/stores/**/*.ts',
+    'src/stores/**/*.tsx',
+  ]
 ---
 
 # State Management
@@ -17,59 +23,48 @@ Data that originates from an external data source (API, DB, CSV) is server state
 
 `useState` remains correct for state that never leaves a single component (input focus, a locally toggled disclosure).
 
-## Query Keys and Options Live in `gateways/`
+## Query Keys and Options Live in `src/api/`
 
 - **Type**: MUST
 - **Reason**: A query key duplicated in two places drifts silently. Nothing throws — the cache simply stops updating, and the bug surfaces as "the list does not refresh" long after the change that caused it.
 
 ### Details
 
-Each domain directory under `src/gateways/` owns three files:
-
-| File                  | Contents                                                           |
-| --------------------- | ------------------------------------------------------------------ |
-| `<domain>.ts`         | The actual I/O (`fetch`, DB access) and conversion to entity types |
-| `<domain>Query.ts`    | The query key and `queryOptions`                                   |
-| `<domain>Mutation.ts` | `mutationOptions` including the optimistic update                  |
+The query key and `queryOptions` live in `src/api/<concept>/queries.ts`, and `mutationOptions` in `src/api/<concept>/mutations.ts` (`api.md`). Features import them and never write a key inline.
 
 ```typescript
 // Good
-// src/gateways/todo/todoQuery.ts
-import { queryOptions } from '@tanstack/react-query';
+// src/api/todo/queries.ts
+export const todoListQueryKey = ['todos'] as const;
 
-import { fetchTodoList } from '@/gateways/todo/todo';
-
-export const todoListQueryKey = ['todos'];
-
-export const todoListQueryOptions = () =>
-  queryOptions({
-    queryFn: fetchTodoList,
-    queryKey: todoListQueryKey,
-  });
+export const todoListQueryOptions = queryOptions({
+  queryFn: () => requestEndpoint({ endpoint: listTodoEndpoint, input: {} }),
+  queryKey: todoListQueryKey,
+});
 
 // Bad: the key is written inline where it is used
-// src/features/todo/list/TodoList.tsx
+// src/features/todo-list/TodoList.tsx
 const { data } = useQuery({ queryFn: fetchTodoList, queryKey: ['todos'] });
 ```
 
-## React Hooks Must Not Appear in `gateways/`
+## React Hooks Must Not Appear in `src/api/`
 
 - **Type**: MUST NOT
-- **Reason**: `gateways/` must stay callable from Server Components for `prefetchQuery`, and must stay testable without rendering a component. A hook call in this layer breaks both.
+- **Reason**: `src/api/` must stay testable without rendering a component. A hook call in this layer breaks that.
 
 ### Details
 
-`queryOptions()` and `mutationOptions()` return plain objects and have no React dependency, so they belong in `gateways/`. `useQuery`, `useMutation`, and `useQueryClient` are hooks and belong in `features/`.
+`queryOptions()` and `mutationOptions()` return plain objects and have no React dependency, so they belong in `src/api/`. `useQuery`, `useMutation`, and `useQueryClient` are hooks and belong in `src/features/`. ESLint rejects the import.
 
 The optimistic update callbacks receive the `QueryClient` through their `context` argument, so `useQueryClient()` is never needed to write them.
 
 ```typescript
-// Good: gateways/ defines the options, features/ calls the hook
-// src/features/todo/list/TodoList.tsx
-const { data } = useQuery(todoListQueryOptions());
+// Good: src/api/ defines the options, features/ calls the hook
+// src/features/todo-list/TodoList.tsx
+const { data } = useQuery(todoListQueryOptions);
 
-// Bad: a hook inside gateways/
-// src/gateways/todo/todoQuery.ts
+// Bad: a hook inside src/api/
+// src/api/todo/queries.ts
 export const useTodoList = () => useQuery({ ... });
 ```
 
@@ -83,56 +78,61 @@ export const useTodoList = () => useQuery({ ... });
 1. `onMutate` — `cancelQueries` to stop in-flight refetches
 2. `onMutate` — `getQueryData` to snapshot the current value, returned for rollback
 3. `onMutate` — `setQueryData` to write the optimistic value
-4. `onError` — restore the snapshot, and `onSettled` — `invalidateQueries`
+4. `onSettled` — restore the snapshot when the result is not `ok`, then `invalidateQueries`
+
+`requestEndpoint` returns a `Result` and never throws, so a failed request resolves the mutation: it reaches `onSuccess` and `onSettled` with `ok: false` and never reaches `onError`. Roll back in `onSettled`, checking `result?.ok !== true` — `result` is `undefined` when `onMutate` or `mutationFn` itself threw.
+
+The query data is a `Result` too. Rewrite it only when it is `ok`; a cached failure stays as it is.
 
 Three type-level constraints apply, all verified against `@tanstack/react-query` 5.101.4:
 
 - The generic parameters of `mutationOptions<TData, TError, TVariables, TOnMutateResult>` must be written explicitly. The return type of `onMutate` is not inferred, and `onMutateResult` degrades to `unknown` without them.
-- `onMutateResult` in `onError` is typed `TOnMutateResult | undefined`, because `onMutate` may itself have thrown. Access it with `?.`.
+- `onMutateResult` in `onSettled` is typed `TOnMutateResult | undefined`, because `onMutate` may itself have thrown. Access it with `?.`.
 - The `current` argument of a `setQueryData` updater is typed `T | undefined`, because the key may hold nothing yet. Access it with `?.`.
 
 ```typescript
 // Good
-// src/gateways/todo/todoMutation.ts
-import { mutationOptions } from '@tanstack/react-query';
+// src/api/todo/mutations.ts
+type TodoListResult = Result<readonly Todo[], ApiFailure>;
 
-import { type Todo } from '@/entities/todo';
-import { putTodo } from '@/gateways/todo/todo';
-import { todoListQueryKey } from '@/gateways/todo/todoQuery';
+export const todoCompletionMutationOptions = mutationOptions<
+  Result<Todo, ApiFailure>,
+  Error,
+  { readonly id: string; readonly isCompleted: boolean },
+  { readonly snapshot: TodoListResult | undefined }
+>({
+  mutationFn: ({ id, isCompleted }) =>
+    requestEndpoint({
+      endpoint: updateTodoEndpoint,
+      input: { body: { isCompleted }, parameters: { id } },
+    }),
+  onMutate: async ({ id, isCompleted }, context) => {
+    await context.client.cancelQueries({ queryKey: todoListQueryKey });
+    const snapshot = context.client.getQueryData<TodoListResult>(todoListQueryKey);
 
-type TodoListSnapshot = { snapshot: Todo[] | undefined };
+    context.client.setQueryData<TodoListResult>(todoListQueryKey, (current) => …);
 
-export const updateTodoMutationOptions = () =>
-  mutationOptions<Todo, Error, Todo, TodoListSnapshot>({
-    mutationFn: putTodo,
-    onError: (_error, _todo, onMutateResult, context) => {
+    return { snapshot };
+  },
+  onSettled: async (result, _error, _variables, onMutateResult, context) => {
+    if (result?.ok !== true) {
       context.client.setQueryData(todoListQueryKey, onMutateResult?.snapshot);
-    },
-    onMutate: async (todo, context) => {
-      await context.client.cancelQueries({ queryKey: todoListQueryKey });
-      const snapshot = context.client.getQueryData<Todo[]>(todoListQueryKey);
+    }
 
-      context.client.setQueryData<Todo[]>(todoListQueryKey, (current) =>
-        current?.map((item) => (item.id === todo.id ? todo : item))
-      );
-
-      return { snapshot };
-    },
-    onSettled: (_data, _error, _todo, _onMutateResult, context) =>
-      context.client.invalidateQueries({ queryKey: todoListQueryKey }),
-  });
+    await context.client.invalidateQueries({ queryKey: todoListQueryKey });
+  },
+});
 
 // Bad: no cancel, no snapshot, no rollback
-export const updateTodoMutationOptions = () =>
-  mutationOptions({
-    mutationFn: putTodo,
-    onMutate: (todo, context) => {
-      context.client.setQueryData(todoListQueryKey, todo);
-    },
-  });
+export const todoCompletionMutationOptions = mutationOptions({
+  mutationFn: …,
+  onMutate: (todo, context) => {
+    context.client.setQueryData(todoListQueryKey, todo);
+  },
+});
 ```
 
-`eslint.config.ts` disables `max-params` and `@typescript-eslint/explicit-function-return-type` for `src/gateways/**/*Query.ts` and `src/gateways/**/*Mutation.ts`. The callback arities are fixed by the library, and the option object types are library-generated generics that cannot be written by hand.
+`eslint.config.ts` disables `max-params` and `@typescript-eslint/explicit-function-return-type` for `src/api/**/queries.ts` and `src/api/**/mutations.ts`. The callback arities are fixed by the library, and the option object types are library-generated generics that cannot be written by hand.
 
 ## Optimistic Updates Require All Three Preconditions
 
@@ -170,7 +170,18 @@ Forbidden for:
 
 ### Details
 
-`onError` must both restore the snapshot and surface the failure to the user.
+`onSettled` in `src/api/` restores the snapshot. The feature that calls `mutate` surfaces the failure, in the `onSuccess` it passes to `mutate` when the result is not `ok` — the message belongs to the screen, and `src/api/` has no UI.
+
+```typescript
+// src/features/todo-list/TodoList.tsx
+completionMutation.mutate(variables, {
+  onSuccess: (result) => {
+    if (!result.ok) {
+      notifyCompletionFailure(result.error.message);
+    }
+  },
+});
+```
 
 ## `QueryClient` Must Not Be Created at Module Scope
 

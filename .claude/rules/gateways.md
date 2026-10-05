@@ -7,121 +7,84 @@ paths: ['src/gateways/**/*.ts']
 
 ## What is a Gateway
 
-Gateways are the I/O boundary of the application, responsible for communication with external data sources (API, DB, CSV files, etc.). They encapsulate all external access and return domain entity types.
+Gateways are the I/O boundary of the application, responsible for communication with external data sources (API, DB, file system, console, etc.). They run on the server and encapsulate all external access. Browser-side calls to this application's own API are not gateways; they live in `src/api/` (`api.md`).
 
 ## Library Clients Are an Exception
 
-`src/gateways/prismaClient.ts` is a configured library client — the `PrismaClient` instance itself — not a gateway function. It satisfies neither rule below: it exports no async I/O function and returns no entity type, and it does not sit in a domain subdirectory named after an `entities/` concept.
-
-It lives in `src/gateways/` rather than `src/helpers/` because a client typed with the application's own generated schema is not domain-independent; see `docs/rules/dependency-policy.md` ("Gateways May Import Library Clients From Helpers") for the reasoning. Domain gateway files (`<domain>/<domain>.ts`) import this client and are the ones that must follow the rules in this document.
+`src/gateways/prismaClient.ts` is a configured library client — the `PrismaClient` instance itself — not a gateway function. It caches the client on `globalThis` so that Next.js HMR does not open a new connection pool on every reload. Only `src/gateways/` and `*.db.test.ts` files may import it; dependency-cruiser (`only-gateways-use-database`) rejects the import from any other layer.
 
 ## Structure
 
-Each gateway file exports:
-
-1. Async functions that perform I/O with external data sources
-2. Return values are always a `Result` (`src/entities/result.ts`) of domain entity types (defined in `src/entities/`). A gateway is the boundary where an external API throws, so it catches there, validates the data with `safeParse`, and never throws itself (`coding-standards.md`)
+Each gateway is a single file named `<domainConcept>Gateway.ts` (camelCase), placed directly under `src/gateways/`. It exports async functions that perform I/O, typed with the interface the usecase declares.
 
 ```typescript
-import type { Result } from '@/entities/result';
+// src/gateways/todoGateway.ts
+import type { ListTodos } from '@/usecases/todo/gateways/todoGateway';
 
-import { schema, type Airport } from '@/entities/airport';
-
-export const fetchAirports = async (): Promise<Result<readonly Airport[]>> => {
-  const response = await fetch('https://api.example.com/airports');
-  if (!response.ok) {
-    return {
-      error: new Error(`空港の一覧を取得できませんでした（${String(response.status)}）`),
-      ok: false,
-    };
-  }
-
-  const airportsResult = schema.array().safeParse(await response.json());
-  return airportsResult.success
-    ? { ok: true, value: airportsResult.data }
-    : { error: new Error(`空港の一覧の形が不正です: ${airportsResult.error.message}`), ok: false };
+export const listTodos: ListTodos = async (): Promise<Result<readonly Todo[]>> => {
+  // query, then validate into entity types
 };
 ```
 
-## Directory Naming
+## Interface Types
 
-Subdirectories are named by domain concept, matching `entities/` naming (e.g., `entities/airport/` ↔ `gateways/airport/`).
+Gateway interface types are defined in `src/usecases/<concept>/gateways/`, not in gateway implementation files. The usecase layer defines what it needs, and the gateway layer implements it.
 
-A domain gets a directory once it has more than one concern file. Until then it stays flat next to its test, so the import path reads `@/gateways/todo` rather than `@/gateways/todo/todo`:
+## File Naming
 
-```text
-// Only I/O so far — flat
-src/gateways/todo.ts
-src/gateways/todo.db.test.ts
+- Gateway file: `<domainConcept>Gateway.ts` (camelCase)
+- Unit test: `<domainConcept>Gateway.test.ts`; DB test: `<domainConcept>Gateway.db.test.ts` (co-located)
 
-// Query and Mutation added — move into a directory
-src/gateways/todo/todo.ts
-src/gateways/todo/todoQuery.ts
-src/gateways/todo/todoMutation.ts
-src/gateways/todo/todo.db.test.ts
+## Domain Types as Input, Domain Types as Output
+
+Gateways accept domain entity types from the usecase layer and convert them to external formats (SDK types, API payloads, database rows) internally. When reading external data, they return validated domain entity types — not raw `unknown` and not database rows.
+
+## Curried Read Functions
+
+When a read depends on something only the controller knows (a file path, a request), the gateway exports a factory that takes it and returns an argument-free function, so the usecase never learns the data source. `createReadingRequestInput` is one.
+
+```typescript
+export const createReadingRequestInput =
+  ({ parameters, request }: { … }): ReadRequestInput =>
+  async (): Promise<Result<RequestInput, ApiFailure>> => { … };
 ```
 
-See `.claude/rules/coding-standards.md` for the general form of this rule.
+## Return Values
 
-## File Layout Within a Domain
+Gateways never throw. A gateway is the boundary where an external API throws, so it catches there and returns a `Result` (`src/entities/result.ts`, `coding-standards.md`).
 
-Once a domain has its own directory, it holds up to three files, split by concern:
-
-| File                  | Contents                                           |
-| --------------------- | -------------------------------------------------- |
-| `<domain>.ts`         | The actual I/O and conversion to entity types      |
-| `<domain>Query.ts`    | The query key and `queryOptions`                   |
-| `<domain>Mutation.ts` | `mutationOptions`, including the optimistic update |
-
-The I/O file carries no suffix. `src/gateways/` already states that the file performs I/O, so `Gateway` repeats the directory and adds nothing a reader did not already know. `Query` and `Mutation` do carry a suffix because they distinguish two further concerns inside the same domain.
-
-```text
-// Good
-src/gateways/user/user.ts
-src/gateways/user/userQuery.ts
-src/gateways/user/userMutation.ts
-
-// Bad: the suffix repeats the directory
-src/gateways/user/userGateway.ts
+```typescript
+// Prisma は接続やクエリの失敗を例外で返すため、ここで Result に変える
+const findTodoRecords = async (): Promise<Result<readonly TodoRecord[]>> => {
+  try {
+    return { ok: true, value: await prisma.todo.findMany({ orderBy: { createdAt: 'asc' } }) };
+  } catch (error) {
+    return { error: toError(error), ok: false };
+  }
+};
 ```
 
-The query key belongs here, not in the component that reads it. A key duplicated across features drifts silently — nothing throws, the cache just stops updating.
+A missing record is not an error at this layer: return `null` inside an `ok` result and let the usecase decide that it is a `not-found` failure.
+
+## Validating External Data with Zod
+
+Data from an external source is validated with a zod schema and `safeParse`, then mapped onto a `Result`. Do not use manual type guards, and do not use `parse`, which throws.
 
 ## No Business Logic in Gateways
 
 Gateways contain only:
 
-- External data source access (HTTP requests, DB queries, file reads, etc.)
-- Conversion from external data to domain entity types (via zod parse)
-- Cache policy and the optimistic update definition (`queryOptions` / `mutationOptions`)
+- External data source access (HTTP requests, DB queries, file reads, console output, etc.)
+- Conversion between domain entity types and external formats
 
 No business logic, no domain rules, no orchestration of multiple gateways.
 
-Cache policy is part of the I/O concern, which is why `queryOptions` and `mutationOptions` live here rather than in a layer of their own. Both return plain objects and carry no React dependency, so this does not change what the layer is.
-
-## No React Hooks in Gateways
-
-`useQuery`, `useMutation`, and `useQueryClient` must not appear in `src/gateways/`.
-
-Gateways must stay callable from Server Components for `prefetchQuery`, and must stay testable without rendering a component. A hook call in this layer breaks both. Hooks are called from `src/features/`.
-
-The optimistic update callbacks receive the `QueryClient` through their `context` argument, so writing them never requires `useQueryClient()`.
-
-```typescript
-// Good: gateways/ defines the options, features/ calls the hook
-// src/features/todo/list/TodoList.tsx
-const { data } = useQuery(todoListQueryOptions());
-
-// Bad: a hook inside gateways/
-// src/gateways/todo/todoQuery.ts
-export const useTodoList = () => useQuery({ ... });
-```
-
-See `.claude/rules/state-management.md` for the required optimistic update pattern and its type-level constraints.
-
 ## Testing Guidelines
 
-- Test the database against a real PostgreSQL instance, not a mock. Name these files `<domain>.db.test.ts`; they run in the `db` Vitest project, which `pnpm test` excludes and `pnpm test:db` runs. Mocking Prisma verifies only that a method was called — it proves nothing about whether the query is correct, while still costing a rewrite of every stubbed return value on each schema change.
-- Use test doubles (mock/stub) for other external data sources (HTTP APIs, files).
-- Test that external data is correctly parsed into entity types.
-- Test error cases (network failure, invalid data, etc.).
+- Verify queries against a real PostgreSQL in `<domainConcept>Gateway.db.test.ts`, run by `pnpm test:db` (Docker). A mocked Prisma client proves nothing about whether the SQL is correct
+- Cover other branches (conversion, parsing, error mapping) in `<domainConcept>Gateway.test.ts` with test doubles for the external source
+- `*.db.test.ts` files follow the database testing rules below rather than `test-standards.md`'s "Test Only Branches"
+
+### Database Tests
+
+Each test starts from an empty database: `vitest.db.setup.ts` truncates the tables before every test, and `vitest.db.globalSetup.ts` applies the migrations once. Create the rows a test needs inside the test with `prisma`.

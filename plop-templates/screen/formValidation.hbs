@@ -1,0 +1,19 @@
+import type { {{dataTypeName}} } from '@/api/{{concept}}/mutations';
+
+const nameMaxLength = 100;
+
+const validateName = (name: string): null | string => {
+  if (name.trim() === '') {
+    return '名前を入力してください';
+  }
+
+  return name.length > nameMaxLength
+    ? `名前は${String(nameMaxLength)}文字以内で入力してください`
+    : null;
+};
+
+export const {{validateFunctionName}} = (
+  values: {{dataTypeName}},
+): { readonly name: null | string } => ({
+  name: validateName(values.name),
+});
