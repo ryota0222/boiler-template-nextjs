@@ -1,31 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
 
 import { buildRequestUrl, requestEndpoint } from '@/api/client';
-import { defineEndpoint } from '@/api/endpoint';
+import { createTodoEndpoint, listTodoEndpoint } from '@/api/todo/endpoints';
 
 const okStatus = 200;
 const createdStatus = 201;
 const noContentStatus = 204;
 const notFoundStatus = 404;
 
-const listTodoEndpoint = defineEndpoint({
-  inputSchema: z
-    .object({ query: z.object({ title: z.string().optional() }).readonly() })
-    .readonly(),
-  method: 'GET',
-  outputSchema: z.array(z.object({ title: z.string() }).readonly()).readonly(),
-  path: '/api/todos',
-  successStatus: okStatus,
-});
+const todo = {
+  createdAt: '2026-10-05T00:00:00.000Z',
+  id: '0b7f4e59-1f2a-4d4f-9a39-3e0b8f2a6c11',
+  isCompleted: false,
+  title: 'タスク',
+};
 
-const createTodoEndpoint = defineEndpoint({
-  inputSchema: z.object({ body: z.object({ title: z.string() }).readonly() }).readonly(),
-  method: 'POST',
-  outputSchema: z.null(),
-  path: '/api/todos',
-  successStatus: createdStatus,
-});
+const pathOnlyEndpoint = { buildPath: (): string => '/api/todos' };
 
 const stubFetch = (response: () => Promise<Response>): ReturnType<typeof vi.fn> => {
   const fetchMock = vi.fn(response);
@@ -39,7 +29,7 @@ afterEach(() => {
 
 describe('buildRequestUrl', () => {
   it('queryが空の場合、パスだけを返すこと', () => {
-    const actual = buildRequestUrl({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const actual = buildRequestUrl({ endpoint: pathOnlyEndpoint, input: {} });
 
     const expected = '/api/todos';
     expect(actual).toBe(expected);
@@ -47,7 +37,7 @@ describe('buildRequestUrl', () => {
 
   it('queryがある場合、クエリ文字列を付けること', () => {
     const actual = buildRequestUrl({
-      endpoint: listTodoEndpoint,
+      endpoint: pathOnlyEndpoint,
       input: { query: { title: '買い物' } },
     });
 
@@ -68,11 +58,11 @@ describe('buildRequestUrl', () => {
 
 describe('requestEndpoint', () => {
   it('応答が成功で形が合う場合、その値のResultを返すこと', async () => {
-    stubFetch(() => Promise.resolve(Response.json([{ title: 'タスク' }], { status: okStatus })));
+    stubFetch(() => Promise.resolve(Response.json([todo], { status: okStatus })));
 
-    const actual = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const actual = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
 
-    const expected = { ok: true, value: [{ title: 'タスク' }] };
+    const expected = { ok: true, value: [todo] };
     expect(actual).toEqual(expected);
   });
 
@@ -92,34 +82,36 @@ describe('requestEndpoint', () => {
     expect(actual).toEqual(expected);
   });
 
-  it('応答が204の場合、本文なしとして読むこと', async () => {
+  it('応答が204で出力のスキーマが本文を求める場合、invalid-responseの失敗を返すこと', async () => {
     stubFetch(() => Promise.resolve(new Response(null, { status: noContentStatus })));
 
-    const actual = await requestEndpoint({
+    const result = await requestEndpoint({
       endpoint: createTodoEndpoint,
       input: { body: { title: 'タスク' } },
     });
+    const actual = result.ok ? null : result.error.kind;
 
-    const expected = { ok: true, value: null };
+    const expected = 'invalid-response';
     expect(actual).toEqual(expected);
   });
 
-  it('応答の本文が空文字の場合、本文なしとして読むこと', async () => {
+  it('応答の本文が空文字で出力のスキーマが本文を求める場合、invalid-responseの失敗を返すこと', async () => {
     stubFetch(() => Promise.resolve(new Response('', { status: createdStatus })));
 
-    const actual = await requestEndpoint({
+    const result = await requestEndpoint({
       endpoint: createTodoEndpoint,
       input: { body: { title: 'タスク' } },
     });
+    const actual = result.ok ? null : result.error.kind;
 
-    const expected = { ok: true, value: null };
+    const expected = 'invalid-response';
     expect(actual).toEqual(expected);
   });
 
   it('fetchが失敗した場合、network-failedの失敗を返すこと', async () => {
     stubFetch(() => Promise.reject(new TypeError('Failed to fetch')));
 
-    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
     const actual = result.ok ? null : result.error.kind;
 
     const expected = 'network-failed';
@@ -129,7 +121,7 @@ describe('requestEndpoint', () => {
   it('応答の本文がJSONでない場合、invalid-responseの失敗を返すこと', async () => {
     stubFetch(() => Promise.resolve(new Response('<html>', { status: okStatus })));
 
-    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
     const actual = result.ok ? null : result.error.kind;
 
     const expected = 'invalid-response';
@@ -146,7 +138,7 @@ describe('requestEndpoint', () => {
       )
     );
 
-    const actual = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const actual = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
 
     const expected = { error: { kind: 'not-found', message: 'Todoがありません' }, ok: false };
     expect(actual).toEqual(expected);
@@ -155,7 +147,7 @@ describe('requestEndpoint', () => {
   it('応答が失敗で失敗の本文の形が合わない場合、invalid-responseの失敗を返すこと', async () => {
     stubFetch(() => Promise.resolve(Response.json({}, { status: notFoundStatus })));
 
-    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
     const actual = result.ok ? null : result.error.kind;
 
     const expected = 'invalid-response';
@@ -163,9 +155,9 @@ describe('requestEndpoint', () => {
   });
 
   it('応答が成功で形が合わない場合、invalid-responseの失敗を返すこと', async () => {
-    stubFetch(() => Promise.resolve(Response.json([{ title: 1 }], { status: okStatus })));
+    stubFetch(() => Promise.resolve(Response.json([{ ...todo, title: 1 }], { status: okStatus })));
 
-    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: { query: {} } });
+    const result = await requestEndpoint({ endpoint: listTodoEndpoint, input: {} });
     const actual = result.ok ? null : result.error.kind;
 
     const expected = 'invalid-response';

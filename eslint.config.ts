@@ -335,6 +335,51 @@ export default defineConfig(
     },
   },
   {
+    // usecase が定める gateway と presenter の型の置き場で、実装は src/gateways/ と src/presenters/ に置く（usecases.md）
+    files: ['src/usecases/*/gateways/**/*.ts', 'src/usecases/*/presenters/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          message:
+            'このディレクトリには型定義のみを配置できます。値定義（const/function/class）は実装の層に移動してください',
+          selector:
+            'ExportNamedDeclaration > :matches(VariableDeclaration, FunctionDeclaration, ClassDeclaration)',
+        },
+        {
+          message: 'このディレクトリには型定義のみを配置できます',
+          selector: 'ExportDefaultDeclaration',
+        },
+      ],
+    },
+  },
+  {
+    // queryOptions と mutationOptions は素のオブジェクトを返し、描画せずにテストできるようにするため、
+    // src/api/ では React のフックを使わない。フックは features から呼ぶ（api.md）
+    files: ['src/api/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              importNames: ['useMutation', 'useQuery', 'useQueryClient', 'useSuspenseQuery'],
+              message:
+                'src/api/ では React のフックを使わず、queryOptions と mutationOptions だけを定義してください',
+              name: '@tanstack/react-query',
+            },
+          ],
+          patterns: [
+            {
+              group: ['./*', '../*'],
+              message: '相対パスではなく @/ エイリアスを使用してください',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['eslint-rules/**/*.ts'],
     rules: {
       'no-restricted-imports': 'off',
