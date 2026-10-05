@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { Container, Heading } from '@radix-ui/themes';
+import { Container, Title } from '@mantine/core';
 
 export const metadata: Metadata = {
   description: 'テンプレートのトップページ',
@@ -10,8 +10,10 @@ export const metadata: Metadata = {
 export default function Page(): React.JSX.Element {
   return (
     <main>
-      <Container>
-        <Heading as="h1">Next.js Template</Heading>
+      <Container py="xl">
+        <Title order={1} size="h3">
+          Next.js Template
+        </Title>
       </Container>
     </main>
   );

@@ -1,6 +1,12 @@
 ---
 description: Rules for Japanese UI copy in pages, components, and stories
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'src/shared-components/**/*.tsx']
+paths:
+  [
+    'src/app/**/*.tsx',
+    'src/features/**/*.tsx',
+    'src/shared-components/**/*.tsx',
+    'packages/ui/src/blocks/**/*.tsx',
+  ]
 ---
 
 # UI Copy Rules

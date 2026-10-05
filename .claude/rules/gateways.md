@@ -20,15 +20,26 @@ It lives in `src/gateways/` rather than `src/helpers/` because a client typed wi
 Each gateway file exports:
 
 1. Async functions that perform I/O with external data sources
-2. Return values are always domain entity types (defined in `src/entities/`)
+2. Return values are always a `Result` (`src/entities/result.ts`) of domain entity types (defined in `src/entities/`). A gateway is the boundary where an external API throws, so it catches there, validates the data with `safeParse`, and never throws itself (`coding-standards.md`)
 
 ```typescript
+import type { Result } from '@/entities/result';
+
 import { schema, type Airport } from '@/entities/airport';
 
-export const fetchAirports = async (): Promise<Airport[]> => {
+export const fetchAirports = async (): Promise<Result<readonly Airport[]>> => {
   const response = await fetch('https://api.example.com/airports');
-  const data = await response.json();
-  return schema.array().parse(data);
+  if (!response.ok) {
+    return {
+      error: new Error(`空港の一覧を取得できませんでした（${String(response.status)}）`),
+      ok: false,
+    };
+  }
+
+  const airportsResult = schema.array().safeParse(await response.json());
+  return airportsResult.success
+    ? { ok: true, value: airportsResult.data }
+    : { error: new Error(`空港の一覧の形が不正です: ${airportsResult.error.message}`), ok: false };
 };
 ```
 

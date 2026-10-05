@@ -27,6 +27,26 @@ E2E tests verify user stories — scenarios that are meaningful from the user's 
 
 The distinction: if it requires a user to navigate, click, or fill a form to trigger the scenario, it belongs in E2E. If it's a code branch that can be exercised by calling a function or rendering a component directly, it belongs in unit tests.
 
+## Every Visited Page Gets an axe Check
+
+The Storybook a11y gate checks one component at a time, so it cannot see page-level properties such as heading order across the page or landmarks. Every page an e2e test visits must therefore have a test that runs axe on it through `findSeriousAccessibilityViolations` (`e2e/helpers/accessibilityChecking.ts`) and expects it to return nothing. Run it after the page has reached the state the scenario checks, so that axe inspects what the user sees.
+
+The helper runs `AxeBuilder` from `@axe-core/playwright` with the same settings as the Storybook gate: `color-contrast` is measured at 3:1, and only `serious` and `critical` violations are returned (`design-a11y.md`). axe reports heading order and landmarks as `moderate`, so this check does not fail on them; it fails on the page-level `serious` and `critical` violations, such as a missing page title or `lang`. Call the helper instead of `new AxeBuilder({ page }).analyze()`, which would apply axe's own defaults.
+
+```typescript
+import { findSeriousAccessibilityViolations } from '@e2e/helpers/accessibilityChecking';
+
+test('ホームを開いた場合、axe の a11y の検査で serious・critical の違反がないこと', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const actual = await findSeriousAccessibilityViolations(page);
+
+  expect(actual).toStrictEqual([]);
+});
+```
+
 ## Test Granularity
 
 Write one test per user-meaningful scenario. Do not bundle multiple unrelated actions into one test.

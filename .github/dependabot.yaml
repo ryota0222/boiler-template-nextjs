@@ -35,9 +35,9 @@ updates:
           - '@vitest/*'
           - '@testing-library/*'
           - jsdom
-      radix:
+      mantine:
         patterns:
-          - '@radix-ui/*'
+          - '@mantine/*'
 
   - package-ecosystem: github-actions
     directory: /

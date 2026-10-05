@@ -1,0 +1,40 @@
+{
+  "name": "@template/ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./theme/*": "./src/theme/*.ts",
+    "./providers/*": "./src/providers/*.tsx",
+    "./blocks/*.css": "./src/blocks/*.css",
+    "./blocks/*": "./src/blocks/*.tsx",
+    "./testing/*": "./src/testing/*.tsx",
+    "./types/*": "./src/types/*.ts",
+    "./table/*": "./src/table/*.ts"
+  },
+  "scripts": {
+    "generate-accent-colors": "tsx scripts/generateAccentColors.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mantine/colors-generator": "9.6.2",
+    "@tanstack/react-table": "9.2.4",
+    "@tanstack/react-virtual": "3.14.13",
+    "chroma-js": "3.2.0"
+  },
+  "devDependencies": {
+    "@mantine/core": "9.6.2",
+    "@mantine/hooks": "9.6.2",
+    "@tabler/icons-react": "3.48.0",
+    "@types/chroma-js": "3.1.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "peerDependencies": {
+    "@mantine/core": "^9.6.2",
+    "@mantine/hooks": "^9.6.2",
+    "@tabler/icons-react": "^3.48.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}

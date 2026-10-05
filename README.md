@@ -1,12 +1,12 @@
 # nextjs-template
 
-Next.js App Router template with Radix Themes, wired for strict linting, accessibility testing, secret scanning, and supply chain protection out of the box.
+Next.js App Router template with Mantine and a shared UI package (`packages/ui`), wired for strict linting, accessibility testing, secret scanning, and supply chain protection out of the box.
 
 ## Requirements
 
 - Node.js 24
 - pnpm 10 (pinned via `packageManager`)
-- [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, and shfmt
+- [mise](https://mise.jdx.dev/) — provides gitleaks, shellcheck, shfmt, and codegraph
 - [Docker](https://www.docker.com/) — runs PostgreSQL via Docker Compose for local development
 
 ## Quick Start
@@ -18,12 +18,15 @@ pnpm install          # postinstall runs `prisma generate`
 pnpm run db:up        # start PostgreSQL (waits for healthcheck)
 pnpm run db:migrate   # apply migrations
 pnpm run db:seed      # insert development data
+codegraph init        # build the code index for the codegraph MCP server
 pnpm dev
 ```
 
 Open <http://localhost:3000>.
 
 `pnpm install` runs `playwright install chromium` afterwards, which the Storybook accessibility tests and the end-to-end tests both need.
+
+`codegraph init` indexes symbols, call paths, and impact into `.codegraph/`, which the codegraph MCP server (`.mcp.json`) hands to agents. The index is built per clone, kept out of git, and updated automatically as files change.
 
 The app itself is not containerised for development — Next.js runs on the host because HMR is measurably faster there. `compose.yaml` starts PostgreSQL only.
 
@@ -38,19 +41,22 @@ Four things carry template defaults and need replacing before the project is you
 | Design baseline                  | `src/helpers/theme.ts`          | Accent color, radius, appearance, and voice & tone — set via `/setup-theme`                        |
 | Favicon                          | `src/app/favicon.ico`           | Still the Next.js default — it renders as the Next.js logo, so a missed replacement ships silently |
 
-The design baseline — **accent color, corner radius, appearance mode, and voice & tone** — is decided before any UI work. Run `/setup-theme` in Claude Code; it asks four impression-based questions and writes `src/helpers/theme.ts`:
+The design baseline — **accent color, corner radius, appearance mode, and voice & tone** — is decided before any UI work. Run `/setup-theme` in Claude Code; it asks four impression-based questions, turns the accent into a ten-step scale with `pnpm --filter @template/ui run generate-accent-colors '<#rrggbb>'`, and writes `src/helpers/theme.ts`:
 
 ```typescript
 export const themeConfig = {
-  accentColor: 'jade',
+  accentColors: ['#f0edff', '#dcd8fa', /* … ten steps … */ '#281f94'],
+  accentShade: 6,
   appearance: 'light',
+  fontFamily: '…',
+  fontFamilyMonospace: '…',
   isConfigured: true,
-  radius: 'medium',
+  radius: 'md',
   voiceAndTone: 'friendly',
-} as const;
+} as const satisfies ThemeConfig;
 ```
 
-`accentColor` (any [Radix color](https://www.radix-ui.com/colors)), `radius`, and `appearance` are applied to Radix `<Theme>` in both the app and Storybook; `voiceAndTone` guides UI copy only. Until `isConfigured` is `true`, a Claude Code hook blocks edits to `src/` (except `theme.ts`), so implementation never starts on undecided styling.
+`UiProvider` from `@template/ui` applies the theme in both the app and Storybook, together with the text-colour overrides that keep secondary text and error messages readable; `voiceAndTone` guides UI copy only. Until `isConfigured` is `true`, a Claude Code hook blocks edits to `src/` (except `theme.ts`), so implementation never starts on undecided styling.
 
 ## Project Structure
 
@@ -64,13 +70,15 @@ src/
   presenters/           # Display formatting functions
   helpers/              # Shared utilities & library configuration
   stores/               # Client UI state (Zustand)
+packages/
+  ui/                   # @template/ui: Mantine theme, UiProvider, test helpers, shared blocks
 prisma/
   schema.prisma         # Database schema
   migrations/           # Migration history
   seed.ts               # Development seed data
 ```
 
-Radix Themes components are imported directly rather than wrapped, so the template is usable immediately without per-component setup work.
+Mantine components are imported directly rather than wrapped. Screens that repeat a shape — a page header, an empty state, an error banner, a data table — use the blocks in `packages/ui` instead of rebuilding them. `packages/ui` is a copy of prototalk-enterprise's package without its CSV and authentication parts; see [.claude/rules/ui-blocks.md](./.claude/rules/ui-blocks.md).
 
 Layer boundaries are enforced by dependency-cruiser, not convention alone. See [AGENTS.md](./AGENTS.md) for the full rules.
 
@@ -83,7 +91,7 @@ Delete it once its purpose — showing the pattern end to end — has been serve
 - The `Todo` model in `prisma/schema.prisma`, plus a follow-up migration (`pnpm run db:migrate`)
 - `src/entities/todo.ts` and `src/entities/todo.test.ts`
 - `src/gateways/todo.ts` and `src/gateways/todo.db.test.ts`
-- `prisma/seed.ts`, its `migrations.seed` entry in `prisma.config.ts`, and its entry in `package.json`'s `knip.entry` — once `Todo` is gone there is nothing left to seed; add all three back when your own schema needs seed data
+- `prisma/seed.ts`, its `migrations.seed` entry in `prisma.config.ts`, and its entry in `package.json`'s `knip.workspaces["."].entry` — once `Todo` is gone there is nothing left to seed; add all three back when your own schema needs seed data
 
 `zod` loses its only consumer once `src/entities/todo.ts` is gone, but `package.json` already lists it in `knip.ignoreDependencies` for exactly this reason (see AGENTS.md), so `pnpm knip` stays green without any extra step.
 
@@ -140,9 +148,9 @@ Delete it once its purpose — showing the pattern end to end — has been serve
 
 ## Accessibility Gate
 
-Storybook stories are rendered in Chromium and checked by axe-core; violations fail `pnpm test`. Coverage comes entirely from stories, so a component state without a story is never checked.
+Storybook stories — in `src/` and in `packages/ui` — are rendered in Chromium and checked by axe-core; `serious` and `critical` violations fail `pnpm test`, and text contrast is measured at 3:1. A component state without a story is never checked, so [.claude/rules/stories.md](./.claude/rules/stories.md) lists which states need one.
 
-The template ships with no stories. Until the first `.stories.tsx` exists the gate has nothing to inspect, and `pnpm test` passes on `passWithNoTests`.
+Page-level properties such as the page title and `lang` are checked by the e2e tests: every page an e2e test visits runs axe through `e2e/helpers/accessibilityChecking.ts` with the same settings.
 
 ## Supply Chain Protection
 

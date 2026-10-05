@@ -45,5 +45,8 @@ tmp/
 # git worktrees
 .worktrees/
 
+# codegraph index (built locally with `codegraph init`)
+.codegraph/
+
 *storybook.log
 storybook-static

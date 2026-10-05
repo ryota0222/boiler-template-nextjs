@@ -1,8 +1,3 @@
-.radix-themes {
-  --default-font-family: var(--font-geist-sans);
-  --code-font-family: var(--font-geist-mono);
-}
-
 html {
   height: 100%;
 }
@@ -14,8 +9,8 @@ body {
   min-height: 100%;
 }
 
-/* Radix Themes はリストの既定パディングを消さないため、ul で組んだ一覧だけが
-   40px 右にずれて他の要素と縦のラインが揃わない */
+/* ブラウザの既定のパディングが残ると、ul で組んだ一覧だけが 40px 右にずれて
+   他の要素と縦のラインが揃わない */
 ul {
   list-style: none;
   margin: 0;
@@ -23,12 +18,7 @@ ul {
 }
 
 /* iOS Safari は font-size が 16px 未満の入力欄にフォーカスするとページ全体を
-   拡大する。Radix Themes の既定 size="2" は 14px にあたるため入力欄だけ引き上げる */
-.radix-themes :where(input, textarea) {
+   拡大する。Mantine の入力欄の既定 size="sm" は 14px にあたるため引き上げる */
+.mantine-Input-input {
   font-size: 16px;
-}
-
-/* 上の引き上げで textarea の行送りが 1.25 まで詰まり、折り返した行が読みにくくなる */
-.radix-themes :where(textarea) {
-  line-height: var(--line-height-3);
 }

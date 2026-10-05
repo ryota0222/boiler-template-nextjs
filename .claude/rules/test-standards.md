@@ -49,7 +49,16 @@ it('...', () => {
 
 ## One Test, One Assertion
 
-Each test verifies exactly one thing with one `expect()` call.
+Each test verifies exactly one thing with one `expect()` call. Two or more `expect()` calls in one test are never allowed; split them into separate tests.
+
+### Type-level tests: the only exception
+
+A test that verifies some code must NOT compile has nothing to assert at runtime, because types are erased before the test runs. Write it with a `// @ts-expect-error <reason>` line and no `expect()` call. The assertion is the typecheck itself: if the code ever compiles, TypeScript reports the directive as unused (TS2578), and the typecheck in the pre-commit hook fails.
+
+- Use this only for "must not compile" checks. Anything observable at runtime still needs exactly one `expect()`
+- One `@ts-expect-error` per test, for the same reason as one `expect()` per test
+- Always write the reason after `@ts-expect-error`
+- Put the directive on the exact line TypeScript reports, not above the whole call
 
 ## Test Only Branches
 
@@ -71,6 +80,8 @@ it('Projectが空の場合、警告メッセージにメンバー名を含むこ
   expect(actual).toContain('田中');
 });
 ```
+
+The one exception is a component with no branches at all, such as a wrapper that passes fixed copy or a fixed link component to a block. Coverage does not count stories, so nothing else runs it: cover it with exactly one test that asserts the reason it exists — its wiring — and nothing more.
 
 ## `toBe` / `toEqual` Rules
 
@@ -243,3 +254,9 @@ it('isActiveがfalseの場合、スタイルのスナップショットが一致
 
 - App Router convention files (layout.tsx, page.tsx, loading.tsx, error.tsx, not-found.tsx) are excluded from test coverage
 - Extract logic from these files into separate components/functions and test those instead
+
+## Coverage
+
+Coverage is measured over the `unit` Vitest project (`src/` and `packages/*/src/`). The `storybook` project renders every story for the a11y check only (`stories.md`), so a story is never written or kept just to run code: cover a component with a `.test.tsx` that renders it in jsdom (`renderWithUi` from `@template/ui/testing/TestRendering`).
+
+App Router convention files (`layout`, `page`, `loading`, `error`, `not-found`), `*.stories.tsx`, and test files are excluded. Extract conditional logic out of excluded files into separate files as functions, and cover those files.

@@ -1,6 +1,12 @@
 ---
 description: Rules for input controls, validation, conditional display, and confirming what a form will produce
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'src/shared-components/**/*.tsx']
+paths:
+  [
+    'src/app/**/*.tsx',
+    'src/features/**/*.tsx',
+    'src/shared-components/**/*.tsx',
+    'packages/ui/src/blocks/**/*.tsx',
+  ]
 ---
 
 # Forms and Input
@@ -47,20 +53,26 @@ design decision, not in a tooltip on the screen.
 
 - **Type**: MUST
 
-| Input                          | Radix component                    |
-| ------------------------------ | ---------------------------------- |
-| 2–3 choices                    | `RadioGroup`, all visible          |
-| 4 or more choices              | `Select`                           |
-| Many choices, searched by name | `Dialog` with its own search field |
-| Multiple selection             | `Checkbox`                         |
-| Long text                      | `TextArea`                         |
+| Input                          | Mantine component                                         |
+| ------------------------------ | --------------------------------------------------------- |
+| 2–3 choices                    | `Radio.Group`, all visible                                |
+| 4 or more choices              | `Select`                                                  |
+| Many choices, searched by name | `Select` with `searchable`                                |
+| Multiple selection             | `Checkbox.Group`                                          |
+| Long text                      | `Textarea`                                                |
+| Amounts and quantities         | `NumberInput` with `thousandSeparator` and `decimalScale` |
+| Dates                          | `DateInput` from `@mantine/dates`                         |
+
+Add `@mantine/dates` the first time a screen needs a date. A date or a number is never a
+`TextInput` — the typed control is what rejects `2026/13/40` and `1,2,3` before validation has to.
 
 Auto-calculated values are not choices. Prefill the field and let the user type over it; the act
 of typing records that the value was checked against the source. Offer a way back
 (`自動算出に戻す`) rather than a mode switch.
 
 Free-text fields that repeat across records (a category, a person's name) suggest previously
-entered values. Suggestion is not validation — do not reject a value that is not in the list.
+entered values with `Autocomplete`. Suggestion is not validation — do not reject a value that is not
+in the list, which is why this is `Autocomplete` and not `Select`.
 
 ## Validation Appears Under the Field, on Blur
 
@@ -68,10 +80,11 @@ entered values. Suggestion is not validation — do not reject a value that is n
 - **Reason**: Validating while typing reports an error the user is halfway through fixing.
   Validating only on submit hides which field is wrong.
 
-Fire on focus-out for the field that lost focus, and on submit for everything. Render the message
-directly under the field, tie it to the input with `aria-describedby` (`design-a11y.md`), and mark
-the field itself so a scan finds it without reading. Wording is cause plus next step
-(`design-copy.md`).
+Fire on focus-out for the field that lost focus, and on submit for everything — with
+`@mantine/form`, `validateInputOnBlur`. Pass the message to the input's `error` prop: Mantine
+renders it directly under the field, sets `aria-invalid`, ties it to the input with
+`aria-describedby` (`design-a11y.md`), and marks the field itself so a scan finds it without
+reading. Wording is cause plus next step (`design-copy.md`).
 
 Never move focus or scroll to the error on blur; the user knows where they are.
 
@@ -79,18 +92,16 @@ Never move focus or scroll to the error on blur; the user knows where they are.
 
 - **Type**: MUST
 
-A red `＊` after the label, hidden from assistive technology, plus the accessible requirement on
-the field itself.
+A red `*` after the label, hidden from assistive technology, plus the accessible requirement on
+the field itself. Mantine's `required` prop produces both: the input gets `required`, and the label
+gets an asterisk with `aria-hidden`. Do not draw a second mark by hand.
 
 ```typescript
-// Good: the mark is visual, the requirement is programmatic
-<Text as="label" size="1" htmlFor="order-quantity">
-  数量
-  <Text color="red" aria-hidden>
-    ＊
-  </Text>
-</Text>
-<TextField.Root id="order-quantity" required aria-describedby="order-quantity-error" />
+// Good: one prop, the mark is visual and the requirement is programmatic
+<NumberInput label="数量" required />
+
+// Bad: a hand-drawn mark, announced as "asterisk" and duplicating nothing programmatic
+<NumberInput label="数量 ＊" />
 ```
 
 Conditionally required fields switch the mark with the condition, never leaving a `＊` on a field
@@ -102,14 +113,15 @@ that is currently optional.
 - **Reason**: Text that explains a field is read once and then costs a line forever.
 
 An information icon next to the label, revealing a `Tooltip` on hover and on keyboard focus. The
+icon sits inside the input's `label` prop, and the element the `Tooltip` wraps is focusable
+(`ActionIcon` with an `aria-label`), or keyboard users never reach the hint. The
 hint carries what the field means or where its value comes from — not the reason the field exists.
 
 Keep one line of always-visible hint only for a format constraint the user must know before
-typing (`半角数字で入力します`, `日付だけを入力できます`).
+typing (`半角数字で入力します`, `日付だけを入力できます`), in the input's `description` prop.
 
-The icon aligns to the middle of the label text, not to its baseline. In a `Flex` label this is
-automatic; anywhere the label is laid out as a grid, wrap the label and icon in an inline flex
-container.
+The icon aligns to the middle of the label text, not to its baseline. Put the label text and the
+icon in a `Group align="center" gap="xs"` inside the `label` prop.
 
 ## What the State Does Not Use, the Screen Does Not Show
 

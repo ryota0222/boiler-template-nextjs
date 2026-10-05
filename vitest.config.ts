@@ -23,9 +23,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      include: ['src/**/*.{ts,tsx}'],
+      include: ['src/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.test.{ts,tsx}',
+        'packages/*/src/**/*.test.{ts,tsx}',
+        'packages/*/src/**/*.stories.tsx',
         'src/app/**/layout.tsx',
         'src/app/**/page.tsx',
         'src/app/**/loading.tsx',
@@ -40,7 +42,11 @@ export default defineConfig({
           name: 'unit',
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
-          include: ['src/**/*.test.{ts,tsx}', 'eslint-rules/**/*.test.ts'],
+          include: [
+            'src/**/*.test.{ts,tsx}',
+            'packages/*/src/**/*.test.{ts,tsx}',
+            'eslint-rules/**/*.test.ts',
+          ],
           exclude: [...configDefaults.exclude, 'src/gateways/**/*.db.test.ts'],
         },
       },

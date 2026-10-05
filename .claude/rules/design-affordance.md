@@ -1,6 +1,12 @@
 ---
 description: Rules for making interactive elements recognisable as interactive
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'src/shared-components/**/*.tsx']
+paths:
+  [
+    'src/app/**/*.tsx',
+    'src/features/**/*.tsx',
+    'src/shared-components/**/*.tsx',
+    'packages/ui/src/blocks/**/*.tsx',
+  ]
 ---
 
 # Affordance Rules
@@ -11,59 +17,59 @@ An element that can be operated must look operable. This is separate from `desig
 
 - Every interactive element carries at least one cue that is not colour: an underline, a border, a filled background, or an icon.
 
-Colour alone fails for a reader with low vision or colour blindness, and it fails outright when the theme has no chromatic accent. `themeConfig.accentColor` is a decision that can change after the component is written, so a component that depends on the accent for its only cue breaks when the theme is retuned.
+Colour alone fails for a reader with low vision or colour blindness, and it fails outright when the theme has no chromatic accent. `themeConfig.accentColors` is a per-app decision that can change after the component is written, so a component that depends on the accent for its only cue breaks when the theme is retuned.
 
-This is not hypothetical. A `Link` placed in body text under an accent of `gray` was measured at `rgba(0, 0, 0, 0.608)` with `text-decoration-line: none` — identical to the surrounding paragraph in both colour and decoration. Nothing marked it as a link.
+This is not hypothetical. Mantine's `Anchor` defaults to `underline="hover"`, so a link in body text is marked by colour alone until the pointer happens to rest on it — and a keyboard or touch user never hovers. Under a gray accent it is identical to the surrounding paragraph. An `Anchor` therefore always takes `underline="always"`.
 
 ```typescript
 // Good: the element is an anchor, and it reads as a control
-<Button asChild variant="soft">
-  <NextLink href={settingsPath}>設定</NextLink>
-</Button>
+<Anchor component={NextLink} href={settingsPath} underline="always">
+  設定
+</Anchor>
 
-// Bad: relies on the accent colour, which may be gray
-<Link asChild>
-  <NextLink href={settingsPath}>設定</NextLink>
-</Link>
+// Bad: underlined only on hover, so colour is the only cue at rest
+<Anchor component={NextLink} href={settingsPath}>
+  設定
+</Anchor>
 ```
 
 In a table, the cell that opens the record is underlined, not merely coloured. A whole row that responds to a click still needs one cue inside it that says so.
 
 ## The Element Follows the Meaning, the Appearance Follows the Role
 
-Navigation renders as `a`, state change renders as `button`. Radix `asChild` keeps the element correct while the appearance is chosen freely, so there is never a reason to swap one for the other to get a look.
+Navigation renders as `a`, state change renders as `button`. Mantine's `component` prop keeps the element correct while the appearance is chosen freely — `<Button component={NextLink} href={…}>` is a link that looks like a button — so there is never a reason to swap one for the other to get a look.
 
 An icon-only control has no text node, so it needs an `aria-label`. Without one it is announced as "button" and nothing else.
 
 ```typescript
 // Good
-<IconButton aria-label="共有" variant="soft">
-  <Share2 size={18} />
-</IconButton>
+<ActionIcon aria-label="共有" size="lg" variant="light">
+  <IconShare size={18} />
+</ActionIcon>
 
 // Bad: no accessible name
-<IconButton variant="soft">
-  <Share2 size={18} />
-</IconButton>
+<ActionIcon size="lg" variant="light">
+  <IconShare size={18} />
+</ActionIcon>
 ```
 
 ## A Badge Means State, and Nothing Else
 
-A record's current state is always visible on the row and on the single-object screen, as a `Badge` carrying a label. `design-a11y.md` requires the second, non-colour cue; this rule adds which elements are allowed to be badges at all.
+A record's current state is always visible on the row and on the single-object screen, as a `StatusBadge` carrying a label (`design-icon.md` decides its glyph). `design-a11y.md` requires the second, non-colour cue; this rule adds which elements are allowed to be badges at all.
 
 A record's kind or category is an attribute, not a state — render it as plain text. When both are badges, the badge stops meaning anything and the row has no state indicator left.
 
 ```typescript
 // Good: state as a badge, kind as text
-<Table.Cell>通常配送</Table.Cell>
-<Table.Cell>
-  <Badge color="amber">未発送</Badge>
-</Table.Cell>
+<Table.Td>通常配送</Table.Td>
+<Table.Td>
+  <StatusBadge size="md" tone="awaiting">未発送</StatusBadge>
+</Table.Td>
 
 // Bad: the kind competes with the state
-<Table.Cell>
-  <Badge color="gray">通常配送</Badge>
-</Table.Cell>
+<Table.Td>
+  <StatusBadge size="md" tone="queued">通常配送</StatusBadge>
+</Table.Td>
 ```
 
 ## Editing Context Is Shown Where the Edit Lands
