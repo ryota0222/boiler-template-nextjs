@@ -27,8 +27,8 @@
     "@mantine/hooks": "9.6.2",
     "@tabler/icons-react": "3.48.0",
     "@types/chroma-js": "3.1.2",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "peerDependencies": {
     "@mantine/core": "^9.6.2",
