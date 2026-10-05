@@ -17,14 +17,18 @@ description: Coding best practices (code quality, error handling)
   | `should` + verb       | `shouldDryRun`, `shouldSkip` |
   | `can` + verb          | `canRetry`, `canDelete`      |
 
+  Do not use negated forms (`isNot`, `hasNo`, `shouldNot`) — use affirmative names and negate at the call site.
+
   ```typescript
   // Good
   const isEnabled = true;
   const shouldDryRun = options.dryRun;
+  const hasValue = (value: unknown): boolean => value !== null;
 
   // Bad
   const enabled = true;
   const dryRun = options.dryRun;
+  const isNotNull = (value: unknown): boolean => value !== null;
   ```
 
 - File names must be noun-based (representing the concept or concern they own);
@@ -65,6 +69,18 @@ description: Coding best practices (code quality, error handling)
   ```
 
   This applies to `entities/`, `gateways/`, `presenters/`, and `helpers/`.
+
+  When a word in a file name could be read as either a verb or a noun (`retry`, `run`, `update`, `read`, `parse`), use the gerund (`retrying`, `running`, `updating`, `reading`, `parsing`). A file names a unit of work, and the gerund names that activity without ambiguity; the functions inside still follow the verb-phrase convention.
+
+  ```text
+  // Good
+  helpers/exponentialBackoffRetrying.ts
+  entities/safeParsingToResult.ts
+
+  // Bad: verb or noun?
+  helpers/exponentialBackoffRetry.ts
+  entities/safeParseToResult.ts
+  ```
 
   For `features/` and `shared-components/`, the directory name and the component file name (without extension) must match using kebab-case ↔ PascalCase conversion:
 
@@ -130,11 +146,13 @@ description: Coding best practices (code quality, error handling)
   type User = { id: string; fullName: string; /** @deprecated */ name?: string };
   ```
 
-- No fallback handling (throw immediately on errors)
+- No fallback handling (return an error `Result` immediately instead of substituting a default)
 
   ```typescript
   // Good
-  if (!data.userId) throw new Error('userId is missing');
+  if (data.userId === null) {
+    return { error: new Error('userId is missing'), ok: false };
+  }
   // Bad
   const userId = data.userId ?? 'unknown';
   ```
@@ -149,7 +167,47 @@ description: Coding best practices (code quality, error handling)
   console.log(formattedDate);
   ```
 
+- Declare variables immediately before their first use, not at the top of a function or module scope
+
+  ```typescript
+  // Good: declared just before use
+  const run = (): void => {
+    doSomething();
+    const decimalPlaces = 2;
+    console.log(value.toFixed(decimalPlaces));
+  };
+
+  // Bad: declared far from use
+  const decimalPlaces = 2;
+  const run = (): void => {
+    doSomething();
+    console.log(value.toFixed(decimalPlaces));
+  };
+  ```
+
+- No single-use type definitions (inline at the usage site). Define a `type` only when it is used in more than one place.
+
+  ```typescript
+  // Good: inline in the function signature
+  const run = async ({ argv }: { readonly argv: readonly string[] }): Promise<void> => { ... };
+
+  // Bad: a type used only once
+  type RunParameters = { readonly argv: readonly string[] };
+  const run = async ({ argv }: RunParameters): Promise<void> => { ... };
+  ```
+
 ## Error Handling & Robustness
+
+Functions never throw. They return a discriminated union that the caller narrows before use; the type lives in `src/helpers/result.ts`.
+
+```typescript
+type Result<T> =
+  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: Error };
+```
+
+Narrow with `if (!result.ok)` and return early. Do not reach for `try`/`catch` except at the boundary where an external API throws — convert the thrown value into a `Result` there and return it.
+
+Validate external data with a zod schema and `safeParse`, then map the outcome onto `Result`. Do not use manual type guards, and do not use `parse`, which throws.
 
 - Catch unexpected errors and log actionable diagnostics
 - Clean up resources to prevent memory leaks (e.g. abort fetch requests, remove event listeners)
@@ -162,6 +220,105 @@ description: Coding best practices (code quality, error handling)
     return () => controller.abort();
   }, []);
   ```
+
+## Performance
+
+- Use streams or batch processing for large data to minimize memory usage
+
+  ```typescript
+  // Good: stream processing
+  const stream = createReadStream('large.csv');
+  // Bad: loading the entire file into memory
+  const content = readFileSync('large.csv', 'utf-8');
+  ```
+
+## Language Policy
+
+- User-facing messages (UI copy, API error messages), code comments, test names, and commit messages are written in Japanese
+- Rule files (`.claude/rules/`) are written in English
+
+## If Statement Style
+
+Always use block form for `if` statements. Single-line `if` is forbidden.
+
+```typescript
+// Good
+if (!result.ok) {
+  return result;
+}
+
+// Bad
+if (!result.ok) return result;
+```
+
+## Nesting Limit
+
+Maximum nesting depth is 1 level inside a function body. Extract nested logic into separate functions.
+
+```typescript
+// Good: flat with an extracted function
+const dryRun = async (...) => {
+  if (!result.ok) {
+    return result;
+  }
+  return { ok: true, value: undefined };
+};
+
+const addContext = async (...) => {
+  if (command.isDryRun) {
+    return dryRun(...);
+  }
+  return update(...);
+};
+
+// Bad: 2-level nesting
+const addContext = async (...) => {
+  if (command.isDryRun) {
+    if (!result.ok) {
+      return result;
+    }
+  }
+};
+```
+
+## Higher-Order Function Naming
+
+Name higher-order functions (factories that return functions) as `create` + gerund (`createReadingGlossary`, `createPrintingResult`). Do not use `create` + bare verb (`createReadGlossary`), because two verbs in a row are not grammatical.
+
+## Blank Line Grouping
+
+Group related statements into logical blocks separated by blank lines. Each block is one step of the function's work (fetch data, check the error, compute the result). Do not write long sequences of statements without blank lines.
+
+```typescript
+// Good: grouped by step
+const todosResult = await fetchTodoList();
+if (!todosResult.ok) {
+  return todosResult;
+}
+
+const summary = summarizeTodos(todosResult.value);
+
+// Bad: no blank lines between unrelated steps
+const todosResult = await fetchTodoList();
+if (!todosResult.ok) {
+  return todosResult;
+}
+const summary = summarizeTodos(todosResult.value);
+```
+
+## No Shared Base Types
+
+Do not group several functions' dependencies into a shared base type. Each function defines its own dependency type, so that a change to one function does not affect the others.
+
+```typescript
+// Good: each function has its own type
+type AddTodoGateways = { readonly saveTodo: SaveTodo };
+type CompleteTodoGateways = { readonly updateTodo: UpdateTodo };
+
+// Bad: a shared base couples unrelated functions
+type BaseGateways = { readonly readTodo: ReadTodo };
+type AddTodoGateways = BaseGateways & { readonly saveTodo: SaveTodo };
+```
 
 ## App Router Entry Constraints
 

@@ -1,6 +1,6 @@
 ---
 description: Rules for searching, sorting, paging, and acting in bulk on a collection view
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx']
+paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'packages/ui/src/blocks/**/*.tsx']
 ---
 
 # Collection Views
@@ -18,7 +18,8 @@ Where the search row sits relative to the header and the table is `design-layout
   condition must be visible without opening anything.
 
 Render the active conditions as removable chips under the search row, plus one control that
-clears all of them. Each chip names the field and the value.
+clears all of them. Each chip names the field and the value. Per-column filters are conditions too,
+and get their own chips.
 
 The search field itself states its scope in the placeholder — the user should not have to guess
 which columns it matches.
@@ -40,17 +41,21 @@ be clicked. Nulls sort last in both directions.
 
 `design-a11y.md` owns the `aria-sort` requirement; this rule owns the interaction it describes.
 
-## Pagination Is Fixed at 20 / 50 / 100
+## Pagination Is Fixed at 20 / 50 / 100, Plus All
 
 - **Type**: MUST
 - **Reason**: An unbounded list hides both the scroll cost and the total, and the total is what
   tells the user whether their filter did what they meant.
 
-20 rows by default. A size selector offering 20 / 50 / 100. Alongside it, the visible range and
-the total: `1〜20件を表示　全26件`.
+20 rows by default. A size selector offering 20 / 50 / 100, and All. Alongside it, the visible range
+and the total: `1〜20件を表示　全26件`.
 
-An infinite scroll replaces the total with nothing, so it needs a reason. Treat it as a decision,
-not a default.
+All exists because users coming from Excel scan a whole sheet at once, and a total with grouping
+and subtotals only reads well when every row is in view. It still shows the range and the total,
+and the table virtualises its rows so the page stays responsive. `DataTable` from `@template/ui`
+does both.
+
+An infinite scroll that drops the total is still a decision with a reason, not a default.
 
 ## Bulk Actions State the Count Before They Run
 
@@ -73,8 +78,7 @@ Rows that cannot take the action get a disabled checkbox, and the header says wh
 Update the row's `aria-selected`, the bulk bar, and the header emphasis in place. Only a change
 of filter, sort, page, or page size redraws the table.
 
-Selection is client UI state local to the collection component, so it belongs in `useState` rather
-than in a store — see `state-management.md`.
+Selection is client UI state local to the collection component, so it belongs in `useState`.
 
 ## Every Column Earns Its Width
 

@@ -1,6 +1,6 @@
 ---
 description: Rules for object-first screen design (OOUI) in App Router pages and feature components
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx']
+paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'packages/ui/src/blocks/**/*.tsx']
 ---
 
 # Object-First Screen Design
@@ -108,7 +108,7 @@ A mismatch in this table means either the object was renamed halfway through or 
 
 - **Type**: MUST
 
-Pick a glyph the user could guess from what the object is, not from the letters of its label. Never repeat one glyph for two objects. The icon set itself is fixed by `design-layout.md`.
+Pick a glyph the user could guess from what the object is, not from the letters of its label. Never repeat one glyph for two objects. The icon set itself is fixed by `design-icon.md`.
 
 ## Hiding a Menu Entry and Removing It Are Different
 

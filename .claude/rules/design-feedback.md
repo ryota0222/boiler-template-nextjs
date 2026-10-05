@@ -1,6 +1,12 @@
 ---
 description: Rules for how the system answers — toasts, error banners, loading, modals, and confirmation dialogs
-paths: ['src/app/**/*.tsx', 'src/features/**/*.tsx', 'src/shared-components/**/*.tsx']
+paths:
+  [
+    'src/app/**/*.tsx',
+    'src/features/**/*.tsx',
+    'src/shared-components/**/*.tsx',
+    'packages/ui/src/blocks/**/*.tsx',
+  ]
 ---
 
 # Feedback
@@ -17,9 +23,10 @@ message is announced at all is `design-a11y.md`.
 Bottom-right, auto-dismissing after 3 seconds. One sentence naming the object and what happened:
 `注文 #1024 を登録しました`.
 
-Radix Themes ships no toast component, so this surface is hand-built and its live region is the
-implementer's responsibility — the container is rendered empty first and its text set afterwards
-(`design-a11y.md`).
+Use `@mantine/notifications` (`notifications.show` with `position: "bottom-right"` and
+`autoClose: 3000`). It defaults every notification to `role="alert"`, so a success toast passes
+`role: "status"` (`design-a11y.md`). `Notifications` is mounted once in the root layout
+(`app/layout.tsx`), so a screen only calls `notifications.show`.
 
 Do not put a toast where the screen already shows the result. Navigating to the single-object
 screen of the record you just created is itself the confirmation; the toast only adds the verb.
@@ -30,8 +37,13 @@ screen of the record you just created is itself the confirmation; the toast only
 - **Reason**: A failed request has no field to attach itself to, and it must survive long enough
   to be read and acted on.
 
-A `Callout` pinned at the top of the content, `color="red"` with an icon child, stating cause and
-next step, and carrying the action that retries. It stays until the condition changes.
+An `Alert` pinned at the top of the content, `color="red"` and `variant="light"` with an `icon`,
+stating cause and next step, and carrying the action that retries. It stays until the condition
+changes, so it has no close button.
+
+A button inside the banner is `variant="default"`, as `ErrorBanner` renders it. `outline` and
+`light` take the accent, and an accent-coloured control on a red surface reads as a clash rather
+than as the next step.
 
 Field-level problems are not banners — they belong under the field (`design-form.md`).
 
@@ -41,12 +53,20 @@ Field-level problems are not banners — they belong under the field (`design-fo
 - **Reason**: A spinner on a blank page moves everything when data arrives, and a live button
   during a mutation gets pressed twice.
 
-| Scope           | Treatment                                                                            |
-| --------------- | ------------------------------------------------------------------------------------ |
-| Whole screen    | `Skeleton` at the dimensions the loaded content will have                            |
-| A single action | `Spinner` inside the button, button disabled, label switched to the progressive form |
+| Scope                                  | Treatment                                                                                                                                                                                                        |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Whole screen                           | `Skeleton` at the dimensions the loaded content will have                                                                                                                                                        |
+| Authentication screen (under `(auth)`) | `AuthenticationLoading`: a centered `Loader`; the screen is a single small card that `AuthenticationLayout` re-centers, so a centered spinner shifts little                                                      |
+| A single action                        | The button is `disabled`, a small `Loader` sits in its `leftSection`, and its label switches to the progressive form (`保存しています…`); never the `loading` prop, which hides the label behind a bare `Loader` |
 
 The whole-screen case is what `loading.tsx` renders (`design-states.md`).
+
+## LLM Work Shows the Thinking Orb, Waiting Shows a Loader
+
+- **Type**: MUST
+- **Reason**: Waiting for an LLM to think or write takes seconds to minutes and is the product working, while waiting for a request or a server is plumbing. When both show the same spinner, the reader cannot tell that the AI is doing something for them.
+
+While an LLM is thinking or producing something — a chat reply, a summary, a generated draft — show the thinking orb next to a progressive line of `ShimmerText` (`ThinkingIndicator`, or `ThinkingOrbIcon` beside the line). Everything else that waits — a submitting button, a reload, a server starting — keeps Mantine's `Loader`. In a chat, the orb takes the place of the assistant's ✦ while the reply is being written. The orb is `thinking-orbs` behind `ThinkingOrbIcon` (`src/shared-components/thinking-orb-icon/`), fixed to one state and theme, at 20px beside a line or 64px in the middle of an empty region that the LLM is filling; never import `thinking-orbs` anywhere else.
 
 ## A Modal Is Allowed Under Three Conditions
 
@@ -67,9 +87,14 @@ chain `design-ooui.md` requires.
 Close or cancel on the left, the confirming action on the right and coloured. A dimmed overlay
 behind. `Esc` and a click on the overlay both close it, and closing is never confirmed.
 
-Use `Dialog` or `AlertDialog`, never a hand-built overlay — the Radix components trap focus,
-restore it to the trigger on close, and close on Escape (`design-a11y.md`). Focus moves into the
-dialog on open: to the first input, or to the confirming button when there is nothing to type.
+Use `Modal`, never a hand-built overlay — it traps focus, restores it to the trigger on close, and
+closes on Escape and on an overlay click by default (`design-a11y.md`). Pass
+`withCloseButton={false}`: the footer's close button and Escape already close it, and the header's
+`×` would otherwise be the first thing to receive focus.
+
+Focus moves into the dialog on open, to the first input, or to the close button when there is
+nothing to type — the least destructive control. That is the element Mantine's focus trap picks by
+itself once the header's `×` is gone, so no `data-autofocus` is needed (TSX rejects `data-*`).
 
 ## Creating, Committing, and Deleting Are Confirmed
 
