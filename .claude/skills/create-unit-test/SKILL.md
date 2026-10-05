@@ -82,7 +82,7 @@ describe('targetFunction', () => {
 ### Step 5: Run and verify
 
 ```bash
-npx vitest run src/libs/feature/targetFunction.test.ts
+pnpm exec vitest run src/libs/feature/targetFunction.test.ts
 ```
 
 ### Step 6: Compliance check
