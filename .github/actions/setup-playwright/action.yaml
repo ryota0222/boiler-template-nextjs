@@ -1,0 +1,22 @@
+name: Setup Playwright Chromium
+description: Restore Chromium from the cache, or download it, and install its system packages
+
+runs:
+  using: composite
+  steps:
+    - id: version
+      run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      shell: bash
+    # Chromium の取得（約 170 MB）を毎回しないよう、Playwright の版ごとにキャッシュする
+    - id: cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-chromium-${{ runner.os }}-${{ steps.version.outputs.version }}
+    - if: steps.cache.outputs.cache-hit != 'true'
+      run: pnpm exec playwright install --with-deps chromium
+      shell: bash
+    # キャッシュにはブラウザしか入らないため、OS のパッケージだけを入れる
+    - if: steps.cache.outputs.cache-hit == 'true'
+      run: pnpm exec playwright install-deps chromium
+      shell: bash

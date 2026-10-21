@@ -1,0 +1,30 @@
+name: Detect changed paths
+description: Tell whether this push or pull request changed any path that matches a regular expression
+
+inputs:
+  pattern:
+    description: Extended regular expression matched against each changed path (git diff --name-only)
+    required: true
+outputs:
+  changed:
+    description: "'true' when a matching path changed, or when the base commit is unknown"
+    value: ${{ steps.detect.outputs.changed }}
+
+runs:
+  using: composite
+  steps:
+    # 重い検査を、関係するファイルが変わったときだけ流すために使う。呼ぶ側は fetch-depth: 0 で checkout する。
+    # 比べる先のコミットが分からない（ブランチを作った最初の push など）ときは、取りこぼさないよう流す側に倒す
+    - id: detect
+      shell: bash
+      env:
+        BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        PATTERN: ${{ inputs.pattern }}
+      run: |
+        if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        elif git diff --name-only "${BASE_SHA}" "${GITHUB_SHA}" | grep -qE "${PATTERN}"; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+        fi

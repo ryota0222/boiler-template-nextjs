@@ -56,6 +56,18 @@ pnpm run db:generate
 
 The `PostToolUse` hook and the pre-push git hook both run `pnpm test` — the project-scoped command above — so neither the everyday edit loop nor pushing needs Docker. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there, and the generator suite in `test-generators`.
 
+## CI Cost
+
+Projects made from this template are usually private, and a private repository spends the account's GitHub Actions minutes (2,000 a month on GitHub Free). Actions bills each job rounded up to the whole minute, and every job installs the dependencies again, so `run-ci.yaml` is shaped to spend few minutes. Keep that shape when adding CI work:
+
+- The quick checks (typecheck, lint, format, knip, depcruise, Markdown, textlint, shell, actionlint, secret scans) are steps of one `checks` job. Add a new quick check as a step there, not as a new job
+- `build` also builds Storybook. `test` runs `pnpm test` without coverage; coverage has no threshold and no uploaded report, and `pnpm run test:coverage` measures it locally
+- A heavy check runs only when the files it checks changed: `test-generators` (the generators and the config their output is checked against) and `docker-build` (the Dockerfile, dependencies, and Prisma) use `.github/actions/detect-changes`, which runs the check when the base commit is unknown
+- Chromium comes from a cache through `.github/actions/setup-playwright`
+- A push or pull request that only touches Markdown, `.claude/`, or `tmp/` does not run CI
+- Every job has `timeout-minutes`. A Storybook run that never exited once held a job for GitHub's 6-hour limit three times in a row in a project made from this template
+- Dependabot opens its grouped pull requests weekly, not daily, because each one runs the whole CI
+
 `docker/initdb/01-create-test-db.sql`, which creates `app_test`, only runs the first time the Postgres volume is created. `pnpm run db:down` stops the container but keeps that volume, so recreating `app_test` from scratch needs `docker compose down -v` before the next `pnpm run db:up`.
 
 ### Migrations in production
