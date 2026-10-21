@@ -20,7 +20,8 @@ test('Todoを完了にした場合、読み込み直しても完了のままで�
   await homePage.goto();
   await homePage.addTodo(title);
   await homePage.toggleTodo(title);
-  await expect(homePage.getTodoCheckbox(title)).toBeChecked();
+  // 完了の印が付くまで待ってから読み込み直す
+  await page.getByRole('checkbox', { checked: true, name: title }).waitFor();
 
   await homePage.reload();
 

@@ -3,55 +3,97 @@ name: CI
 on:
   push:
     branches: [main]
+    # 文書とローカルの作業メモだけの変更では流さない（Markdown は lefthook の markdownlint がコミット前に確かめる）
+    paths-ignore:
+      - '**/*.md'
+      - '.claude/**'
+      - 'tmp/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.claude/**'
+      - 'tmp/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Actions はジョブごとに分を切り上げて数え、ジョブごとに依存を入れ直す。非公開のリポジトリでは無料枠（月 2,000 分）を使うため、
+# 短い検査は 1 つのジョブにまとめ、重い検査は関係するファイルが変わったときだけ流す。
+# どのジョブも、止まったまま GitHub の上限（6 時間）まで分を使い続けないよう timeout-minutes で打ち切る
 jobs:
-  typecheck:
+  checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          # gitleaks が履歴を調べるため
+          fetch-depth: 0
       - uses: ./.github/actions/setup-node
-      - run: pnpm run typecheck
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run lint
-
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run format
+      - uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204
+        with:
+          install: true
+      - name: typecheck
+        run: pnpm run typecheck
+      - name: lint
+        run: pnpm run lint
+      - name: format
+        run: pnpm run format
+      - name: knip
+        run: pnpm run knip
+      - name: depcruise
+        run: pnpm run depcruise
+      - name: lint-md
+        run: pnpm run lint:md
+      - name: lint-text
+        run: pnpm run lint:text
+      - name: shell-lint
+        run: pnpm run lint:sh
+      - name: shell-format
+        run: pnpm run format:sh
+      - name: actionlint
+        run: mise exec -- actionlint
+      - name: secretlint
+        run: pnpm run scan:secretlint
+      - name: gitleaks
+        run: pnpm run scan:gitleaks
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run test:coverage
+      - uses: ./.github/actions/setup-playwright
+      # カバレッジはしきい値も報告の保存もないため、CI では測らない（pnpm run test:coverage で手元で測れる）
+      - run: pnpm test
 
   test-generators:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
+        with:
+          fetch-depth: 0
+      # generator の検査はプロジェクトを写して全部を流すため重い。generator と、生成物を検査する設定が変わったときだけ流す
+      - id: changes
+        uses: ./.github/actions/detect-changes
+        with:
+          pattern: '^(plopfile\.ts|plop-templates/|generators/|eslint\.config\.ts|eslint-rules/|tsconfig\.json|package\.json|pnpm-lock\.yaml|\.dependency-cruiser\.cjs|vitest\.config\.ts|\.textlintrc\.json|prh\.yml)'
+      - if: steps.changes.outputs.changed == 'true'
+        uses: ./.github/actions/setup-node
       # 生成した story を Chromium で描いて axe の検査を通す
-      - run: pnpm exec playwright install --with-deps chromium
+      - if: steps.changes.outputs.changed == 'true'
+        uses: ./.github/actions/setup-playwright
       # plop の generator が作るファイルが lint・型検査・テストを通ることを、プロジェクトを写した一時ディレクトリで確かめる
-      - run: pnpm run test:generators
+      - if: steps.changes.outputs.changed == 'true'
+        run: pnpm run test:generators
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # トップページの Todo の一覧が API から DB を読むため、e2e でも PostgreSQL を立ててスキーマを適用する
     services:
       postgres:
@@ -70,21 +112,24 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
-      - run: pnpm exec playwright install --with-deps chromium
+      - uses: ./.github/actions/setup-playwright
       - run: pnpm run db:deploy
       - run: pnpm run e2e
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - uses: ./.github/actions/setup-node
       - run: pnpm run build
+      - run: pnpm run build-storybook
 
   test-db:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:18-alpine
@@ -107,14 +152,25 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - run: docker build --target runner -t nextjs-template:runner .
-      - run: docker build --target migrator -t nextjs-template:migrator .
+        with:
+          fetch-depth: 0
+      # イメージのビルドは重いため、イメージに入るものの作り方（Dockerfile・依存・Prisma）が変わったときだけ流す
+      - id: changes
+        uses: ./.github/actions/detect-changes
+        with:
+          pattern: '^(Dockerfile|\.dockerignore|docker/|package\.json|pnpm-lock\.yaml|\.npmrc|prisma/|prisma\.config\.ts)'
+      - if: steps.changes.outputs.changed == 'true'
+        run: docker build --target runner -t nextjs-template:runner .
+      - if: steps.changes.outputs.changed == 'true'
+        run: docker build --target migrator -t nextjs-template:migrator .
       # migrator はデプロイ時のワンショットジョブとして閉じた環境で動くため、
       # 実行時に npm レジストリや binaries.prisma.sh へ到達できてはならない。
       # DB に到達できない P1001 以外のエラーはネットワーク依存の混入を意味する
-      - run: |
+      - if: steps.changes.outputs.changed == 'true'
+        run: |
           set +e
           output=$(docker run --rm --network none \
             -e DATABASE_URL='postgresql://postgres:postgres@localhost:5432/app' \
@@ -133,62 +189,3 @@ jobs:
             echo 'migrator が実行時に外部ネットワークへアクセスしています'
             exit 1
           fi
-
-  knip:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run knip
-
-  depcruise:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run depcruise
-
-  lint-md:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run lint:md
-
-  lint-text:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run lint:text
-
-  build-storybook:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - run: pnpm run build-storybook
-
-  secret-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup-node
-      - uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204
-        with:
-          install: true
-      - run: pnpm run scan:secretlint
-      - run: pnpm run scan:gitleaks
-
-  shell-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
-      - uses: ./.github/actions/setup-node
-      - uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204
-        with:
-          install: true
-      - run: pnpm run lint:sh
-      - run: pnpm run format:sh
