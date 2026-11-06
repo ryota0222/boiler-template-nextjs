@@ -19,7 +19,7 @@ pnpm run db:seed      # insert development data
 pnpm dev
 ```
 
-Creating `.env` (the first line above) is a human step: an agent's permissions deny both running `cp .env.example .env` and reading `.env.example`, so an agent cannot discover the connection strings that way. Two variables matter:
+Creating `.env` (the first line above) is a human step: an agent's permissions deny running `cp .env.example .env` and reading or editing `.env` itself. An agent may read and edit `.env.example` with the file tools, since it holds no secrets. Two variables matter:
 
 - `DATABASE_URL` — the connection string the app and `prisma migrate` / `prisma generate` use, e.g. `postgresql://postgres:postgres@localhost:5432/app`
 - `DATABASE_URL_TEST` — the connection string `pnpm run test:db` (the `db` Vitest project) uses, e.g. `postgresql://postgres:postgres@localhost:5432/app_test`
