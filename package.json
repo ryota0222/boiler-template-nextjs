@@ -60,11 +60,11 @@
     }
   },
   "dependencies": {
-    "@mantine/core": "9.6.2",
-    "@mantine/dates": "9.6.2",
-    "@mantine/dropzone": "9.6.2",
-    "@mantine/hooks": "9.6.2",
-    "@mantine/notifications": "9.6.2",
+    "@mantine/core": "9.7.5",
+    "@mantine/dates": "9.7.5",
+    "@mantine/dropzone": "9.7.5",
+    "@mantine/hooks": "9.7.5",
+    "@mantine/notifications": "9.7.5",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@tabler/icons-react": "^3.48.0",

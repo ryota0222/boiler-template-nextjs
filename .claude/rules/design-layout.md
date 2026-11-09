@@ -62,7 +62,7 @@ location. `PageHeader` omits the breadcrumb when `breadcrumbs` is empty.
   failure `design-hierarchy.md` describes as a screen with no grouping.
 
 Use the `gap`, `p`, `m` props with a size key, or `var(--mantine-spacing-<key>)` in CSS. Never
-write a raw pixel value for spacing. In Mantine 9.6.2 the scale is `xs` 10px, `sm` 12px, `md` 16px,
+write a raw pixel value for spacing. In Mantine 9.7.5 the scale is `xs` 10px, `sm` 12px, `md` 16px,
 `lg` 20px, and `xl` 32px, multiplied by `--mantine-scale`.
 
 | Distance                  | Token                  |

@@ -26,7 +26,7 @@ paths:
 | Surface | `Card`, `Paper`, panels, a table, an embedded preview                | A border and `shadow="xs"`; an embedded preview has its own cue (below) |
 | Overlay | `Modal`, `Drawer`, notifications, `Popover`, `Menu`                  | `shadow="md"` or larger                                                 |
 
-`Modal` and `Drawer` (`xl`) and notifications (`lg`) carry their shadow by default. `Popover` and `Menu` default to no shadow in Mantine 9.6.2, so pass `shadow="md"` explicitly, or a dropdown lies flat on the surface it opens over.
+`Modal` and `Drawer` (`xl`) and notifications (`lg`) carry their shadow by default. `Popover` and `Menu` default to no shadow in Mantine 9.7.5, so pass `shadow="md"` explicitly, or a dropdown lies flat on the surface it opens over.
 
 ## The Page Stays the Body Colour
 

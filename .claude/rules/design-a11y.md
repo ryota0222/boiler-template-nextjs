@@ -36,7 +36,7 @@ Anything that responds to a click is a `Button`, an `ActionIcon`, an `Anchor`, o
 <Box onClick={handleSelect}>{order.title}</Box>
 ```
 
-Overlays are `Modal` or `Drawer`, never a hand-built one. In Mantine 9.6.2 both trap focus, return it to the trigger on close, and close on Escape by default (`trapFocus`, `returnFocus`, `closeOnEscape`). Never turn those props off. A hand-built overlay has to reimplement all three, and usually reimplements none.
+Overlays are `Modal` or `Drawer`, never a hand-built one. In Mantine 9.7.5 both trap focus, return it to the trigger on close, and close on Escape by default (`trapFocus`, `returnFocus`, `closeOnEscape`). Never turn those props off. A hand-built overlay has to reimplement all three, and usually reimplements none.
 
 Mantine's `Menu` defaults to `withInitialFocusPlaceholder={true}`, which places a `role="presentation"` div directly under `role="menu"` and fails axe's `aria-required-children` rule; pass `withInitialFocusPlaceholder={false}` on every `Menu` in this repository, as `AppShellLayout` does.
 
@@ -77,7 +77,7 @@ An icon-only control below `size="lg"` needs a reason. `size="md"` is for dense,
 
 ### Details
 
-3:1 for every text pair, including `size="xs"` notes and bold `Badge` labels. This is the ratio both axe gates measure `color-contrast` against (lowered by decision from axe's default, which is WCAG AA's 4.5:1 for body text), and the ratio `generateAccentColors` holds the accent's primary shade to against white, so every accent the app can have carries white text and sits on white as text. Mantine's shade number says nothing about whether a shade may carry text, so the pairs below were measured against Mantine 9.6.2's default colours:
+3:1 for every text pair, including `size="xs"` notes and bold `Badge` labels. This is the ratio both axe gates measure `color-contrast` against (lowered by decision from axe's default, which is WCAG AA's 4.5:1 for body text), and the ratio `generateAccentColors` holds the accent's primary shade to against white, so every accent the app can have carries white text and sits on white as text. Mantine's shade number says nothing about whether a shade may carry text, so the pairs below were measured against Mantine 9.7.5's default colours:
 
 | Pair                                                      | Passes (≥ 3:1)                                                         | Fails                                                      |
 | --------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -146,7 +146,7 @@ The `aria-label` on an icon-only control is `design-affordance.md`; this rule is
 | Selected row                   | `aria-selected` on the row              |
 | Radio group                    | A group with an accessible name         |
 
-`Tabs` sets its own selected state. `NavLink` does not set `aria-current` in Mantine 9.6.2 — pass it yourself (`aria-current={isCurrent ? "page" : undefined}`), as `AppShellLayout` does. `Table` sets none of these, so a sortable or selectable table sets them itself — or use `DataTable` from `@template/ui`, which does. The interactions these describe are `design-collection.md`. Content that appears without focus moving is the next rule.
+`Tabs` sets its own selected state. `NavLink` does not set `aria-current` in Mantine 9.7.5 — pass it yourself (`aria-current={isCurrent ? "page" : undefined}`), as `AppShellLayout` does. `Table` sets none of these, so a sortable or selectable table sets them itself — or use `DataTable` from `@template/ui`, which does. The interactions these describe are `design-collection.md`. Content that appears without focus moving is the next rule.
 
 ## Hand-Written Motion Is Opt-In
 
