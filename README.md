@@ -130,10 +130,10 @@ Keep the shared parts every endpoint uses: `src/api/endpoint.ts`, `src/api/clien
 
 ### Code Generators
 
-| Command                                                                                                    | Purpose                                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run generate api -- --concept inventory-item --action list --method GET --path /api/inventory-items` | Endpoint definition, controller, Route Handler, usecase operation, and tests                                               |
-| `pnpm run generate screen -- --concept inventory-item --kind collection --path /inventory-items`           | Page, feature component, query or mutation options, stories, and tests (`--kind`: `blank`, `collection`, `detail`, `form`) |
+| Command                                                                                                    | Purpose                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run generate api -- --concept inventory-item --action list --method GET --path /api/inventory-items` | Endpoint definition, controller, Route Handler, usecase operation, and tests                                                                                                      |
+| `pnpm run generate screen -- --concept inventory-item --kind collection --path /inventory-items`           | Page, feature component, query or mutation options, stories, and tests (`--kind`: `collection`, `detail`, `form`, `split`, `dashboard`, `chat`, `task-step`, `settings`, `blank`) |
 
 Run without arguments in a terminal to be asked for each one. The `add-web-api-endpoint` and `add-web-screen` skills in `.claude/skills/` describe every argument.
 
