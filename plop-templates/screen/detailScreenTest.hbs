@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
-import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 import { {{componentName}} } from '{{{componentImportPath}}}';
 
 const renderScreen = (queryClient: QueryClient): void => {
@@ -18,9 +18,9 @@ const renderScreen = (queryClient: QueryClient): void => {
 };
 
 // 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く
-const createSettledQueryClient = (result: Result<{{{valueTypeCode}}}, ApiFailure>): QueryClient => {
+const createSettledQueryClient = (result: Result<{{{queryValueTypeCode}}}, ApiFailure>): QueryClient => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
-  queryClient.setQueryData({{{sampleOptionsCode}}}.queryKey, result);
+  queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
   return queryClient;
 };
 
@@ -33,44 +33,20 @@ describe('{{componentName}}', () => {
 
     const expected = 2;
     await waitFor(() => {
-      const actual = queryClient.getQueryState({{{sampleOptionsCode}}}.queryKey)?.dataUpdateCount;
+      const actual = queryClient.getQueryState({{{sampleQueryOptionsCode}}}.queryKey)?.dataUpdateCount;
       expect(actual).toBe(expected);
     });
   });
 
   it('queryのdataが成功のResultの場合、読み込んだ値を表示すること', () => {
-    renderScreen(createSettledQueryClient({ ok: true, value: {{{idealValueCode}}} }));
+    renderScreen(createSettledQueryClient({ ok: true, value: { id: '1', name: '見本' } }));
 
-{{#if hasRowsSelectedStory}}
-    const actual = screen.getByRole('cell', { name: '見本' });
-{{else}}
+
     const actual = screen.getByText('見本');
-{{/if}}
 
     expect(actual).toBeInTheDocument();
   });
-{{#if hasEmptyStory}}
 
-  it('queryのdataが空の配列のResultの場合、まだないことを表示すること', () => {
-    renderScreen(createSettledQueryClient({ ok: true, value: [] }));
-
-    const actual = screen.getByText('{{concept}} はまだありません');
-
-    expect(actual).toBeInTheDocument();
-  });
-{{/if}}
-{{#if hasRowsSelectedStory}}
-
-  it('行の選択のチェックボックスを押した場合、その行を選んだ状態にすること', () => {
-    renderScreen(createSettledQueryClient({ ok: true, value: {{{idealValueCode}}} }));
-    const checkbox = screen.getByRole('checkbox', { name: '{{concept}}見本を選択' });
-
-    fireEvent.click(checkbox);
-
-    expect(checkbox).toBeChecked();
-  });
-{{/if}}
-{{#if hasNotFoundStory}}
 
   it('queryのdataがnot-foundの失敗のResultの場合、見つからないことを表示すること', () => {
     renderScreen(
@@ -84,5 +60,4 @@ describe('{{componentName}}', () => {
 
     expect(actual).toBeInTheDocument();
   });
-{{/if}}
 });

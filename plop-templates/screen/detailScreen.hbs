@@ -18,7 +18,7 @@ import { isDefined } from 'remeda';
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
-import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 
 // 読み込み後の PageHeader の見出しと DetailCard と同じ高さにし、データが届いたときに配置がずれないようにする
 const titleSkeletonHeight = 28;
@@ -30,7 +30,7 @@ const renderContent = ({
   result,
 }: {
   readonly onRetry: () => void;
-  readonly result: Result<{{{valueTypeCode}}}, ApiFailure>;
+  readonly result: Result<{{{queryValueTypeCode}}}, ApiFailure>;
 }): React.JSX.Element => {
   // 存在しないものを空の詳細として出すと壊れたリンクが隠れるため、読み込みの失敗と分けて出す（design-states.md）
   if (!result.ok && result.error.kind === 'not-found') {
@@ -69,7 +69,7 @@ export const {{componentName}} = ({
 {{else}}
 export const {{componentName}} = (): React.JSX.Element => {
 {{/if}}
-  const query = useQuery({{{screenOptionsCode}}});
+  const query = useQuery({{{queryOptionsCode}}});
   if (!isDefined(query.data)) {
     return (
       <Stack aria-busy aria-label="{{concept}} を読み込み中" gap="xl" role="status">

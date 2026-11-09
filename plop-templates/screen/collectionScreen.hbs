@@ -16,9 +16,9 @@ import { isDefined } from 'remeda';
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
-import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 
-const columnHelper = createDataTableColumnHelper<{{dataTypeName}}>();
+const columnHelper = createDataTableColumnHelper<{{queryDataTypeName}}>();
 
 // TanStack Table は columns の参照が変わるたびにページと開閉の状態を戻すため、描画の外で 1 度だけ作る
 const columns = columnHelper.columns([
@@ -29,7 +29,7 @@ const columns = columnHelper.columns([
 ]);
 
 // 数と単位、日本語と半角の英数字の間には空白を入れない（design-copy.md）
-const labels: DataTableLabels<{{dataTypeName}}> = {
+const labels: DataTableLabels<{{queryDataTypeName}}> = {
   clearConditions: '条件をすべて解除',
   clearSelection: '選択を解除',
   columnFilter: (columnLabel) => `${columnLabel}で絞り込む`,
@@ -63,7 +63,7 @@ const renderContent = ({
   result,
 }: {
   readonly onRetry: () => void;
-  readonly result: Result<{{{valueTypeCode}}}, ApiFailure>;
+  readonly result: Result<{{{queryValueTypeCode}}}, ApiFailure>;
 }): React.JSX.Element => {
   if (!result.ok) {
     return (
@@ -115,7 +115,7 @@ export const {{componentName}} = ({
 {{else}}
 export const {{componentName}} = (): React.JSX.Element => {
 {{/if}}
-  const query = useQuery({{{screenOptionsCode}}});
+  const query = useQuery({{{queryOptionsCode}}});
   // 読み込み中は読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
   if (!isDefined(query.data)) {
     return <CollectionSkeleton loadingLabel="{{concept}} を読み込み中" rowCount={skeletonRowCount} />;

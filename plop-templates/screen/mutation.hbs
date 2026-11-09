@@ -1,18 +1,14 @@
 
-export type {{dataTypeName}} = {
-  readonly name: string;
-};
-
 // エンドポイントをつなぐまでは、画面が送信の失敗を出すよう、つながっていないことを失敗として返す。
 // つなぐときは mutationFn で requestEndpoint に src/api/{{concept}}/endpoints.ts の定義を渡す
 {{#if hasParameters}}
 export const {{mutationOptionsName}} = (
   parameters: {{{parametersTypeCode}}},
 ): ReturnType<
-  typeof mutationOptions<Result<null, ApiFailure>, Error, {{dataTypeName}}, unknown>
+  typeof mutationOptions<Result<{{{mutationResultTypeCode}}}, ApiFailure>, Error, {{mutationValuesTypeName}}, unknown>
 > =>
   mutationOptions({
-    mutationFn: (_values: {{dataTypeName}}): Promise<Result<null, ApiFailure>> =>
+    mutationFn: (_values: {{mutationValuesTypeName}}): Promise<Result<{{{mutationResultTypeCode}}}, ApiFailure>> =>
       Promise.resolve({
         error: { kind: 'internal', message: 'この画面の API はまだつながっていません' },
         ok: false,
@@ -21,7 +17,7 @@ export const {{mutationOptionsName}} = (
   });
 {{else}}
 export const {{mutationOptionsName}} = mutationOptions({
-  mutationFn: (_values: {{dataTypeName}}): Promise<Result<null, ApiFailure>> =>
+  mutationFn: (_values: {{mutationValuesTypeName}}): Promise<Result<{{{mutationResultTypeCode}}}, ApiFailure>> =>
     Promise.resolve({
       error: { kind: 'internal', message: 'この画面の API はまだつながっていません' },
       ok: false,
