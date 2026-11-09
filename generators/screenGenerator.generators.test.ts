@@ -70,6 +70,14 @@ const generationCases = [
     name: '動的な区切りを持つchat',
   },
   {
+    answers: { concept: 'inventory-item', kind: 'task-step', path: '/inventory-items/packing' },
+    name: 'task-step',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'task-step', path: '/shipments/[id]/packing' },
+    name: '動的な区切りを持つtask-step',
+  },
+  {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
     name: '手で書いたqueries.tsへ追記するblank',
   },
@@ -266,6 +274,16 @@ it.each([
     ],
   },
   {
+    kind: 'task-step',
+    paths: [
+      'src/app/inventory-items/packing/page.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/InventoryItemTaskStepScreen.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/InventoryItemTaskStepScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/inventoryItemTaskStepScreen.test.tsx',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
     kind: 'dashboard',
     paths: [
       'src/app/inventory-items/overview/page.tsx',
@@ -336,6 +354,9 @@ it.each([
       'shipmentChatMutationOptions',
       'ShipmentChatRequest',
       'ShipmentChatReply',
+      'shipmentTaskStepMutationOptions',
+      'ShipmentTaskStepScan',
+      'ShipmentTaskStepCheck',
     ],
     path: 'src/api/shipment/mutations.ts',
   },

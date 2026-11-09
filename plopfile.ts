@@ -1483,6 +1483,7 @@ const screenKinds = [
   'split',
   'dashboard',
   'chat',
+  'task-step',
 ] as const;
 
 const screenKindSchema = z.enum(screenKinds, {
@@ -1605,6 +1606,15 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     // 左の一覧と右の詳細がそれぞれ縦に流れるよう、画面の高さを埋める
     pageFrame: 'fullHeight',
     query: { dataTypeSuffix: 'SplitItem', isList: true },
+  },
+  'task-step': {
+    hasValidation: false,
+    headingSuffix: ' の作業',
+    // 読んだバーコードを確かめるため、送信は form と同じく mutation にする
+    mutation: { resultTypeSuffix: 'TaskStepCheck', valuesTypeSuffix: 'TaskStepScan' },
+    // HandheldLayout が main とヘッダー・フッターを持つため、アプリの枠の Container に入れない
+    pageFrame: 'frameless',
+    query: null,
   },
 };
 
