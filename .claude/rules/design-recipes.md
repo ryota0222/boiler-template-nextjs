@@ -26,6 +26,8 @@ This file decides which recipe to start from. It does not repeat the rules the r
 | Five destinations or fewer, no groups; the content wants the full width                   | `HeaderNavLayout`                           |
 | Used on a handheld or with one hand, stepping through work while scanning                 | `HandheldLayout` (every screen of the task) |
 
+Screens before login (login, the link or code sent, password reset) use `AuthLayout` whatever the app's layout is.
+
 Inside the app's layout, two areas may use their own frame: the settings (`SettingsLayout`, when there are three or more groups of settings) and a queue the user works through (`SplitLayout`). Both sit inside the app's layout, never instead of it.
 
 ## The Recipe Follows What the User Does on the Screen
@@ -74,6 +76,28 @@ Every card on a dashboard either links to the screen where the user acts on what
 - **Reason**: `design-ooui.md` warns against shaping screens around a process. Handheld work is the exception: the user's hands are on the items, and the order is set by the physical work, not by the interface.
 
 Use the task-step recipe only on `HandheldLayout`. At a desk, the same work is a collection and a detail.
+
+## Login Screens Are Composed from the Method's Blocks
+
+- **Type**: MUST
+- **Reason**: The authentication method changes which steps exist, not how each step looks. Composing the same blocks keeps every app's login recognisable and keeps the failure wording safe.
+
+| Method             | Blocks inside `AuthLayout`                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| Email and password | `PasswordLoginForm`, then a `Divider` labelled `または` and `SSOButtons` when SSO is offered too |
+| Link by email      | `MagicLinkForm` (it turns into the sent state itself)                                            |
+| SSO only           | A heading and `SSOButtons`                                                                       |
+| One-time code      | `OTPForm` after the step that sends the code                                                     |
+| Forgotten password | `PasswordResetForm`                                                                              |
+
+The blocks take the submit as a prop and know nothing of the auth library. A failure message never tells whether the email is registered (`メールアドレスかパスワードが違います`). Returning to the page the user first asked for is the caller's job.
+
+## SSO Buttons Use the Provider's Official Assets
+
+- **Type**: MUST
+- **Reason**: Each provider sets the logo, its colours, and the button wording, and a redrawn or one-colour logo breaks their terms.
+
+The logos live in `public/brand/` and come only from the provider's own download: `google.svg` is the "G" cropped from the Sign in with Google bundle (Light, square, no text), and `microsoft.svg` is the Microsoft logo from the Microsoft Entra branding page. Never draw a logo, take one from an icon library, or recolour it. The label follows the provider's wording, translated (`Google でログイン`, `Microsoft アカウントでサインイン`), and every provider's button has the same size and weight. To add another provider, download its official asset into `public/brand/` and add its row here.
 
 ## A Screen That Fits No Recipe
 
