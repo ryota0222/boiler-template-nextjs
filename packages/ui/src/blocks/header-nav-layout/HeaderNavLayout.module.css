@@ -1,0 +1,22 @@
+/* 今いるページのリンクは、文字を主色の太字にし、ヘッダーの下の境目に重なる線を引く。ほかのリンクは線を引かない */
+.link {
+  align-items: center;
+  border-bottom: calc(0.125rem * var(--mantine-scale)) solid transparent;
+  color: var(--mantine-color-text);
+  display: flex;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  height: 100%;
+  padding-inline: var(--mantine-spacing-xs);
+  text-decoration: none;
+}
+
+.link:hover {
+  background-color: var(--mantine-color-default-hover);
+}
+
+.link[aria-current='page'] {
+  border-bottom-color: var(--mantine-primary-color-filled);
+  color: var(--mantine-primary-color-filled);
+  font-weight: 700;
+}
