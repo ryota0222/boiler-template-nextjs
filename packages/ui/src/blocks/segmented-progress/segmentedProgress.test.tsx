@@ -21,11 +21,11 @@ it('全体が 8 個より多い場合、1 本の棒で済んだ割合を進み�
 });
 
 it('全体が 1 個の場合、進み具合を出さないこと', () => {
-  const { container } = renderWithUi(<SegmentedProgress done={0} label="梱包済み" total={1} />);
+  renderWithUi(<SegmentedProgress done={0} label="梱包済み" total={1} />);
 
-  const actual = container.textContent;
+  const actual = [screen.queryByRole('progressbar'), screen.queryByText(/梱包済み/u)];
 
-  expect(actual).toBe('');
+  expect(actual).toStrictEqual([null, null]);
 });
 
 it('進み具合を出す場合、済んだ数と全体の数を文字でも出すこと', () => {

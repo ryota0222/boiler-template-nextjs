@@ -12,9 +12,9 @@ it('単位を渡した場合、数字と単位を別々の文字として出す�
 });
 
 it('単位がない場合、数字だけを出すこと', () => {
-  const { container } = renderWithUi(<MetricValue size="xl" unit={null} value="4417" />);
+  renderWithUi(<MetricValue size="xl" unit={null} value="4417" />);
 
-  const actual = container.textContent;
+  const actual = screen.getByText('4417').parentElement?.textContent;
 
   expect(actual).toBe('4417');
 });

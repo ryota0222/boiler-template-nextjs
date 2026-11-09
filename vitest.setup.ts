@@ -35,6 +35,12 @@ Object.defineProperties(globalThis, {
 
 HTMLElement.prototype.scrollIntoView = vi.fn();
 
+// Mantine の Textarea の autosize は、フォントを読み込み終えたときに高さを測り直すため、jsdom にない document.fonts を購読する
+Object.defineProperty(document, 'fonts', {
+  value: { addEventListener: vi.fn(), removeEventListener: vi.fn() },
+  writable: true,
+});
+
 // jsdom は canvas を描けず、getContext を呼ぶたびに「Not implemented」と出す。thinking-orbs のオーブは
 // canvas がなければ描かずに済ませるため、jsdom と同じく null を返して出力だけを止める
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(null);
