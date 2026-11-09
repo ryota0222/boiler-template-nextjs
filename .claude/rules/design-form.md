@@ -127,8 +127,8 @@ hint carries what the field means or where its value comes from — not the reas
 Keep one line of always-visible hint only for a format constraint the user must know before
 typing (`半角数字で入力します`, `日付だけを入力できます`), in the input's `description` prop.
 
-The icon aligns to the middle of the label text, not to its baseline. Put the label text and the
-icon in a `Group align="center" gap="xs"` inside the `label` prop.
+The icon aligns to the middle of the label text, not to its baseline. Pass `FieldLabel`
+(`@template/ui/blocks/field-label`) as the `label` prop; it holds all of this.
 
 ## What the State Does Not Use, the Screen Does Not Show
 
