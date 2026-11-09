@@ -12,7 +12,7 @@ const collectionAnswers = {
   path: '/inventory-items',
 };
 
-// 4 種類を、動的な区切りのないパスとあるパスの両方で生成する。inventory-item は generator が作った queries.ts へ、
+// どの kind も、動的な区切りのないパスとあるパスの両方で生成する。inventory-item は generator が作った queries.ts へ、
 // shipment は手で書いた queries.ts と mutations.ts（import が一部だけある）へ、todo は
 // Todo の参考実装の queries.ts（同じモジュールの import を既に持つ）へ追記する
 const generationCases = [
@@ -44,6 +44,14 @@ const generationCases = [
   {
     answers: { concept: 'shipment', kind: 'blank', path: '/shipments/[id]/summary' },
     name: '動的な区切りを持つblank',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'split', path: '/inventory-items/queue' },
+    name: 'split',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'split', path: '/shipments/[id]/queue' },
+    name: '動的な区切りを持つsplit',
   },
   {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
@@ -232,6 +240,16 @@ it.each([
     ],
   },
   {
+    kind: 'split',
+    paths: [
+      'src/app/inventory-items/queue/page.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/InventoryItemSplitScreen.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/InventoryItemSplitScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/inventoryItemSplitScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+    ],
+  },
+  {
     kind: 'form',
     paths: [
       'src/app/inventory-items/new/page.tsx',
@@ -258,6 +276,7 @@ it.each([
       'inventoryItemCollectionQueryOptions',
       'inventoryItemDetailQueryOptions',
       'inventoryItemBlankQueryOptions',
+      'inventoryItemSplitQueryOptions',
     ],
     path: 'src/api/inventory-item/queries.ts',
   },

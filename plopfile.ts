@@ -1475,7 +1475,7 @@ const createBuildingApiActions =
     });
   };
 
-const screenKinds = ['blank', 'collection', 'detail', 'form'] as const;
+const screenKinds = ['blank', 'collection', 'detail', 'form', 'split'] as const;
 
 const screenKindSchema = z.enum(screenKinds, {
   error: `kind は ${screenKinds.join('・')} のどれかで指定してください`,
@@ -1535,6 +1535,8 @@ type ScreenKindDefinition = {
     readonly resultTypeSuffix: null | string;
     readonly valuesTypeSuffix: string;
   };
+  // container はアプリの枠の中で Container に収め、fullHeight は画面の高さを埋め、frameless は枠の部品に任せて包まない
+  readonly pageFrame: 'container' | 'frameless' | 'fullHeight';
   readonly query: null | {
     readonly dataTypeSuffix: string;
     readonly isList: boolean;
@@ -1548,12 +1550,14 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     hasValidation: false,
     headingSuffix: '',
     mutation: null,
+    pageFrame: 'container',
     query: { dataTypeSuffix: 'BlankItem', isList: true },
   },
   collection: {
     hasValidation: false,
     headingSuffix: ' の一覧',
     mutation: null,
+    pageFrame: 'container',
     query: { dataTypeSuffix: 'CollectionRow', isList: true },
   },
   detail: {
@@ -1561,13 +1565,23 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     headingSuffix: ' の詳細',
     // 1 つか 2 つの値を InlineEdit でその場で直すため、読み込みの query と保存の mutation を両方書き出す
     mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'DetailChanges' },
+    pageFrame: 'container',
     query: { dataTypeSuffix: 'Detail', isList: false },
   },
   form: {
     hasValidation: true,
     headingSuffix: ' の入力',
     mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'FormValues' },
+    pageFrame: 'container',
     query: null,
+  },
+  split: {
+    hasValidation: false,
+    headingSuffix: ' の一覧',
+    mutation: null,
+    // 左の一覧と右の詳細がそれぞれ縦に流れるよう、画面の高さを埋める
+    pageFrame: 'fullHeight',
+    query: { dataTypeSuffix: 'SplitItem', isList: true },
   },
 };
 
@@ -1578,6 +1592,8 @@ type ScreenTemplateData = {
   readonly featureDirectory: string;
   readonly hasParameters: boolean;
   readonly heading: string;
+  readonly isFramelessPage: boolean;
+  readonly isFullHeightPage: boolean;
   readonly kind: ScreenKind;
   readonly kindTemplatePrefix: string;
   readonly metadataDescriptionCode: string;
@@ -1706,6 +1722,8 @@ const buildScreenTemplateData = ({
     featureDirectory,
     hasParameters,
     heading,
+    isFramelessPage: definition.pageFrame === 'frameless',
+    isFullHeightPage: definition.pageFrame === 'fullHeight',
     kind: answers.kind,
     kindTemplatePrefix: decapitalize(kindPascalCase),
     metadataDescriptionCode: JSON.stringify(heading),
