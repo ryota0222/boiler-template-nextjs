@@ -119,19 +119,24 @@ const writeFileIn = async ({
 
 const layoutPath = 'src/app/layout.tsx';
 
+const layoutDescriptionCode =
+  "  description: 'Next.js App Router アプリケーションのテンプレート',\n";
+
 const layoutTitleCode = "  title: 'Next.js Template',\n";
 
-const rewriteLayoutTitle = async ({
+const rewriteLayoutCode = async ({
+  code,
   directory,
-  title,
+  replacement,
 }: {
+  readonly code: string;
   readonly directory: string;
-  readonly title: string;
+  readonly replacement: string;
 }): Promise<void> => {
   const content = await readFile(nodePath.resolve(directory, layoutPath), 'utf8');
   await writeFile(
     nodePath.resolve(directory, layoutPath),
-    content.replace(layoutTitleCode, () => title)
+    content.replace(code, () => replacement)
   );
 };
 
@@ -166,10 +171,12 @@ beforeAll(async () => {
   await Promise.all(
     handwrittenApiFiles.map((file) => writeFileIn({ ...file, directory: generatedDirectory }))
   );
-  // 入れ子の openGraph.title をアプリの名前と取り違えないことも確かめるため、metadata の title より前に置く
-  await rewriteLayoutTitle({
+  // 入れ子の openGraph.title をアプリの名前と取り違えないことも確かめるため、metadata の title より前に置く。
+  // title の直前に差し込むと、間に robots などのキーがあるときに ESLint のキーの並び順に引っかかるため、description の直後に置く
+  await rewriteLayoutCode({
+    code: layoutDescriptionCode,
     directory: generatedDirectory,
-    title: `  openGraph: { title: '共有用の名前' },\n${layoutTitleCode}`,
+    replacement: `${layoutDescriptionCode}  openGraph: { title: '共有用の名前' },\n`,
   });
   for (const { answers, name } of generationCases) {
     const { failures } = await runGenerator({
@@ -198,9 +205,10 @@ beforeAll(async () => {
   });
 
   await copyProjectInto(templatedLayoutDirectory);
-  await rewriteLayoutTitle({
+  await rewriteLayoutCode({
+    code: layoutTitleCode,
     directory: templatedLayoutDirectory,
-    title:
+    replacement:
       "  title: {\n    default: 'Next.js Template',\n    template: '%s | Next.js Template',\n  },\n",
   });
   await runGenerator({
@@ -210,7 +218,11 @@ beforeAll(async () => {
   });
 
   await copyProjectInto(untitledLayoutDirectory);
-  await rewriteLayoutTitle({ directory: untitledLayoutDirectory, title: '' });
+  await rewriteLayoutCode({
+    code: layoutTitleCode,
+    directory: untitledLayoutDirectory,
+    replacement: '',
+  });
 });
 
 const runInGeneratedDirectory = ({
