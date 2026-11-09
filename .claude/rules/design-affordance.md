@@ -33,7 +33,7 @@ This is not hypothetical. Mantine's `Anchor` defaults to `underline="hover"`, so
 </Anchor>
 ```
 
-A `subtle` `Button` has the same problem at rest: no surface, no border, only its colour. `src/app/globals.css` therefore underlines the label of every `variant="subtle"` button, as a link is underlined. Do not remove it.
+A `subtle` `Button` has the same problem at rest: no surface, no border, only its colour. `src/app/globals.css` therefore underlines the label of every `variant="subtle"` button that has no `leftSection` or `rightSection`, as a link is underlined; a subtle button with an icon already has a cue that is not colour. Do not remove it.
 
 In a table, the cell that opens the record is underlined, not merely coloured. A whole row that responds to a click still needs one cue inside it that says so.
 
