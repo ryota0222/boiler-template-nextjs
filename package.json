@@ -61,6 +61,7 @@
   },
   "dependencies": {
     "@mantine/core": "9.6.2",
+    "@mantine/dates": "9.6.2",
     "@mantine/dropzone": "9.6.2",
     "@mantine/hooks": "9.6.2",
     "@mantine/notifications": "9.6.2",
@@ -69,6 +70,7 @@
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-query": "^5.101.4",
     "@template/ui": "workspace:*",
+    "dayjs": "^1.11.23",
     "next": "16.3.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
