@@ -14,7 +14,7 @@ const renderScreen = (queryClient: QueryClient): void => {
 };
 
 const submitName = async (name: string): Promise<void> => {
-  fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+  fireEvent.change(screen.getByRole('textbox', { name: /^名前/u }), {
     target: { value: name },
   });
   fireEvent.click(screen.getByRole('button', { name: '送信する' }));
@@ -33,7 +33,7 @@ describe('{{componentName}}', () => {
 
   it('名前の欄を空のまま離れた場合、名前の欄をaria-invalidにすること', () => {
     renderScreen(new QueryClient());
-    const nameInput = screen.getByRole('textbox', { name: '名前' });
+    const nameInput = screen.getByRole('textbox', { name: /^名前/u });
 
     fireEvent.blur(nameInput);
 
@@ -42,7 +42,7 @@ describe('{{componentName}}', () => {
 
   it('名前を入力して送信するボタンを押し、mutationFnが失敗のResultを返した場合、送信できなかったことを表示すること', async () => {
     renderScreen(new QueryClient());
-    fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: /^名前/u }), {
       target: { value: '見本' },
     });
 
@@ -56,7 +56,7 @@ describe('{{componentName}}', () => {
     const queryClient = new QueryClient();
     renderScreen(queryClient);
     await submitName('見本');
-    fireEvent.change(screen.getByRole('textbox', { name: '名前' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: /^名前/u }), {
       target: { value: '' },
     });
 

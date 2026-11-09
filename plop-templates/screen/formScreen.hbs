@@ -3,6 +3,7 @@
 import { Stack, TextInput } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { FieldLabel } from '@template/ui/blocks/field-label/FieldLabel';
 import { FormCard } from '@template/ui/blocks/form-card/FormCard';
 import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
 import Link from 'next/link';
@@ -76,7 +77,14 @@ export const {{componentName}} = (): React.JSX.Element => {
       >
         <TextInput
           error={isNameTouched ? errors.name : null}
-          label="名前"
+          // 欄の説明は流れに置かず、ラベルの横のアイコンの後ろに置く（design-form.md）
+          label={
+            <FieldLabel
+              hint="一覧と詳細の見出しに出します"
+              hintLabel="名前について"
+              label="名前"
+            />
+          }
           onBlur={() => {
             setIsNameTouched(true);
           }}

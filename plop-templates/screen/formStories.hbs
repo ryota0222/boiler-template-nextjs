@@ -39,7 +39,7 @@ export const Filled: Story = {
   decorators: [createQueryClientDecorator()],
   name: '入力した場合',
   play: async ({ canvasElement }): Promise<void> => {
-    await userEvent.type(within(canvasElement).getByRole('textbox', { name: '名前' }), '見本');
+    await userEvent.type(within(canvasElement).getByRole('textbox', { name: /^名前/u }), '見本');
   },
 };
 
@@ -47,7 +47,7 @@ export const InvalidInput: Story = {
   decorators: [createQueryClientDecorator()],
   name: '入力エラーの場合',
   play: async ({ canvasElement }): Promise<void> => {
-    const nameInput = within(canvasElement).getByRole('textbox', { name: '名前' });
+    const nameInput = within(canvasElement).getByRole('textbox', { name: /^名前/u });
     await userEvent.click(nameInput);
     await userEvent.tab();
 
@@ -60,7 +60,7 @@ export const Error: Story = {
   name: 'エラーの場合',
   play: async ({ canvasElement }): Promise<void> => {
     const canvas = within(canvasElement);
-    await userEvent.type(canvas.getByRole('textbox', { name: '名前' }), '見本');
+    await userEvent.type(canvas.getByRole('textbox', { name: /^名前/u }), '見本');
     await userEvent.click(canvas.getByRole('button', { name: '送信する' }));
 
     await expect(await canvas.findByRole('alert')).toBeVisible();
