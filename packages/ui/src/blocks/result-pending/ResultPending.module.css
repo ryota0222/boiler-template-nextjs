@@ -1,0 +1,46 @@
+/* 結果が出る場所に帯を敷き、左から右へ薄い光を流す。光は背景との差を小さくし、目を引きすぎないようにする */
+.band {
+  /* 灰色だけだと止まった枠に見えるため、光の芯に主色を薄く混ぜる */
+  --pending-base: var(--mantine-color-gray-1);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 14%,
+    var(--mantine-color-gray-0)
+  );
+
+  background-color: var(--pending-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--pending-base) 0%,
+    var(--pending-glow) 50%,
+    var(--pending-base) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--mantine-radius-default);
+  height: 100%;
+}
+
+[data-mantine-color-scheme='dark'] .band {
+  --pending-base: var(--mantine-color-dark-6);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 24%,
+    var(--mantine-color-dark-6)
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .band {
+    animation: pending-band 1.3s linear infinite;
+  }
+}
+
+@keyframes pending-band {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

@@ -1,0 +1,65 @@
+/* 結果の帯はカードの下の縁まで敷き、どの状態でも高さを変えないことで、結果が届いたときに配置が動かないようにする */
+.status {
+  align-items: center;
+  border-top: calc(0.0625rem * var(--mantine-scale)) solid var(--mantine-color-default-border);
+  display: flex;
+  gap: var(--mantine-spacing-xs);
+  min-height: calc(3rem * var(--mantine-scale));
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+}
+
+.status[data-status='success'] {
+  background-color: var(--mantine-color-green-light);
+}
+
+.status[data-status='failure'] {
+  background-color: var(--mantine-color-red-light);
+}
+
+.status[data-status='offline'] {
+  background-color: var(--mantine-color-orange-light);
+}
+
+/* 待ちの光は ResultPending と同じく、灰色の帯の芯に主色を薄く混ぜる */
+.status[data-status='pending'][data-visible] {
+  --pending-base: var(--mantine-color-gray-1);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 14%,
+    var(--mantine-color-gray-0)
+  );
+
+  background-color: var(--pending-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--pending-base) 0%,
+    var(--pending-glow) 50%,
+    var(--pending-base) 100%
+  );
+  background-size: 200% 100%;
+}
+
+[data-mantine-color-scheme='dark'] .status[data-status='pending'][data-visible] {
+  --pending-base: var(--mantine-color-dark-6);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 24%,
+    var(--mantine-color-dark-6)
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status[data-status='pending'][data-visible] {
+    animation: result-card-pending 1.3s linear infinite;
+  }
+}
+
+@keyframes result-card-pending {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
