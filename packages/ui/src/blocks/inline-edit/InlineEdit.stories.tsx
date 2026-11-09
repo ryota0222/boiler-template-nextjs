@@ -6,6 +6,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 const meta = {
   args: {
+    hasViewingLabel: true,
     label: '取引先名',
     labels: {
       cancel: 'やめる',

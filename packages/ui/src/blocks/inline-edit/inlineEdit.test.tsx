@@ -13,7 +13,13 @@ const labels = {
 
 it('直すボタンを押した場合、今の値を入れた入力欄を出すこと', () => {
   renderWithUi(
-    <InlineEdit label="取引先名" labels={labels} onSave={vi.fn()} value="株式会社サンプル" />
+    <InlineEdit
+      hasViewingLabel
+      label="取引先名"
+      labels={labels}
+      onSave={vi.fn()}
+      value="株式会社サンプル"
+    />
   );
 
   fireEvent.click(screen.getByRole('button', { name: '直す' }));
@@ -25,7 +31,13 @@ it('直すボタンを押した場合、今の値を入れた入力欄を出す�
 it('保存に成功した場合、保存したことを値の横に出すこと', async () => {
   const onSave = vi.fn().mockResolvedValue({ ok: true });
   renderWithUi(
-    <InlineEdit label="取引先名" labels={labels} onSave={onSave} value="株式会社サンプル" />
+    <InlineEdit
+      hasViewingLabel
+      label="取引先名"
+      labels={labels}
+      onSave={onSave}
+      value="株式会社サンプル"
+    />
   );
   fireEvent.click(screen.getByRole('button', { name: '直す' }));
   fireEvent.change(screen.getByRole('textbox', { name: '取引先名' }), {
@@ -42,7 +54,13 @@ it('保存に成功した場合、保存したことを値の横に出すこと'
 it('保存に失敗した場合、入力欄を残して理由を出すこと', async () => {
   const onSave = vi.fn().mockResolvedValue({ message: '取引先名を入力してください', ok: false });
   renderWithUi(
-    <InlineEdit label="取引先名" labels={labels} onSave={onSave} value="株式会社サンプル" />
+    <InlineEdit
+      hasViewingLabel
+      label="取引先名"
+      labels={labels}
+      onSave={onSave}
+      value="株式会社サンプル"
+    />
   );
   fireEvent.click(screen.getByRole('button', { name: '直す' }));
 
@@ -54,12 +72,34 @@ it('保存に失敗した場合、入力欄を残して理由を出すこと', a
 
 it('やめるボタンを押した場合、値の表示に戻ること', () => {
   renderWithUi(
-    <InlineEdit label="取引先名" labels={labels} onSave={vi.fn()} value="株式会社サンプル" />
+    <InlineEdit
+      hasViewingLabel
+      label="取引先名"
+      labels={labels}
+      onSave={vi.fn()}
+      value="株式会社サンプル"
+    />
   );
   fireEvent.click(screen.getByRole('button', { name: '直す' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'やめる' }));
 
   const actual = screen.queryByRole('textbox');
+  expect(actual).not.toBeInTheDocument();
+});
+
+it('hasViewingLabelがfalseの場合、表示しているときに見出しを描画しないこと', () => {
+  renderWithUi(
+    <InlineEdit
+      hasViewingLabel={false}
+      label="取引先名"
+      labels={labels}
+      onSave={vi.fn()}
+      value="株式会社サンプル"
+    />
+  );
+
+  const actual = screen.queryByText('取引先名');
+
   expect(actual).not.toBeInTheDocument();
 });
