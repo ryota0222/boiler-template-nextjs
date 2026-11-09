@@ -20,7 +20,7 @@ paths:
 
 ### Details
 
-`@tabler/icons-react` is the set, because Mantine ships no icons and Mantine UI's blocks are written against Tabler. Keep Tabler's default stroke; never pass `stroke`. The same meaning always gets the same glyph, and no glyph is reused for two meanings.
+`@tabler/icons-react` is the set, because Mantine ships no icons and Mantine UI's blocks are written against Tabler. The stroke is 1.5, set once for every icon by `.tabler-icon` in `src/app/globals.css` (Tabler's own default of 2 looks heavier than 14–16px text); never pass `stroke`. The same meaning always gets the same glyph, and no glyph is reused for two meanings.
 
 | Where                                                                          | `size` |
 | ------------------------------------------------------------------------------ | ------ |
@@ -28,6 +28,7 @@ paths:
 | `leftSection` / `rightSection` of `sm` and `md` controls, `Menu.Item`, `Alert` | 16     |
 | Inside an `ActionIcon size="lg"`                                               | 18     |
 | `leftSection` of a `Badge`                                                     | 12     |
+| `icon` of a toast (`notifications.show`)                                       | 20     |
 
 An icon never appears without either a text label next to it or an `aria-label` on the control (`design-a11y.md`). An icon next to a text label is decorative and takes `aria-hidden`.
 
@@ -56,6 +57,7 @@ The operation decides the icon, not the label's wording and not the button's var
 | Send a chat message                           | `送信`                                                         | `IconArrowUp`                      | Icon only |
 | Mark the start of an assistant's chat message | —                                                              | `IconSparkles`                     | Left      |
 | Log out                                       | `ログアウト`                                                   | `IconLogout`                       | Left      |
+| Copy a value (`CopyableValue`)                | `〜をコピーする`                                               | `IconCopy`                         | Icon only |
 
 `〜を開く` that stays in the same tab is navigation, not "open in a new tab", and carries no icon.
 

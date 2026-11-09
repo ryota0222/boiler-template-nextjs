@@ -15,21 +15,22 @@ paths:
 particular action. The wording of every message in here follows `design-copy.md`, and whether the
 message is announced at all is `design-a11y.md`.
 
-## Success Is a Toast, and It Disappears
+## Success Answers Where the Result Shows
 
-- **Type**: MUST
-- **Reason**: A confirmation that must be dismissed makes the user acknowledge their own success.
+- **Type**: MUST for where the answer appears; the expression is chosen per screen
+- **Reason**: The user is looking at the place they acted. An answer elsewhere is missed, and a confirmation that must be dismissed makes the user acknowledge their own success.
 
-Bottom-right, auto-dismissing after 3 seconds. One sentence naming the object and what happened:
-`注文 #1024 を登録しました`.
+Answer next to where the result appears, and pick the expression by how the screen works:
 
-Use `@mantine/notifications` (`notifications.show` with `position: "bottom-right"` and
-`autoClose: 3000`). It defaults every notification to `role="alert"`, so a success toast passes
-`role: "status"` (`design-a11y.md`). `Notifications` is mounted once in the root layout
-(`app/layout.tsx`), so a screen only calls `notifications.show`.
+| Situation                                                                                   | Treatment                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The result is visible in place (a value, a row, a counter, a status line changes)           | Change it in place: the new value itself, the line or surface in the success colour, a check icon, or a short inline message. No toast                                                       |
+| The action closes a unit of work (a step, a batch, a whole task)                            | A larger in-place answer is allowed: the region or the whole screen takes the success state, says what was done, and offers the next step (one button, or auto-advance with a visible timer) |
+| The result is not visible on this screen (a background save, a result that lives elsewhere) | A toast (below)                                                                                                                                                                              |
 
-Do not put a toast where the screen already shows the result. Navigating to the single-object
-screen of the record you just created is itself the confirmation; the toast only adds the verb.
+Answer a success once: not in place and with a toast. Do not turn the whole screen for every small action; keep that for the end of a unit. Navigating to the single-object screen of the record you just created is itself the confirmation; the toast only adds the verb.
+
+A toast sits bottom-right and auto-dismisses after 3 seconds. One sentence naming the object and what happened: `注文 #1024 を登録しました`. Use `@mantine/notifications` (`notifications.show` with `position: "bottom-right"` and `autoClose: 3000`). It defaults every notification to `role="alert"`, so a success toast passes `role: "status"` (`design-a11y.md`). Every toast passes an `icon` that matches its colour, as an `Alert` does: `IconInfoCircle` for the primary colour, `IconCircleCheck` for success (pass `color: 'green.9'`, because shade 6 falls short of 3:1 on white for a mark, `design-a11y.md`), `IconAlertCircle` for `red`, at `size={20}` with `aria-hidden`. The theme draws the icon in the toast's colour instead of Mantine's filled circle, and the coloured bar on the left disappears. `Notifications` is mounted once in the root layout (`app/layout.tsx`), so a screen only calls `notifications.show`. An in-place answer is announced through a `role="status"` region (`design-a11y.md`).
 
 ## A Failure the User Cannot Fix Is a Banner
 
@@ -53,20 +54,40 @@ Field-level problems are not banners — they belong under the field (`design-fo
 - **Reason**: A spinner on a blank page moves everything when data arrives, and a live button
   during a mutation gets pressed twice.
 
-| Scope                                  | Treatment                                                                                                                                                                                                        |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Whole screen                           | `Skeleton` at the dimensions the loaded content will have                                                                                                                                                        |
-| Authentication screen (under `(auth)`) | `AuthenticationLoading`: a centered `Loader`; the screen is a single small card that `AuthenticationLayout` re-centers, so a centered spinner shifts little                                                      |
-| A single action                        | The button is `disabled`, a small `Loader` sits in its `leftSection`, and its label switches to the progressive form (`保存しています…`); never the `loading` prop, which hides the label behind a bare `Loader` |
+| Scope                                  | Treatment                                                                                                                                                                                                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Whole screen                           | `Skeleton` at the dimensions the loaded content will have                                                                                                                                                                                                                          |
+| Authentication screen (under `(auth)`) | `AuthenticationLoading`: a centered `Loader`; the screen is a single small card that `AuthenticationLayout` re-centers, so a centered spinner shifts little                                                                                                                        |
+| A result that appears in place         | Keep the region's size and show the wait there: `ResultPending` (a shimmer band at the result's height), `PendingValue` for a single value inside a line, or the current value dimmed. Both show the shimmer only after 300ms (`DelayedPending`), so a fast response never flashes |
+| Moving on to the next screen           | Move at once. Values already known (what was entered, scanned, or selected) render immediately; only the values that need the response wait, as a `PendingValue` in their place                                                                                                    |
+| A single action                        | The button is `disabled`, a small `Loader` sits in its `leftSection`, and its label switches to the progressive form (`保存しています…`); never the `loading` prop, which hides the label behind a bare `Loader`                                                                   |
 
 The whole-screen case is what `loading.tsx` renders (`design-states.md`).
+
+The expression may differ per product, as long as three things hold: the wait shows where the result will appear, the layout does not move when it arrives, and the action cannot be repeated while it waits. A spinner on its own is the last resort.
 
 ## LLM Work Shows the Thinking Orb, Waiting Shows a Loader
 
 - **Type**: MUST
 - **Reason**: Waiting for an LLM to think or write takes seconds to minutes and is the product working, while waiting for a request or a server is plumbing. When both show the same spinner, the reader cannot tell that the AI is doing something for them.
 
-While an LLM is thinking or producing something — a chat reply, a summary, a generated draft — show the thinking orb next to a progressive line of `ShimmerText` (`ThinkingIndicator`, or `ThinkingOrbIcon` beside the line). Everything else that waits — a submitting button, a reload, a server starting — keeps Mantine's `Loader`. In a chat, the orb takes the place of the assistant's ✦ while the reply is being written. The orb is `thinking-orbs` behind `ThinkingOrbIcon` (`src/shared-components/thinking-orb-icon/`), fixed to one state and theme, at 20px beside a line or 64px in the middle of an empty region that the LLM is filling; never import `thinking-orbs` anywhere else.
+While an LLM is thinking or producing something — a chat reply, a summary, a generated draft — show the thinking orb next to a progressive line of `ShimmerText` (`ThinkingIndicator`, or `ThinkingOrbIcon` beside the line). Everything else that waits — a submitting button, a reload, a server starting, a value arriving in place — uses the treatments in the loading table above (`Loader`, `Skeleton`, or an in-place shimmer), never the orb. In a chat, the orb takes the place of the assistant's ✦ while the reply is being written. The orb is `thinking-orbs` behind `ThinkingOrbIcon` (`src/shared-components/thinking-orb-icon/`), fixed to the `searching` state, tinted with the app's primary colour at its primary shade, with its theme following the colour scheme Mantine resolves, at 32px beside a line (20px is too small to read the motion) or 64px in the middle of an empty region that the LLM is filling; never import `thinking-orbs` anywhere else.
+
+## The Block Follows Where the Answer Belongs
+
+- **Type**: MUST
+- **Reason**: One answer per action, in the place the reader is already looking. When two blocks answer the same action, or the answer lands away from the object it is about, the reader checks twice.
+
+| Situation                                                                              | Block                                                  |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| An action on one object (a scan, a check, a confirmation) whose object stays on screen | `ResultCard`: the object above, the answer in its band |
+| A result that appears in a region with no object card (a list row, a count field)      | `ResultPending`, replaced by the result                |
+| The screen has moved on and one value inside a line still waits for the response       | `PendingValue`                                         |
+| A unit of work (a step, a batch, the whole task) has ended                             | The region or whole screen takes the success state     |
+| The result is not visible on this screen                                               | A toast                                                |
+| An LLM is thinking or writing                                                          | `ThinkingIndicator`                                    |
+
+`ResultCard`'s band has four states: `pending` (the shimmer and a progressive label such as `確かめています…`, shown after 300ms), `success` (green surface, `IconCircleCheck`, a short verdict), `failure` (red surface, `IconAlertCircle`, the reason, and in `detail` the next step or the expected value beside the one entered), and `offline` (orange surface, `IconWifiOff`, and in `detail` whether it was recorded). The words stay in the default text colour. When the next action on the same screen starts, the band returns to `pending`; a success colour is never left standing over a new object. Never answer the same action in the band and in a toast.
 
 ## A Modal Is Allowed Under Three Conditions
 

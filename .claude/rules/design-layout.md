@@ -95,6 +95,20 @@ Line height comes with the size token — do not override it. Columns of numbers
 Do not introduce a fifth size to make something look important. Move it up a level or change its
 weight.
 
+## Units Beside Large Numbers Are Smaller, and Mixed Sizes Share a Baseline
+
+- **Type**: SHOULD
+- **Reason**: A unit at the number's size competes with it, and text of different sizes aligned on the centre looks like it is floating.
+
+When a number is enlarged to be the thing the reader checks (a count, a quantity, a total), its unit (`個`, `件`, `円`, `cm`) is set at about 60% of the number's size in the same text, so the two share a baseline. Text of different sizes placed side by side (a number and its description, a value and its label on one line) aligns on the baseline (`align="baseline"` on `Group`), never on the centre. An enlarged number with its unit is drawn with `MetricValue` (`@template/ui/blocks/metric-value`), which holds both rules.
+
+## Progress Is a Bar Beside the Count
+
+- **Type**: SHOULD
+- **Reason**: A count alone (`6 / 18`) has to be read and compared; a bar is seen at a glance.
+
+Progress through a known number of items is `SegmentedProgress` (`@template/ui/blocks/segmented-progress`): the count in words with a bar under it. Up to 8 items the bar is split into one segment per item; beyond 8 the segments are too thin to read, so it is one continuous bar. With a single item it renders nothing.
+
 ## Colour Carries Meaning, and the Meaning Is Fixed
 
 - **Type**: MUST

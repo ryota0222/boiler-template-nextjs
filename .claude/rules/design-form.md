@@ -92,19 +92,26 @@ Never move focus or scroll to the error on blur; the user knows where they are.
 
 - **Type**: MUST
 
-A red `*` after the label, hidden from assistive technology, plus the accessible requirement on
-the field itself. Mantine's `required` prop produces both: the input gets `required`, and the label
-gets an asterisk with `aria-hidden`. Do not draw a second mark by hand.
+A small 「必須」 tag after the label (light red surface, red 11px bold text), hidden from assistive
+technology, plus the accessible requirement on the field itself. Japanese users read 「必須」 more
+reliably than the English-convention `*`. Mantine's `required` prop produces both: the input gets
+`required`, and the label gets a mark with `aria-hidden`, which `src/app/globals.css` redraws as
+「必須」. Do not draw a second mark by hand.
 
 ```typescript
 // Good: one prop, the mark is visual and the requirement is programmatic
 <NumberInput label="数量" required />
 
-// Bad: a hand-drawn mark, announced as "asterisk" and duplicating nothing programmatic
-<NumberInput label="数量 ＊" />
+// Bad: a hand-drawn mark, read aloud and duplicating nothing programmatic
+<NumberInput label="数量（必須）" />
 ```
 
-Conditionally required fields switch the mark with the condition, never leaving a `＊` on a field
+Optional fields get no mark. When almost every field on a form is required, a 「必須」 on each one
+is noise. Keep `required` on those fields but pass `withAsterisk={false}` to hide the tag, mark the
+few optional fields with 「任意」 in their `description`, and say once above the form that every
+field without 「任意」 is required.
+
+Conditionally required fields switch the mark with the condition, never leaving 「必須」 on a field
 that is currently optional.
 
 ## Hints Live Behind an Icon, Not in the Flow
