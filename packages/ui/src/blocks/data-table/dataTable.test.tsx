@@ -145,6 +145,7 @@ const renderDataTable = ({
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={initialGroupingColumnId}
       labels={labels}
       selectionActions={(selectedRows) => (
@@ -614,6 +615,7 @@ it('列の見出しをまとめた場合、見出しの選択欄を 1 つだけ�
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={() => null}
@@ -648,6 +650,7 @@ const RerenderingDataTable = (): React.JSX.Element => {
         getRowId={(order) => order.id}
         hasColumnVisibility
         hasGrouping
+        hasSearch
         initialGroupingColumnId="customer"
         // アプリは labels を描画のたびに作ることが多いため、毎回新しいオブジェクトを渡す
         labels={{ ...labels }}
@@ -824,6 +827,7 @@ it('合計の行がない表ですべてを選んだ場合、見出しと本体�
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={() => null}
@@ -874,6 +878,7 @@ const renderOrdersWithoutOptionalControls = (): void => {
       getRowId={(order) => order.id}
       hasColumnVisibility={false}
       hasGrouping={false}
+      hasSearch={false}
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={null}
@@ -885,6 +890,14 @@ it('hasGroupingがfalseの場合、グループ化する列を選ぶ欄を描画
   renderOrdersWithoutOptionalControls();
 
   const actual = screen.queryByLabelText('グループ化する列');
+
+  expect(actual).not.toBeInTheDocument();
+});
+
+it('hasSearchがfalseの場合、検索の欄を描画しないこと', () => {
+  renderOrdersWithoutOptionalControls();
+
+  const actual = screen.queryByRole('textbox', { name: '注文を検索' });
 
   expect(actual).not.toBeInTheDocument();
 });

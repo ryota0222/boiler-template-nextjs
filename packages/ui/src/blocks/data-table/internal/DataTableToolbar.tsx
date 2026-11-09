@@ -123,6 +123,7 @@ export const DataTableToolbar = <TData extends RowData>({
   groupingColumnId,
   hasColumnVisibility,
   hasGrouping,
+  hasSearch,
   labels,
   onGroupingColumnIdChange,
   onSearchChange,
@@ -133,6 +134,7 @@ export const DataTableToolbar = <TData extends RowData>({
   readonly groupingColumnId: null | string;
   readonly hasColumnVisibility: boolean;
   readonly hasGrouping: boolean;
+  readonly hasSearch: boolean;
   readonly labels: DataTableLabels<TData>;
   readonly onGroupingColumnIdChange: (groupingColumnId: null | string) => void;
   readonly onSearchChange: (search: string) => void;
@@ -141,15 +143,18 @@ export const DataTableToolbar = <TData extends RowData>({
   readonly table: ReactTable<DataTableFeatures, TData>;
 }): React.JSX.Element => (
   <Stack gap="xs">
-    <Group align="flex-end" justify="space-between">
-      <TextInput
-        label={labels.search}
-        onChange={(event) => {
-          onSearchChange(event.currentTarget.value);
-        }}
-        placeholder={labels.searchPlaceholder}
-        value={search}
-      />
+    {/* 画面が表の上に自分の絞り込みの欄を置くときは、同じ欄が 2 つ並ばないよう検索の欄を出さない */}
+    <Group align="flex-end" justify={hasSearch ? 'space-between' : 'flex-end'}>
+      {hasSearch ? (
+        <TextInput
+          label={labels.search}
+          onChange={(event) => {
+            onSearchChange(event.currentTarget.value);
+          }}
+          placeholder={labels.searchPlaceholder}
+          value={search}
+        />
+      ) : null}
       <Group align="flex-end" gap="sm">
         {hasGrouping ? (
           <GroupingSelect

@@ -145,6 +145,7 @@ const meta = {
     getRowId: (order): string => order.id,
     hasColumnVisibility: true,
     hasGrouping: true,
+    hasSearch: true,
     initialGroupingColumnId: null,
     labels,
     selectionActions: (selectedRows): React.JSX.Element => (
