@@ -54,6 +54,14 @@ const generationCases = [
     name: '動的な区切りを持つsplit',
   },
   {
+    answers: { concept: 'inventory-item', kind: 'dashboard', path: '/inventory-items/overview' },
+    name: 'dashboard',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'dashboard', path: '/shipments/[id]/overview' },
+    name: '動的な区切りを持つdashboard',
+  },
+  {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
     name: '手で書いたqueries.tsへ追記するblank',
   },
@@ -240,6 +248,16 @@ it.each([
     ],
   },
   {
+    kind: 'dashboard',
+    paths: [
+      'src/app/inventory-items/overview/page.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/InventoryItemDashboardScreen.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/InventoryItemDashboardScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/inventoryItemDashboardScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+    ],
+  },
+  {
     kind: 'split',
     paths: [
       'src/app/inventory-items/queue/page.tsx',
@@ -277,6 +295,7 @@ it.each([
       'inventoryItemDetailQueryOptions',
       'inventoryItemBlankQueryOptions',
       'inventoryItemSplitQueryOptions',
+      'inventoryItemDashboardQueryOptions',
     ],
     path: 'src/api/inventory-item/queries.ts',
   },

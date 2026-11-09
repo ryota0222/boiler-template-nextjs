@@ -1475,7 +1475,7 @@ const createBuildingApiActions =
     });
   };
 
-const screenKinds = ['blank', 'collection', 'detail', 'form', 'split'] as const;
+const screenKinds = ['blank', 'collection', 'detail', 'form', 'split', 'dashboard'] as const;
 
 const screenKindSchema = z.enum(screenKinds, {
   error: `kind は ${screenKinds.join('・')} のどれかで指定してください`,
@@ -1559,6 +1559,13 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     mutation: null,
     pageFrame: 'container',
     query: { dataTypeSuffix: 'CollectionRow', isList: true },
+  },
+  dashboard: {
+    hasValidation: false,
+    headingSuffix: ' の概要',
+    mutation: null,
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'Dashboard', isList: false },
   },
   detail: {
     hasValidation: false,
