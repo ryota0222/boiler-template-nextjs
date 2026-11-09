@@ -1,0 +1,211 @@
+'use client';
+
+import type { InlineEditSaveResult } from '@template/ui/blocks/inline-edit/InlineEdit';
+
+import {
+  Button,
+  Card,
+  Checkbox,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+  VisuallyHidden,
+} from '@mantine/core';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ConfirmModal } from '@template/ui/blocks/confirm-modal/ConfirmModal';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { InlineEdit } from '@template/ui/blocks/inline-edit/InlineEdit';
+import { SettingsLayout } from '@template/ui/blocks/settings-layout/SettingsLayout';
+import Link from 'next/link';
+import { useState } from 'react';
+import { isDefined } from 'remeda';
+
+import { {{mutationOptionsName}} } from '@/api/{{concept}}/mutations';
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+// 読み込み後のカードと同じ高さにし、データが届いたときに配置がずれないようにする
+const cardSkeletonHeight = 120;
+
+const inlineEditLabels = {
+  cancel: 'やめる',
+  edit: '直す',
+  save: '保存する',
+  saved: '保存しました',
+  saving: '保存しています…',
+};
+
+const saveFailureMessage = '保存できませんでした。時間をおいてから、もう一度保存してください。';
+
+// 設定のまとまりが 3 つ以上あるときに SettingsLayout を使う（design-recipes.md）。
+// この画面のほかの 2 つは仮のまとまりで、画面を作るまでつながらないため、作るときに名前と URL を直す
+const createNavigationItems = (
+  currentPath: string,
+): readonly { readonly href: string; readonly isCurrent: boolean; readonly label: string }[] => [
+  { href: currentPath, isCurrent: true, label: '基本' },
+  { href: `${currentPath}/members`, isCurrent: false, label: 'メンバー' },
+  { href: `${currentPath}/integrations`, isCurrent: false, label: '連携' },
+];
+
+const renderCard = ({
+  children,
+  title,
+}: {
+  readonly children: React.ReactNode;
+  readonly title: string;
+}): React.JSX.Element => (
+  <Card padding="md" shadow="xs" withBorder>
+    <Stack gap="md">
+      <Title order={2} size="h5">
+        {title}
+      </Title>
+      {children}
+    </Stack>
+  </Card>
+);
+
+const renderNotification = ({
+  hasFailed,
+  isNotified,
+  isSaving,
+  onChange,
+}: {
+  readonly hasFailed: boolean;
+  readonly isNotified: boolean;
+  readonly isSaving: boolean;
+  readonly onChange: (isNotified: boolean) => void;
+}): React.JSX.Element =>
+  renderCard({
+    children: (
+      <Checkbox
+        checked={isNotified}
+        disabled={isSaving}
+        error={hasFailed ? saveFailureMessage : null}
+        label="{{concept}} が変わったときにメールで知らせる"
+        onChange={(event) => {
+          onChange(event.currentTarget.checked);
+        }}
+      />
+    ),
+    title: 'お知らせ',
+  });
+
+// 取り消せない操作は、ほかの操作から離して最後に置き、いちばん弱い見た目にする（design-hierarchy.md）
+const renderDeletion = ({
+  onOpen,
+}: {
+  readonly onOpen: () => void;
+}): React.JSX.Element =>
+  renderCard({
+    children: (
+      <Stack align="flex-start" gap="xs">
+        <Text size="sm">削除すると、{{concept}} の記録も消えます。取り消せません。</Text>
+        <Button color="red.9" onClick={onOpen} variant="subtle">
+          {{concept}} を削除する
+        </Button>
+      </Stack>
+    ),
+    title: '{{concept}} の削除',
+  });
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{queryOptionsCode}}});
+  // 名前とお知らせは別々に保存し、失敗をそれぞれの欄の下に返す
+  const nameMutation = useMutation({{{mutationOptionsCode}}});
+  const notificationMutation = useMutation({{{mutationOptionsCode}}});
+  const [isDeletionOpened, setIsDeletionOpened] = useState(false);
+
+  const renderContent = (settings: {{queryDataTypeName}}): React.JSX.Element => (
+    <Stack gap="lg">
+      {renderCard({
+        children: (
+          <InlineEdit
+            hasViewingLabel
+            label="名前"
+            labels={inlineEditLabels}
+            // 保存の結果は InlineEdit がその場で返すため、通知は出さない（design-feedback.md）
+            onSave={async (name): Promise<InlineEditSaveResult> => {
+              const result = await nameMutation.mutateAsync({ ...settings, name });
+              return result.ok ? { ok: true } : { message: saveFailureMessage, ok: false };
+            }}
+            value={settings.name}
+          />
+        ),
+        title: '基本の情報',
+      })}
+      {renderNotification({
+        hasFailed: notificationMutation.data?.ok === false,
+        isNotified: notificationMutation.isPending
+          ? notificationMutation.variables.isNotified
+          : settings.isNotified,
+        isSaving: notificationMutation.isPending,
+        onChange: (isNotified) => {
+          notificationMutation.mutate({ ...settings, isNotified });
+        },
+      })}
+      {renderDeletion({
+        onOpen: () => {
+          setIsDeletionOpened(true);
+        },
+      })}
+      <ConfirmModal
+        closeLabel="キャンセル"
+        confirmLabel="削除する"
+        description="削除した {{concept}} は元に戻せません。"
+        isConfirming={false}
+        isDestructive
+        isOpened={isDeletionOpened}
+        onClose={() => {
+          setIsDeletionOpened(false);
+        }}
+        // 削除の mutation をつなぐまでは、確かめた後に閉じるだけにする
+        onConfirm={() => {
+          setIsDeletionOpened(false);
+        }}
+        summary={[{ label: '名前', value: settings.name }]}
+        title="{{concept}} を削除しますか"
+      />
+    </Stack>
+  );
+
+  return (
+    <SettingsLayout
+      linkComponent={Link}
+      navigationItems={createNavigationItems({{{pathCode}}})}
+      navigationLabel="設定のまとまり"
+    >
+      <Stack gap="lg">
+        <Title order={1} size="h3">
+          {{heading}}
+        </Title>
+        {isDefined(query.data) ? null : (
+          <Stack aria-busy aria-label="{{concept}} の設定を読み込み中" gap="lg" role="status">
+            {/* aria-label はライブリージョンでは読み上げられないことが多いため、同じ文言を画面外の文字でも置く */}
+            <VisuallyHidden>{{concept}} の設定を読み込み中</VisuallyHidden>
+            <Skeleton h={cardSkeletonHeight} />
+            <Skeleton h={cardSkeletonHeight} />
+          </Stack>
+        )}
+        {query.data?.ok === false ? (
+          <ErrorBanner
+            description="時間をおいてから、もう一度読み込んでください。"
+            onRetry={() => {
+              void query.refetch();
+            }}
+            retryLabel="もう一度読み込む"
+            title="{{concept}} の設定を読み込めませんでした"
+          />
+        ) : null}
+        {query.data?.ok === true ? renderContent(query.data.value) : null}
+      </Stack>
+    </SettingsLayout>
+  );
+};

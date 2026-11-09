@@ -1484,6 +1484,7 @@ const screenKinds = [
   'dashboard',
   'chat',
   'task-step',
+  'settings',
 ] as const;
 
 const screenKindSchema = z.enum(screenKinds, {
@@ -1599,6 +1600,14 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     pageFrame: 'container',
     query: null,
   },
+  settings: {
+    hasValidation: false,
+    headingSuffix: ' の設定',
+    // 値を InlineEdit と Checkbox でその場で保存するため、読み込みの query と保存の mutation を両方書き出す
+    mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'SettingsChanges' },
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'Settings', isList: false },
+  },
   split: {
     hasValidation: false,
     headingSuffix: ' の一覧',
@@ -1637,6 +1646,7 @@ type ScreenTemplateData = {
   readonly mutationResultTypeName: string;
   readonly mutationValuesTypeName: string;
   readonly parametersTypeCode: string;
+  readonly pathCode: string;
   readonly queryDataTypeName: string;
   readonly queryOptionsCode: string;
   readonly queryOptionsName: string;
@@ -1727,6 +1737,17 @@ const buildScreenTypeNames = ({
   };
 };
 
+// 画面の中から自分の URL を指すためのコード。動的な区切りは画面が受け取る parameters の値で埋める
+const buildPathCode = (path: string): string =>
+  path.includes('[')
+    ? `\`${path
+        .split('/')
+        .map((segment) =>
+          segment.startsWith('[') ? `\${parameters.${segment.slice(1, -1)}}` : segment
+        )
+        .join('/')}\``
+    : `'${path}'`;
+
 const buildScreenTemplateData = ({
   answers,
   titleFormat,
@@ -1770,6 +1791,7 @@ const buildScreenTemplateData = ({
     }),
     mutationOptionsName,
     parametersTypeCode: parameterFields.typeCode,
+    pathCode: buildPathCode(answers.path),
     queryOptionsCode: withParameters({
       argumentCode: 'parameters',
       hasParameters,

@@ -78,6 +78,14 @@ const generationCases = [
     name: '動的な区切りを持つtask-step',
   },
   {
+    answers: { concept: 'inventory-item', kind: 'settings', path: '/inventory-items/settings' },
+    name: 'settings',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'settings', path: '/shipments/[id]/settings' },
+    name: '動的な区切りを持つsettings',
+  },
+  {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
     name: '手で書いたqueries.tsへ追記するblank',
   },
@@ -274,6 +282,17 @@ it.each([
     ],
   },
   {
+    kind: 'settings',
+    paths: [
+      'src/app/inventory-items/settings/page.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/InventoryItemSettingsScreen.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/InventoryItemSettingsScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/inventoryItemSettingsScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
     kind: 'task-step',
     paths: [
       'src/app/inventory-items/packing/page.tsx',
@@ -332,6 +351,7 @@ it.each([
       'inventoryItemBlankQueryOptions',
       'inventoryItemSplitQueryOptions',
       'inventoryItemDashboardQueryOptions',
+      'inventoryItemSettingsQueryOptions',
     ],
     path: 'src/api/inventory-item/queries.ts',
   },
@@ -357,6 +377,8 @@ it.each([
       'shipmentTaskStepMutationOptions',
       'ShipmentTaskStepScan',
       'ShipmentTaskStepCheck',
+      'shipmentSettingsMutationOptions',
+      'ShipmentSettingsChanges',
     ],
     path: 'src/api/shipment/mutations.ts',
   },
