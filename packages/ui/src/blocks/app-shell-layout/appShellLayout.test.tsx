@@ -75,9 +75,11 @@ it('アプリの名前がない場合、ヘッダーにアカウントのボタ�
     isNavigationFullHeight: false,
   });
 
-  const actual = screen.getByRole('banner');
+  const banner = screen.getByRole('banner');
 
-  expect(actual).toHaveTextContent(/^アカウント$/);
+  const actual = banner.textContent;
+
+  expect(actual).toBe(within(banner).getByRole('button', { name: 'アカウント' }).textContent);
 });
 
 it('navigationを渡した場合、ナビゲーションの中に描画すること', () => {
