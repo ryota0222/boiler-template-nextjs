@@ -5,6 +5,7 @@ const notFoundStatus = 404;
 const conflictStatus = 409;
 const internalServerErrorStatus = 500;
 const badGatewayStatus = 502;
+const serviceUnavailableStatus = 503;
 const noContentStatus = 204;
 
 const statusByFailureKind: Readonly<Record<FailureKind, number>> = {
@@ -13,6 +14,7 @@ const statusByFailureKind: Readonly<Record<FailureKind, number>> = {
   internal: internalServerErrorStatus,
   'invalid-input': badRequestStatus,
   'invalid-response': badGatewayStatus,
+  maintenance: serviceUnavailableStatus,
   'network-failed': badGatewayStatus,
   'not-found': notFoundStatus,
 };
