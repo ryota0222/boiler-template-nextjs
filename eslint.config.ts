@@ -42,6 +42,7 @@ export default defineConfig(
       '*.config.ts',
       '*.config.mjs',
       '*.cjs',
+      '.claude/skills/**/*.mjs',
     ],
   },
   {

@@ -146,7 +146,8 @@
           "prisma/seed.ts"
         ],
         "ignore": [
-          "prisma/generated/**"
+          "prisma/generated/**",
+          ".claude/skills/**/*.mjs"
         ],
         "ignoreDependencies": [
           "@commitlint/cli",
