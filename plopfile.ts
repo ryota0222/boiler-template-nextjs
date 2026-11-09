@@ -1559,7 +1559,8 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
   detail: {
     hasValidation: false,
     headingSuffix: ' の詳細',
-    mutation: null,
+    // 1 つか 2 つの値を InlineEdit でその場で直すため、読み込みの query と保存の mutation を両方書き出す
+    mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'DetailChanges' },
     query: { dataTypeSuffix: 'Detail', isList: false },
   },
   form: {

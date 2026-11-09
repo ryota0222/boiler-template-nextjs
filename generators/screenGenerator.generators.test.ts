@@ -218,6 +218,7 @@ it.each([
       'src/features/inventory-item/inventory-item-detail-screen/InventoryItemDetailScreen.stories.tsx',
       'src/features/inventory-item/inventory-item-detail-screen/inventoryItemDetailScreen.test.tsx',
       'src/api/inventory-item/queries.ts',
+      'src/api/inventory-item/mutations.ts',
     ],
   },
   {
@@ -270,7 +271,13 @@ it.each([
     path: 'src/api/shipment/queries.ts',
   },
   {
-    names: ['ShipmentFailure', 'shipmentFormMutationOptions', 'ShipmentFormValues'],
+    names: [
+      'ShipmentFailure',
+      'shipmentDetailMutationOptions',
+      'ShipmentDetailChanges',
+      'shipmentFormMutationOptions',
+      'ShipmentFormValues',
+    ],
     path: 'src/api/shipment/mutations.ts',
   },
   {

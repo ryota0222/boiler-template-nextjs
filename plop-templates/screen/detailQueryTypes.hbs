@@ -1,5 +1,12 @@
 
 export type {{queryDataTypeName}} = {
+  // 日時は ISO 8601 の文字列で受け取る。並べる順は新しいものから
+  readonly activities: readonly {
+    readonly at: string;
+    readonly id: string;
+    readonly title: string;
+  }[];
+  readonly code: string;
   readonly id: string;
   readonly name: string;
 };

@@ -1,23 +1,35 @@
 'use client';
 
+import type { InlineEditSaveResult } from '@template/ui/blocks/inline-edit/InlineEdit';
+
 import {
+  Card,
   EmptyState,
   EmptyStateDescription,
   EmptyStateTitle,
+  Grid,
+  GridCol,
   Skeleton,
   Stack,
+  Text,
+  Title,
   VisuallyHidden,
 } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { ActivityTimeline } from '@template/ui/blocks/activity-timeline/ActivityTimeline';
+import { CopyableValue } from '@template/ui/blocks/copyable-value/CopyableValue';
 import { DetailCard } from '@template/ui/blocks/detail-card/DetailCard';
 import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { InlineEdit } from '@template/ui/blocks/inline-edit/InlineEdit';
 import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
 import Link from 'next/link';
+import { useState } from 'react';
 import { isDefined } from 'remeda';
 
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
+import { {{mutationOptionsName}} } from '@/api/{{concept}}/mutations';
 import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 
 // 読み込み後の PageHeader の見出しと DetailCard と同じ高さにし、データが届いたときに配置がずれないようにする
@@ -25,11 +37,52 @@ const titleSkeletonHeight = 28;
 const titleSkeletonWidth = 240;
 const cardSkeletonHeight = 160;
 
+// 幅の広い画面では、基本情報を左の 2/3、更新の履歴を右の 1/3 に並べる
+const fullColumnSpan = 12;
+const mainColumnSpan = 8;
+const sideColumnSpan = 4;
+
+const inlineEditLabels = {
+  cancel: 'やめる',
+  edit: '直す',
+  save: '保存する',
+  saved: '保存しました',
+  saving: '保存しています…',
+};
+
+const renderActivities = ({
+  activities,
+  now,
+}: {
+  readonly activities: {{queryDataTypeName}}['activities'];
+  readonly now: Date;
+}): React.JSX.Element =>
+  activities.length === 0 ? (
+    <Text c="dimmed" size="sm">
+      更新の履歴はまだありません
+    </Text>
+  ) : (
+    <ActivityTimeline
+      items={activities.map((activity) => ({
+        at: new Date(activity.at),
+        detail: null,
+        id: activity.id,
+        title: activity.title,
+      }))}
+      label="更新の履歴"
+      now={now}
+    />
+  );
+
 const renderContent = ({
+  now,
   onRetry,
+  onSaveName,
   result,
 }: {
+  readonly now: Date;
   readonly onRetry: () => void;
+  readonly onSaveName: (name: string) => Promise<InlineEditSaveResult>;
   readonly result: Result<{{{queryValueTypeCode}}}, ApiFailure>;
 }): React.JSX.Element => {
   // 存在しないものを空の詳細として出すと壊れたリンクが隠れるため、読み込みの失敗と分けて出す（design-states.md）
@@ -56,7 +109,49 @@ const renderContent = ({
   }
 
   return (
-    <DetailCard action={null} items={[{ label: '名前', value: result.value.name }]} title="基本情報" />
+    <Grid gap="lg">
+      <GridCol span=\{{ base: fullColumnSpan, md: mainColumnSpan }}>
+        {/* 1 つか 2 つの値はその場で直し、ほかの値に関わる変更は編集の画面に送る（design-recipes.md） */}
+        <DetailCard
+          action={null}
+          items={[
+            {
+              label: '名前',
+              value: (
+                <InlineEdit
+                  hasViewingLabel={false}
+                  label="名前"
+                  labels={inlineEditLabels}
+                  onSave={onSaveName}
+                  value={result.value.name}
+                />
+              ),
+            },
+            {
+              label: 'コード',
+              value: (
+                <CopyableValue
+                  copiedLabel="コピーしました"
+                  copyLabel="コードをコピーする"
+                  value={result.value.code}
+                />
+              ),
+            },
+          ]}
+          title="基本情報"
+        />
+      </GridCol>
+      <GridCol span=\{{ base: fullColumnSpan, md: sideColumnSpan }}>
+        <Card padding="md" shadow="xs" withBorder>
+          <Stack gap="md">
+            <Title order={2} size="h5">
+              更新の履歴
+            </Title>
+            {renderActivities({ activities: result.value.activities, now })}
+          </Stack>
+        </Card>
+      </GridCol>
+    </Grid>
   );
 };
 
@@ -70,6 +165,9 @@ export const {{componentName}} = ({
 export const {{componentName}} = (): React.JSX.Element => {
 {{/if}}
   const query = useQuery({{{queryOptionsCode}}});
+  const mutation = useMutation({{{mutationOptionsCode}}});
+  // 更新の履歴は、描くたびに変わらないよう画面を開いた時刻を基準に「3分前」のように出す
+  const [now] = useState(() => new Date());
   if (!isDefined(query.data)) {
     return (
       <Stack aria-busy aria-label="{{concept}} を読み込み中" gap="xl" role="status">
@@ -92,8 +190,19 @@ export const {{componentName}} = (): React.JSX.Element => {
         title="{{heading}}"
       />
       {renderContent({
+        now,
         onRetry: () => {
           void query.refetch();
+        },
+        // 保存の結果は InlineEdit がその場で返すため、通知は出さない（design-feedback.md）
+        onSaveName: async (name) => {
+          const result = await mutation.mutateAsync({ name });
+          return result.ok
+            ? { ok: true }
+            : {
+                message: '保存できませんでした。時間をおいてから、もう一度保存してください。',
+                ok: false,
+              };
         },
         result: query.data,
       })}

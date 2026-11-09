@@ -9,6 +9,13 @@ import type { Result } from '@/entities/result';
 import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 import { {{componentName}} } from '{{{componentImportPath}}}';
 
+const detail: {{queryDataTypeName}} = {
+  activities: [{ at: '2026-11-10T00:00:00.000Z', id: '1', title: '見本を登録しました' }],
+  code: 'SAMPLE-0001',
+  id: '1',
+  name: '見本',
+};
+
 const renderScreen = (queryClient: QueryClient): void => {
   renderWithUi(
     <QueryClientProvider client={queryClient}>
@@ -39,14 +46,32 @@ describe('{{componentName}}', () => {
   });
 
   it('queryのdataが成功のResultの場合、読み込んだ値を表示すること', () => {
-    renderScreen(createSettledQueryClient({ ok: true, value: { id: '1', name: '見本' } }));
-
+    renderScreen(createSettledQueryClient({ ok: true, value: detail }));
 
     const actual = screen.getByText('見本');
 
     expect(actual).toBeInTheDocument();
   });
 
+  it('更新の履歴が空の場合、まだないことを表示すること', () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: { ...detail, activities: [] } }));
+
+    const actual = screen.getByText('更新の履歴はまだありません');
+
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('名前を直して保存し、mutationFnが失敗のResultを返した場合、保存できなかったことを表示すること', async () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: detail }));
+    fireEvent.click(screen.getByRole('button', { name: '直す' }));
+
+    fireEvent.click(screen.getByRole('button', { name: '保存する' }));
+
+    const actual = await screen.findByText(
+      '保存できませんでした。時間をおいてから、もう一度保存してください。',
+    );
+    expect(actual).toBeInTheDocument();
+  });
 
   it('queryのdataがnot-foundの失敗のResultの場合、見つからないことを表示すること', () => {
     renderScreen(
