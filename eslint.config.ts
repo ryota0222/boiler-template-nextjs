@@ -330,6 +330,13 @@ export default defineConfig(
     },
   },
   {
+    // Mantine のテーマの vars（部品の CSS 変数を決める関数）は、引数の数と順序（theme, props）がライブラリ側で固定されている
+    files: ['packages/ui/src/theme/**/*.ts'],
+    rules: {
+      'max-params': ['error', { max: 2 }],
+    },
+  },
+  {
     // controller はエンドポイントの定義（<verb><Concept>Endpoint）を import して usecase に渡すため。
     // 動的な区切りを持つ Route Handler は Next.js が区切りの値を第 2 引数で渡すため、controller の関数だけ引数を 2 つまで許す
     files: ['src/controllers/**/*.ts'],

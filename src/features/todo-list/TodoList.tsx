@@ -4,6 +4,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 
 import { Checkbox, Stack } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconAlertCircle } from '@tabler/icons-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CollectionSkeleton } from '@template/ui/blocks/collection-skeleton/CollectionSkeleton';
 import { EmptyCollection } from '@template/ui/blocks/empty-collection/EmptyCollection';
@@ -91,7 +92,12 @@ const renderContent = ({
 // 完了の切り替えは楽観的に先に画面へ反映するため、失敗して元に戻したときは通知で理由を伝える（state-management.md）。
 // requestEndpoint は失敗を例外ではなく Result で返すため、失敗はいつも onSuccess に届く
 const notifyCompletionFailure = (message: string): void => {
-  notifications.show({ color: 'red', message, title: 'Todo を更新できませんでした' });
+  notifications.show({
+    color: 'red',
+    icon: <IconAlertCircle aria-hidden size={20} />,
+    message,
+    title: 'Todo を更新できませんでした',
+  });
 };
 
 export const TodoList = (): React.JSX.Element => {
