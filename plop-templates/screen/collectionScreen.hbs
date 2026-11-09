@@ -1,32 +1,95 @@
 'use client';
 
+import type { StatusTone } from '@template/ui/blocks/status-badge/StatusBadge';
+import type { DataTableColumns } from '@template/ui/table/dataTableFeatures';
 import type { DataTableLabels } from '@template/ui/table/dataTableLabels';
 
-import { Stack } from '@mantine/core';
+import { Group, NativeSelect, Stack, TextInput } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { CollectionSkeleton } from '@template/ui/blocks/collection-skeleton/CollectionSkeleton';
 import { DataTable } from '@template/ui/blocks/data-table/DataTable';
 import { EmptyCollection } from '@template/ui/blocks/empty-collection/EmptyCollection';
 import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
 import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import { RelativeTime } from '@template/ui/blocks/relative-time/RelativeTime';
+import { StatusBadge } from '@template/ui/blocks/status-badge/StatusBadge';
 import { createDataTableColumnHelper } from '@template/ui/table/dataTableFeatures';
+import dayjs from 'dayjs';
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { isDefined } from 'remeda';
 
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
 import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import {
+  type DateRange,
+  DateRangeFilter,
+  type DateRangeFilterLabels,
+} from '@/shared-components/date-range-filter/DateRangeFilter';
+
+type Filters = {
+  readonly name: string;
+  readonly status: 'all' | {{queryDataTypeName}}['status'];
+  readonly updatedAt: DateRange;
+};
+
+const initialFilters: Filters = { name: '', status: 'all', updatedAt: [null, null] };
+
+const dateFormat = 'YYYY-MM-DD';
+
+// 状態は色だけで伝えないよう、StatusBadge の形の違うアイコンと文言で出す（design-icon.md）
+const statusBadges: Readonly<
+  Record<{{queryDataTypeName}}['status'], { readonly label: string; readonly tone: StatusTone }>
+> = {
+  confirmed: { label: '確認済み', tone: 'done' },
+  unconfirmed: { label: '未確認', tone: 'awaiting' },
+};
+
+const statusOptions = [
+  { label: 'すべて', value: 'all' },
+  { label: statusBadges.confirmed.label, value: 'confirmed' },
+  { label: statusBadges.unconfirmed.label, value: 'unconfirmed' },
+] as const;
+
+const dateRangeFilterLabels: DateRangeFilterLabels = {
+  calendar: {
+    nextDecade: '次の10年',
+    nextMonth: '次の月',
+    nextYear: '次の年',
+    previousDecade: '前の10年',
+    previousMonth: '前の月',
+    previousYear: '前の年',
+  },
+  clear: '更新日の条件を消す',
+  input: '更新日',
+  placeholder: '期間を選ぶ',
+  presets: { last7Days: '直近7日', lastMonth: '先月', thisMonth: '今月' },
+};
 
 const columnHelper = createDataTableColumnHelper<{{queryDataTypeName}}>();
 
-// TanStack Table は columns の参照が変わるたびにページと開閉の状態を戻すため、描画の外で 1 度だけ作る
-const columns = columnHelper.columns([
-  columnHelper.accessor('name', {
-    header: '名前',
-    meta: { filterVariant: 'text', label: '名前' },
-  }),
-]);
+// 更新日は画面を開いた時刻を基準に「3分前」のように出すため、その時刻から列を作る
+const createColumns = (now: Date): DataTableColumns<{{queryDataTypeName}}> =>
+  columnHelper.columns([
+    columnHelper.accessor('name', { header: '名前', meta: { label: '名前' } }),
+    columnHelper.accessor('status', {
+      // getValue は列の値の型を持たないため、型の付いた行から読む
+      cell: ({ row }) => (
+        <StatusBadge size="sm" tone={statusBadges[row.original.status].tone}>
+          {statusBadges[row.original.status].label}
+        </StatusBadge>
+      ),
+      header: '状態',
+      meta: { label: '状態' },
+    }),
+    columnHelper.accessor('updatedAt', {
+      cell: ({ row }) => <RelativeTime now={now} value={new Date(row.original.updatedAt)} />,
+      header: '更新日',
+      meta: { label: '更新日' },
+    }),
+  ]);
 
 // 数と単位、日本語と半角の英数字の間には空白を入れない（design-copy.md）
 const labels: DataTableLabels<{{queryDataTypeName}}> = {
@@ -36,7 +99,7 @@ const labels: DataTableLabels<{{queryDataTypeName}}> = {
   columnFilterCondition: ({ columnLabel, values }) => `${columnLabel}: ${values.join('、')}`,
   columnVisibility: '表示する列',
   conditions: '適用中の条件',
-  // 本当に 0 件のときは画面が EmptyCollection を出すため、DataTable が空になるのは条件で絞り込んだときだけ
+  // 本当に 0 件のときと、表の上の欄で絞り込んで 0 件のときは画面が EmptyCollection を出すため、DataTable が空になるのは列の絞り込みのときだけ
   empty: '条件に一致する{{concept}}はありません',
   groupBy: 'グループ化する列',
   groupByNone: 'グループ化しない',
@@ -58,12 +121,123 @@ const labels: DataTableLabels<{{queryDataTypeName}}> = {
 
 const skeletonRowCount = 5;
 
+const emptyCopy = {
+  action: null,
+  description: '{{concept}} を登録すると、ここに一覧で表示されます',
+  title: '{{concept}} はまだありません',
+};
+
+const isWithinDateRange = ({
+  range,
+  value,
+}: {
+  readonly range: DateRange;
+  readonly value: string;
+}): boolean => {
+  const [start, end] = range;
+  const date = dayjs(value).format(dateFormat);
+  return (start === null || date >= start) && (end === null || date <= end);
+};
+
+const isMatchingFilters = ({
+  filters,
+  row,
+}: {
+  readonly filters: Filters;
+  readonly row: {{queryDataTypeName}};
+}): boolean =>
+  row.name.toLowerCase().includes(filters.name.trim().toLowerCase()) &&
+  (filters.status === 'all' || row.status === filters.status) &&
+  isWithinDateRange({ range: filters.updatedAt, value: row.updatedAt });
+
+const renderFilters = ({
+  filters,
+  onChange,
+  today,
+}: {
+  readonly filters: Filters;
+  readonly onChange: (filters: Filters) => void;
+  readonly today: string;
+}): React.JSX.Element => (
+  <Group align="flex-end" gap="md">
+    <TextInput
+      label="名前で探す"
+      onChange={(event) => {
+        onChange({ ...filters, name: event.currentTarget.value });
+      }}
+      value={filters.name}
+    />
+    <DateRangeFilter
+      labels={dateRangeFilterLabels}
+      onChange={(updatedAt) => {
+        onChange({ ...filters, updatedAt });
+      }}
+      today={today}
+      value={filters.updatedAt}
+    />
+    <NativeSelect
+      data={statusOptions}
+      label="状態"
+      onChange={(event) => {
+        const { value } = event.currentTarget;
+        const status = statusOptions.find((option) => option.value === value);
+        onChange({ ...filters, status: status?.value ?? 'all' });
+      }}
+      value={filters.status}
+    />
+  </Group>
+);
+
+const renderRows = ({
+  columns,
+  onClearFilters,
+  rows,
+}: {
+  readonly columns: DataTableColumns<{{queryDataTypeName}}>;
+  readonly onClearFilters: () => void;
+  readonly rows: readonly {{queryDataTypeName}}[];
+}): React.JSX.Element =>
+  rows.length === 0 ? (
+    <EmptyCollection
+      empty={emptyCopy}
+      filtered=\{{
+        clearLabel: '条件をすべて解除',
+        description: '名前・更新日・状態の条件を変えるか、解除してください',
+        onClear: onClearFilters,
+        title: '条件に一致する{{concept}}はありません',
+      }}
+    />
+  ) : (
+    <DataTable
+      columns={columns}
+      data={rows}
+      getRowId={(row) => row.id}
+      hasColumnVisibility
+      hasGrouping
+      hasSearch={false}
+      initialGroupingColumnId={null}
+      labels={labels}
+      // 一括の操作をまだ持たないため、行を選んでも選択の件数と解除のボタンだけを出す
+      selectionActions={() => null}
+    />
+  );
+
 const renderContent = ({
+  columns,
+  filteredRows,
+  filters,
+  onFiltersChange,
   onRetry,
   result,
+  today,
 }: {
+  readonly columns: DataTableColumns<{{queryDataTypeName}}>;
+  readonly filteredRows: readonly {{queryDataTypeName}}[];
+  readonly filters: Filters;
+  readonly onFiltersChange: (filters: Filters) => void;
   readonly onRetry: () => void;
   readonly result: Result<{{{queryValueTypeCode}}}, ApiFailure>;
+  readonly today: string;
 }): React.JSX.Element => {
   if (!result.ok) {
     return (
@@ -76,33 +250,24 @@ const renderContent = ({
     );
   }
 
-  // 画面の側に絞り込みの条件がまだないため、0 件は本当に 0 件のときだけ。DataTable の中の絞り込みで 0 件になったときは DataTable が labels.empty を出す
+  // 本当に 0 件のときは、絞り込みの欄を出しても選べるものがないため出さない（design-states.md）
   if (result.value.length === 0) {
     return (
-      <EmptyCollection
-        empty=\{{
-          action: null,
-          description: '{{concept}} を登録すると、ここに一覧で表示されます',
-          title: '{{concept}} はまだありません',
-        }}
-        filtered={null}
-      />
+      <EmptyCollection empty={emptyCopy} filtered={null} />
     );
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={result.value}
-      getRowId={(row) => row.id}
-      hasColumnVisibility
-      hasGrouping
-      hasSearch
-      initialGroupingColumnId={null}
-      labels={labels}
-      // 一括の操作をまだ持たないため、行を選んでも選択の件数と解除のボタンだけを出す
-      selectionActions={() => null}
-    />
+    <Stack gap="lg">
+      {renderFilters({ filters, onChange: onFiltersChange, today })}
+      {renderRows({
+        columns,
+        onClearFilters: () => {
+          onFiltersChange(initialFilters);
+        },
+        rows: filteredRows,
+      })}
+    </Stack>
   );
 };
 
@@ -116,6 +281,16 @@ export const {{componentName}} = ({
 export const {{componentName}} = (): React.JSX.Element => {
 {{/if}}
   const query = useQuery({{{queryOptionsCode}}});
+  // 更新日と期間の選択肢は、描くたびに変わらないよう画面を開いた時刻を基準にする
+  const [now] = useState(() => new Date());
+  const columns = useMemo(() => createColumns(now), [now]);
+  const [filters, setFilters] = useState(initialFilters);
+  // TanStack Table は data の参照が変わるたびにページを戻すため、条件か結果が変わったときだけ絞り込み直す
+  const filteredRows = useMemo(
+    () =>
+      query.data?.ok === true ? query.data.value.filter((row) => isMatchingFilters({ filters, row })) : [],
+    [filters, query.data]
+  );
   // 読み込み中は読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
   if (!isDefined(query.data)) {
     return <CollectionSkeleton loadingLabel="{{concept}} を読み込み中" rowCount={skeletonRowCount} />;
@@ -132,10 +307,15 @@ export const {{componentName}} = (): React.JSX.Element => {
         title="{{heading}}"
       />
       {renderContent({
+        columns,
+        filteredRows,
+        filters,
+        onFiltersChange: setFilters,
         onRetry: () => {
           void query.refetch();
         },
         result: query.data,
+        today: dayjs(now).format(dateFormat),
       })}
     </Stack>
   );

@@ -2,5 +2,8 @@
 export type {{queryDataTypeName}} = {
   readonly id: string;
   readonly name: string;
+  readonly status: 'confirmed' | 'unconfirmed';
+  // 日時は ISO 8601 の文字列で受け取る
+  readonly updatedAt: string;
 };
 
