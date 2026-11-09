@@ -1,0 +1,141 @@
+'use client';
+
+import {
+  EmptyState,
+  EmptyStateDescription,
+  EmptyStateTitle,
+  Stack,
+  Text,
+} from '@mantine/core';
+import { useMutation } from '@tanstack/react-query';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import Link from 'next/link';
+import { useState } from 'react';
+import { isNonNullish } from 'remeda';
+
+import { type {{mutationValuesTypeName}}, {{mutationOptionsName}} } from '@/api/{{concept}}/mutations';
+import { ChatComposer } from '@/shared-components/chat-composer/ChatComposer';
+import { ChatMessage } from '@/shared-components/chat-message/ChatMessage';
+import { ShimmerText } from '@/shared-components/shimmer-text/ShimmerText';
+
+type Message = {
+  readonly id: string;
+  readonly speaker: 'assistant' | 'user';
+  readonly text: string;
+};
+
+// 話し手は見た目で分かるため、読み上げのときだけ名前を添える
+const speakerLabels = { assistant: 'AI の回答', user: '送ったメッセージ' } as const;
+
+const composerLabels = {
+  input: 'メッセージ',
+  placeholder: '{{concept}} について聞きたいことを入力',
+  send: '送信',
+  sending: '送信しています…',
+};
+
+// 1 行が長くなりすぎないよう、会話の幅は 720px までにする
+const conversationMaxWidth = 720;
+
+const renderMessages = ({
+  isWriting,
+  messages,
+}: {
+  readonly isWriting: boolean;
+  readonly messages: readonly Message[];
+}): React.JSX.Element => (
+  // 会話の記録として log の役割を付け、新しく届いたメッセージを読み上げさせる。
+  // 領域を先に置いておかないと最初のメッセージが読み上げられないため、空のときも置く（design-a11y.md）
+  <Stack aria-label="会話" gap="lg" role="log">
+    {messages.map((message) => (
+      <ChatMessage
+        isWriting={false}
+        key={message.id}
+        speaker={message.speaker}
+        speakerLabel={speakerLabels[message.speaker]}
+      >
+        <Text size="sm">{message.text}</Text>
+      </ChatMessage>
+    ))}
+    {/* 回答を書いている間は、✦ の代わりにオーブを置き、進行中の文言を光らせる（design-feedback.md） */}
+    {isWriting ? (
+      <ChatMessage isWriting speaker="assistant" speakerLabel={speakerLabels.assistant}>
+        <ShimmerText size="sm">回答を書いています…</ShimmerText>
+      </ChatMessage>
+    ) : null}
+  </Stack>
+);
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const mutation = useMutation({{{mutationOptionsCode}}});
+  const [messages, setMessages] = useState<readonly Message[]>([]);
+  // もう一度送るのは、回答を受け取れなかった質問
+  const failedRequest = mutation.data?.ok === false ? mutation.variables : null;
+
+  const requestReply = (request: {{mutationValuesTypeName}}): void => {
+    mutation.mutate(request, {
+      onSuccess: (result) => {
+        if (!result.ok) {
+          return;
+        }
+
+        setMessages((current) => [
+          ...current,
+          { id: String(current.length), speaker: 'assistant', text: result.value.message },
+        ]);
+      },
+    });
+  };
+
+  return (
+    <Stack gap="xl" maw={conversationMaxWidth} mx="auto">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {messages.length === 0 && !mutation.isPending ? (
+        <EmptyState>
+          <EmptyStateTitle order={2}>まだメッセージはありません</EmptyStateTitle>
+          <EmptyStateDescription>
+            下の欄に {{concept}} について聞きたいことを入力して送ると、AI が回答します
+          </EmptyStateDescription>
+        </EmptyState>
+      ) : null}
+      {renderMessages({ isWriting: mutation.isPending, messages })}
+      {isNonNullish(failedRequest) ? (
+        <ErrorBanner
+          description="時間をおいてから、もう一度送ってください。"
+          onRetry={() => {
+            requestReply(failedRequest);
+          }}
+          retryLabel="もう一度送る"
+          title="回答を受け取れませんでした"
+        />
+      ) : null}
+      <ChatComposer
+        isSending={mutation.isPending}
+        labels={composerLabels}
+        onSend={(message) => {
+          setMessages((current) => [
+            ...current,
+            { id: String(current.length), speaker: 'user', text: message },
+          ]);
+          requestReply({ message });
+        }}
+      />
+    </Stack>
+  );
+};

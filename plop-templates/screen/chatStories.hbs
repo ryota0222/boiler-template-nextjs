@@ -1,0 +1,69 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { expect, userEvent, within } from 'storybook/test';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+// 送信の結果を story の間で持ち越さないよう、story ごとに QueryClient を作る
+const createQueryClientDecorator = (): Decorator => {
+  const queryClient = new QueryClient();
+  return (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+};
+
+const sendMessage = async (canvasElement: HTMLElement): Promise<void> => {
+  const canvas = within(canvasElement);
+  await userEvent.type(canvas.getByRole('textbox', { name: 'メッセージ' }), '見本について教えて');
+  await userEvent.click(canvas.getByRole('button', { name: '送信' }));
+};
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Empty: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '空の場合',
+};
+
+// 送信の mutation は、TanStack Query が通信が切れていると見なす間は送られずに待つため、回答を書いている途中を描ける
+export const Writing: Story = {
+  beforeEach: () => {
+    onlineManager.setOnline(false);
+    return () => {
+      onlineManager.setOnline(true);
+    };
+  },
+  decorators: [createQueryClientDecorator()],
+  name: '回答を書いている場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await sendMessage(canvasElement);
+
+    await expect(await within(canvasElement).findByText('回答を書いています…')).toBeVisible();
+  },
+};
+
+// エンドポイントをつなぐまでの mutation は失敗を返すため、送ると回答を受け取れなかったことが出る
+export const Error: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: 'エラーの場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await sendMessage(canvasElement);
+
+    await expect(await within(canvasElement).findByRole('alert')).toBeVisible();
+  },
+};

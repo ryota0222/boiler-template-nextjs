@@ -1,0 +1,81 @@
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithUi } from '@template/ui/testing/TestRendering';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const renderScreen = (queryClient: QueryClient): void => {
+  renderWithUi(
+    <QueryClientProvider client={queryClient}>
+      <{{componentName}}{{#if hasParameters}} parameters={ {{{sampleParametersCode}}} }{{/if}} />
+    </QueryClientProvider>,
+  );
+};
+
+const sendMessage = (message: string): void => {
+  fireEvent.change(screen.getByRole('textbox', { name: 'メッセージ' }), {
+    target: { value: message },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '送信' }));
+};
+
+afterEach(() => {
+  onlineManager.setOnline(true);
+});
+
+describe('{{componentName}}', () => {
+  it('まだ何も送っていない場合、メッセージがないことを表示すること', () => {
+    renderScreen(new QueryClient());
+
+    const actual = screen.getByText('まだメッセージはありません');
+
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('メッセージを送った場合、送ったメッセージを会話に表示すること', () => {
+    renderScreen(new QueryClient());
+
+    sendMessage('見本について教えて');
+
+    const actual = screen.getByText('見本について教えて');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('メッセージを送って回答を待っている場合、回答を書いていることを表示すること', async () => {
+    onlineManager.setOnline(false);
+    renderScreen(new QueryClient());
+
+    sendMessage('見本について教えて');
+
+    const actual = await screen.findByText('回答を書いています…');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('メッセージを送ってmutationFnが失敗のResultを返した場合、回答を受け取れなかったことを表示すること', async () => {
+    renderScreen(new QueryClient());
+
+    sendMessage('見本について教えて');
+
+    const actual = await screen.findByRole('alert');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('回答を受け取れなかった後にもう一度送るボタンを押した場合、同じ質問をもう一度送ること', async () => {
+    const queryClient = new QueryClient();
+    renderScreen(queryClient);
+    sendMessage('見本について教えて');
+    const retryButton = await screen.findByRole('button', { name: 'もう一度送る' });
+
+    fireEvent.click(retryButton);
+
+    const expected = [{ message: '見本について教えて' }, { message: '見本について教えて' }];
+    await waitFor(() => {
+      const actual = queryClient
+        .getMutationCache()
+        .getAll()
+        .map((mutation) => mutation.state.variables);
+      expect(actual).toEqual(expected);
+    });
+  });
+});

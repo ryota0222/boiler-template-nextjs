@@ -62,6 +62,14 @@ const generationCases = [
     name: '動的な区切りを持つdashboard',
   },
   {
+    answers: { concept: 'inventory-item', kind: 'chat', path: '/inventory-items/assistant' },
+    name: 'chat',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'chat', path: '/shipments/[id]/assistant' },
+    name: '動的な区切りを持つchat',
+  },
+  {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
     name: '手で書いたqueries.tsへ追記するblank',
   },
@@ -248,6 +256,16 @@ it.each([
     ],
   },
   {
+    kind: 'chat',
+    paths: [
+      'src/app/inventory-items/assistant/page.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/InventoryItemChatScreen.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/InventoryItemChatScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/inventoryItemChatScreen.test.tsx',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
     kind: 'dashboard',
     paths: [
       'src/app/inventory-items/overview/page.tsx',
@@ -315,6 +333,9 @@ it.each([
       'ShipmentDetailChanges',
       'shipmentFormMutationOptions',
       'ShipmentFormValues',
+      'shipmentChatMutationOptions',
+      'ShipmentChatRequest',
+      'ShipmentChatReply',
     ],
     path: 'src/api/shipment/mutations.ts',
   },

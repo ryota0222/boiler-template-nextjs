@@ -1475,7 +1475,15 @@ const createBuildingApiActions =
     });
   };
 
-const screenKinds = ['blank', 'collection', 'detail', 'form', 'split', 'dashboard'] as const;
+const screenKinds = [
+  'blank',
+  'collection',
+  'detail',
+  'form',
+  'split',
+  'dashboard',
+  'chat',
+] as const;
 
 const screenKindSchema = z.enum(screenKinds, {
   error: `kind は ${screenKinds.join('・')} のどれかで指定してください`,
@@ -1552,6 +1560,14 @@ const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> 
     mutation: null,
     pageFrame: 'container',
     query: { dataTypeSuffix: 'BlankItem', isList: true },
+  },
+  chat: {
+    hasValidation: false,
+    headingSuffix: ' について聞く',
+    // 質問を送って回答を受け取るため、送信は form と同じく mutation にする
+    mutation: { resultTypeSuffix: 'ChatReply', valuesTypeSuffix: 'ChatRequest' },
+    pageFrame: 'container',
+    query: null,
   },
   collection: {
     hasValidation: false,
