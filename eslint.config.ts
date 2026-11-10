@@ -59,6 +59,9 @@ export default defineConfig(
       'unicorn/filename-case': 'off',
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-null': 'off',
+      // unicorn 79 から、if で早く return したあとに return が続く形も三項演算子にするよう求める。
+      // Result は if (!result.ok) で絞って早く返す決まり（coding-standards.md）のため、この規則は使わない
+      'unicorn/prefer-ternary': 'off',
     },
   },
   {

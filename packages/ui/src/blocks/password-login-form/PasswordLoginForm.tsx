@@ -35,8 +35,6 @@ export type PasswordLoginFormLabels = {
   readonly title: string;
 };
 
-type FieldErrors = { readonly email: null | string; readonly password: null | string };
-
 // メールアドレスとパスワードでログインするフォーム。送信の結果は呼ぶ側から受け取り、認証の仕組みには依存しない。
 // 失敗はフォームの上に赤い Alert で出し、登録があるかどうかが分からない文を呼ぶ側が渡す
 export const PasswordLoginForm = ({
@@ -55,20 +53,23 @@ export const PasswordLoginForm = ({
 }): React.JSX.Element => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<FieldErrors>({ email: null, password: null });
+  const [errors, setErrors] = useState<{
+    readonly email: null | string;
+    readonly password: null | string;
+  }>({ email: null, password: null });
   const [failure, setFailure] = useState<null | string>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const validateEmail = (value: string): null | string => {
-    if (value.trim() === '') {
+  const validateEmail = (): null | string => {
+    if (email.trim() === '') {
       return labels.emailRequired;
     }
-    return emailPattern.test(value.trim()) ? null : labels.emailInvalid;
+    return emailPattern.test(email.trim()) ? null : labels.emailInvalid;
   };
 
   const submit = async (): Promise<void> => {
     const nextErrors = {
-      email: validateEmail(email),
+      email: validateEmail(),
       password: password === '' ? labels.passwordRequired : null,
     };
     setErrors(nextErrors);
@@ -113,7 +114,7 @@ export const PasswordLoginForm = ({
             label={labels.email}
             onBlur={() => {
               if (email !== '') {
-                setErrors({ ...errors, email: validateEmail(email) });
+                setErrors({ ...errors, email: validateEmail() });
               }
             }}
             onChange={(event) => {

@@ -13,9 +13,9 @@ const renderScreen = (queryClient: QueryClient): void => {
   );
 };
 
-const sendMessage = (message: string): void => {
+const sendSampleMessage = (): void => {
   fireEvent.change(screen.getByRole('textbox', { name: 'メッセージ' }), {
-    target: { value: message },
+    target: { value: '見本について教えて' },
   });
   fireEvent.click(screen.getByRole('button', { name: '送信' }));
 };
@@ -36,7 +36,7 @@ describe('{{componentName}}', () => {
   it('メッセージを送った場合、送ったメッセージを会話に表示すること', () => {
     renderScreen(new QueryClient());
 
-    sendMessage('見本について教えて');
+    sendSampleMessage();
 
     const actual = screen.getByText('見本について教えて');
     expect(actual).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('{{componentName}}', () => {
     onlineManager.setOnline(false);
     renderScreen(new QueryClient());
 
-    sendMessage('見本について教えて');
+    sendSampleMessage();
 
     const actual = await screen.findByText('回答を書いています…');
     expect(actual).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('{{componentName}}', () => {
   it('メッセージを送ってmutationFnが失敗のResultを返した場合、回答を受け取れなかったことを表示すること', async () => {
     renderScreen(new QueryClient());
 
-    sendMessage('見本について教えて');
+    sendSampleMessage();
 
     const actual = await screen.findByRole('alert');
     expect(actual).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('{{componentName}}', () => {
   it('回答を受け取れなかった後にもう一度送るボタンを押した場合、同じ質問をもう一度送ること', async () => {
     const queryClient = new QueryClient();
     renderScreen(queryClient);
-    sendMessage('見本について教えて');
+    sendSampleMessage();
     const retryButton = await screen.findByRole('button', { name: 'もう一度送る' });
 
     fireEvent.click(retryButton);

@@ -251,14 +251,8 @@ const generationFailures = new Map<string, readonly unknown[]>();
 // 決め打ちすると、Todo の参考実装に操作が増減しただけでこのテストが壊れるため
 const existingFileContentsByPath = new Map<string, string>();
 
-const captureExistingContent = async ({
-  destination,
-  path,
-}: {
-  readonly destination: string;
-  readonly path: string;
-}): Promise<void> => {
-  const absolutePath = nodePath.resolve(destination, path);
+const captureExistingContent = async (path: string): Promise<void> => {
+  const absolutePath = nodePath.resolve(generatedDirectory, path);
   if (existingFileContentsByPath.has(path) || !existsSync(absolutePath)) {
     return;
   }
@@ -275,14 +269,8 @@ beforeAll(async () => {
   await copyProjectInto(generatedDirectory);
   await writeFiles({ destination: generatedDirectory, files: handwrittenFiles });
   for (const { answers, name } of generationCases) {
-    await captureExistingContent({
-      destination: generatedDirectory,
-      path: `src/usecases/${answers.concept}/usecase.ts`,
-    });
-    await captureExistingContent({
-      destination: generatedDirectory,
-      path: `src/api/${answers.concept}/endpoints.ts`,
-    });
+    await captureExistingContent(`src/usecases/${answers.concept}/usecase.ts`);
+    await captureExistingContent(`src/api/${answers.concept}/endpoints.ts`);
 
     const { failures } = await runGenerator({
       answers,
@@ -363,7 +351,7 @@ const listUsecaseOperationNamesInContent = ({
           ? initializer.type.members
           : []
       )
-      .flatMap((member) => (member.name && ts.isIdentifier(member.name) ? [member.name.text] : []))
+      .flatMap((member) => (member.name && ts.isIdentifier(member.name) ? member.name.text : []))
   );
 
 const listUsecaseOperationNames = async ({
@@ -454,7 +442,7 @@ it.each([
 
 // export const の行から名前を抜き出す。findDefinitionConflicts（plopfile.ts）が既存の定義を見つけるのと同じ書式を使う
 const listExistingEndpointNames = (content: string): readonly string[] =>
-  Array.from(content.matchAll(/export const (\w+Endpoint) /g), ([, name]) => name ?? '');
+  Array.from(content.matchAll(/export const (\w+Endpoint) /g), ([, name = '']) => name);
 
 it.each([
   {
@@ -502,10 +490,7 @@ it('既にcontrollerがある状態でapiを実行した場合、既存のhandle
 // 並び順は生成の最後に perfectionist がそろえるため、順序を問わない Set で比べる
 const listRouteMethods = (content: string): ReadonlySet<string> =>
   new Set(
-    Array.from(
-      content.matchAll(/\bas (DELETE|GET|PATCH|POST|PUT)\b/g),
-      ([, method]) => method ?? ''
-    )
+    Array.from(content.matchAll(/\bas (DELETE|GET|PATCH|POST|PUT)\b/g), ([, method = '']) => method)
   );
 
 it.each([

@@ -19,8 +19,6 @@ export type InlineEditLabels = {
 export type InlineEditSaveResult =
   { readonly message: string; readonly ok: false } | { readonly ok: true };
 
-type Mode = 'editing' | 'saving' | 'viewing';
-
 // 詳細の 1 つの値を、編集の画面へ移らずにその場で直す。保存の結果もその場で返し、通知は出さない（design-feedback.md）。
 // DetailCard の項目のように見出しを外側が描くときは、hasViewingLabel を false にして見出しを 2 回並べない。
 // 直している間の入力欄には、外側の見出しと関係なくいつもラベルを付ける
@@ -37,7 +35,7 @@ export const InlineEdit = ({
   readonly onSave: (value: string) => Promise<InlineEditSaveResult>;
   readonly value: string;
 }): React.JSX.Element => {
-  const [mode, setMode] = useState<Mode>('viewing');
+  const [mode, setMode] = useState<'editing' | 'saving' | 'viewing'>('viewing');
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<null | string>(null);
   const [isSaved, setIsSaved] = useState(false);

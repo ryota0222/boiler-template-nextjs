@@ -369,12 +369,12 @@ const listTopLevelVariableDeclarations = ({
         (statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ??
           false)
     )
-    .flatMap((statement) => [...statement.declarationList.declarations]);
+    .flatMap((statement) => statement.declarationList.declarations);
 
 const listDeclarationNames = (
   declarations: readonly (ts.ObjectLiteralElementLike | ts.TypeElement)[]
 ): readonly string[] =>
-  declarations.flatMap(({ name }) => (isDefined(name) && ts.isIdentifier(name) ? [name.text] : []));
+  declarations.flatMap(({ name }) => (isDefined(name) && ts.isIdentifier(name) ? name.text : []));
 
 const findReturnedObjectInBlock = (body: ts.ConciseBody): null | ts.ObjectLiteralExpression => {
   if (!ts.isBlock(body)) {
@@ -1176,15 +1176,13 @@ const buildAppendAction = ({
   unique: false,
 });
 
-const buildNamedImports = ({
-  isType,
+const buildValueImports = ({
   module,
   names,
 }: {
-  readonly isType: boolean;
   readonly module: string;
   readonly names: readonly string[];
-}): readonly NamedImport[] => names.map((name) => ({ isType, module, name }));
+}): readonly NamedImport[] => names.map((name) => ({ isType: false, module, name }));
 
 const resultTypeImports: readonly NamedImport[] = [
   { isType: true, module: '@/entities/apiFailure', name: 'ApiFailure' },
@@ -1211,8 +1209,7 @@ const buildControllerImports = ({
           module: '@/gateways/requestInputGateway',
           name: 'createReadingRequestInput',
         },
-        ...buildNamedImports({
-          isType: false,
+        ...buildValueImports({
           module: '@/presenters/apiResponsePresenter',
           names: ['presentFailure', 'presentSuccess'],
         }),
@@ -1244,8 +1241,7 @@ const buildApiFileAppendings = ({
   return [
     {
       namedImports: [
-        ...buildNamedImports({
-          isType: false,
+        ...buildValueImports({
           module: 'vitest',
           names: [
             'expect',
@@ -1280,7 +1276,7 @@ const buildApiFileAppendings = ({
     },
     {
       namedImports: [
-        ...buildNamedImports({ isType: false, module: 'vitest', names: ['expect', 'it', 'vi'] }),
+        ...buildValueImports({ module: 'vitest', names: ['expect', 'it', 'vi'] }),
         {
           isType: false,
           module: `@/controllers/${templateData.controllerFileName}`,
@@ -1366,9 +1362,7 @@ const findDynamicSegmentConflicts = ({
   return readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
     const existingName = routeParameterDirectoryPattern.exec(entry.name)?.[1];
     return existingName !== parameterName && isDefined(existingName) && entry.isDirectory()
-      ? [
-          `${directory}/${entry.name} があるため、同じ場所の動的な区切りは {${existingName}} にしてください`,
-        ]
+      ? `${directory}/${entry.name} があるため、同じ場所の動的な区切りは {${existingName}} にしてください`
       : [];
   });
 };

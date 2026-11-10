@@ -47,6 +47,8 @@ const emulateNarrowScreen = (): void => {
     (query: string) =>
       ({
         addEventListener: vi.fn(),
+        // MediaQueryList の型が古い addListener と removeListener も求めるため、使わないが形だけ置く
+        /* eslint-disable @typescript-eslint/no-deprecated */
         addListener: vi.fn(),
         dispatchEvent: vi.fn(),
         matches: true,
@@ -54,6 +56,7 @@ const emulateNarrowScreen = (): void => {
         onchange: null,
         removeEventListener: vi.fn(),
         removeListener: vi.fn(),
+        /* eslint-enable @typescript-eslint/no-deprecated */
       }) as MediaQueryList
   );
 };

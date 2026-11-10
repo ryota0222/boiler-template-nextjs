@@ -13,9 +13,9 @@ const renderScreen = (): void => {
   );
 };
 
-const scanCode = (code: string): void => {
+const scanSampleCode = (): void => {
   const input = screen.getByRole('textbox', { name: '{{concept}} のバーコード' });
-  fireEvent.change(input, { target: { value: code } });
+  fireEvent.change(input, { target: { value: '4417' } });
   fireEvent.submit(input);
 };
 
@@ -38,7 +38,7 @@ describe('{{componentName}}', () => {
   it('バーコードを読んだ場合、応答を待たずに読んだバーコードを表示すること', () => {
     renderScreen();
 
-    scanCode('4417');
+    scanSampleCode();
 
     const actual = screen.getByText('4417');
     expect(actual).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe('{{componentName}}', () => {
     onlineManager.setOnline(false);
     renderScreen();
 
-    scanCode('4417');
+    scanSampleCode();
 
     const actual = await screen.findByText('確かめています…');
     expect(actual).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('{{componentName}}', () => {
   it('バーコードを読んでmutationFnが失敗のResultを返した場合、確かめられなかったことを表示すること', async () => {
     renderScreen();
 
-    scanCode('4417');
+    scanSampleCode();
 
     const actual = await screen.findByText('確かめられませんでした');
     expect(actual).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('{{componentName}}', () => {
       globalThis.dispatchEvent(new Event('offline'));
     });
 
-    scanCode('4417');
+    scanSampleCode();
 
     const actual = await screen.findByText('つながったら確かめます。まだ記録していません');
     expect(actual).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('{{componentName}}', () => {
 
   it('確かめた結果が出た後に次へ進むボタンを押した場合、確かめた結果を消すこと', async () => {
     renderScreen();
-    scanCode('4417');
+    scanSampleCode();
     const nextButton = await screen.findByRole('button', { name: '次の {{concept}} へ' });
     await screen.findByText('確かめられませんでした');
 
