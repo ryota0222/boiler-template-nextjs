@@ -1,23 +1,26 @@
 import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-{{#if hasRowsSelectedStory}}
 import { expect, userEvent, within } from 'storybook/test';
-{{/if}}
 
 import type { ApiFailure } from '@/entities/apiFailure';
 import type { Result } from '@/entities/result';
 
-import { type {{dataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
 import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const rows: {{{queryValueTypeCode}}} = [
+  { id: '1', name: '見本', status: 'confirmed', updatedAt: '2026-11-10T00:00:00.000Z' },
+  { id: '2', name: '下書き', status: 'unconfirmed', updatedAt: '2026-11-01T00:00:00.000Z' },
+];
 
 // 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く。結果が null なら読み込み中のまま止まる
 const createQueryClientDecorator = (
-  result: null | Result<{{{valueTypeCode}}}, ApiFailure>,
+  result: null | Result<{{{queryValueTypeCode}}}, ApiFailure>,
 ): Decorator => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
   if (result !== null) {
-    queryClient.setQueryData({{{sampleOptionsCode}}}.queryKey, result);
+    queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
   }
 
   return (Story): React.JSX.Element => (
@@ -42,14 +45,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ideal: Story = {
-  decorators: [createQueryClientDecorator({ ok: true, value: {{{idealValueCode}}} })],
+  decorators: [createQueryClientDecorator({ ok: true, value: rows })],
   name: '理想状態の場合',
 };
 
-{{#if hasRowsSelectedStory}}
 // 行を選ぶと、選んだ件数と選択の解除のボタンが現れる
 export const RowsSelected: Story = {
-  decorators: [createQueryClientDecorator({ ok: true, value: {{{idealValueCode}}} })],
+  decorators: [createQueryClientDecorator({ ok: true, value: rows })],
   name: '行を選んだ場合',
   play: async ({ canvasElement }): Promise<void> => {
     const checkbox = within(canvasElement).getByRole('checkbox', {
@@ -61,14 +63,23 @@ export const RowsSelected: Story = {
   },
 };
 
-{{/if}}
-{{#if hasEmptyStory}}
 export const Empty: Story = {
   decorators: [createQueryClientDecorator({ ok: true, value: [] })],
   name: '空の場合',
 };
 
-{{/if}}
+// 本当に 0 件のときとは次の操作が違うため、条件の解除を出す（design-states.md）
+export const FilteredEmpty: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: rows })],
+  name: '絞り込んで空の場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await userEvent.type(canvas.getByRole('textbox', { name: '名前で探す' }), '一致しない名前');
+
+    await expect(canvas.getByRole('button', { name: '条件をすべて解除' })).toBeVisible();
+  },
+};
+
 export const Loading: Story = {
   decorators: [createQueryClientDecorator(null)],
   name: '読み込み中の場合',
@@ -83,15 +94,3 @@ export const Error: Story = {
   ],
   name: 'エラーの場合',
 };
-{{#if hasNotFoundStory}}
-
-export const NotFound: Story = {
-  decorators: [
-    createQueryClientDecorator({
-      error: { kind: 'not-found', message: '見つかりません' },
-      ok: false,
-    }),
-  ],
-  name: '存在しない場合',
-};
-{{/if}}

@@ -145,6 +145,7 @@ const renderDataTable = ({
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={initialGroupingColumnId}
       labels={labels}
       selectionActions={(selectedRows) => (
@@ -191,9 +192,9 @@ const search = (value: string): void => {
   });
 };
 
-const selectCustomerFilter = async (customer: string): Promise<void> => {
+const selectCustomerAFilter = async (): Promise<void> => {
   fireEvent.click(screen.getByRole('button', { name: '顧客で絞り込む' }));
-  fireEvent.click(await screen.findByRole('checkbox', { name: customer }));
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'A社' }));
 };
 
 it('行を渡した場合、行ごとに描画すること', () => {
@@ -343,7 +344,7 @@ it('適用中の条件の検索を押した場合、検索を解除してすべ�
 it('列の値の一覧から選んだ場合、その値の行だけを描画すること', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
 
   expect(getBodyRows()).toHaveLength(2);
 });
@@ -351,7 +352,7 @@ it('列の値の一覧から選んだ場合、その値の行だけを描画す�
 it('列の値の一覧から選んだ場合、適用中の条件として列と値を表示すること', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
 
   expect(screen.getByRole('button', { name: '顧客: A社' })).toBeInTheDocument();
 });
@@ -359,7 +360,7 @@ it('列の値の一覧から選んだ場合、適用中の条件として列と�
 it('適用中の条件の列の絞り込みを押した場合、その絞り込みを解除すること', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
   fireEvent.click(screen.getByRole('button', { name: '顧客: A社' }));
 
   expect(getBodyRows()).toHaveLength(3);
@@ -368,7 +369,7 @@ it('適用中の条件の列の絞り込みを押した場合、その絞り込�
 it('列の値の一覧で選んだ値を外した場合、その列の絞り込みを解除すること', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
   // jsdom では値を選んだあとに一覧が非表示の扱いになる（ブラウザでは開いたまま。ストーリーの
   // 「顧客で絞り込んだ場合」で確かめる）ため、非表示の要素も含めて探す
   fireEvent.click(await screen.findByRole('checkbox', { hidden: true, name: 'A社' }));
@@ -402,7 +403,7 @@ it('条件をすべて解除を押した場合、検索と列の絞り込みを�
   renderOrders();
 
   search('A社');
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
   fireEvent.click(screen.getByRole('button', { name: '条件をすべて解除' }));
 
   expect(getBodyRows()).toHaveLength(3);
@@ -436,7 +437,7 @@ it('合計の行に、行の合計の列の合計を描画すること', () => {
 it('絞り込んだ場合、合計の行に絞り込んだ行だけの合計を描画すること', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
 
   expect(getTotalRow()).toHaveTextContent('5000 円');
 });
@@ -614,6 +615,7 @@ it('列の見出しをまとめた場合、見出しの選択欄を 1 つだけ�
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={() => null}
@@ -648,6 +650,7 @@ const RerenderingDataTable = (): React.JSX.Element => {
         getRowId={(order) => order.id}
         hasColumnVisibility
         hasGrouping
+        hasSearch
         initialGroupingColumnId="customer"
         // アプリは labels を描画のたびに作ることが多いため、毎回新しいオブジェクトを渡す
         labels={{ ...labels }}
@@ -732,7 +735,7 @@ it('数値の値の一覧を、数の小さい順に並べること', async () =
 it('ほかの条件で見えなくなっても、選んでいる値を値の一覧に残すこと', async () => {
   renderOrders();
 
-  await selectCustomerFilter('A社');
+  await selectCustomerAFilter();
   search('B社');
   fireEvent.click(screen.getByRole('button', { name: '顧客で絞り込む' }));
 
@@ -824,6 +827,7 @@ it('合計の行がない表ですべてを選んだ場合、見出しと本体�
       getRowId={(order) => order.id}
       hasColumnVisibility
       hasGrouping
+      hasSearch
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={() => null}
@@ -874,6 +878,7 @@ const renderOrdersWithoutOptionalControls = (): void => {
       getRowId={(order) => order.id}
       hasColumnVisibility={false}
       hasGrouping={false}
+      hasSearch={false}
       initialGroupingColumnId={null}
       labels={labels}
       selectionActions={null}
@@ -885,6 +890,14 @@ it('hasGroupingがfalseの場合、グループ化する列を選ぶ欄を描画
   renderOrdersWithoutOptionalControls();
 
   const actual = screen.queryByLabelText('グループ化する列');
+
+  expect(actual).not.toBeInTheDocument();
+});
+
+it('hasSearchがfalseの場合、検索の欄を描画しないこと', () => {
+  renderOrdersWithoutOptionalControls();
+
+  const actual = screen.queryByRole('textbox', { name: '注文を検索' });
 
   expect(actual).not.toBeInTheDocument();
 });

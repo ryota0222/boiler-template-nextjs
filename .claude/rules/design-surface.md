@@ -26,7 +26,7 @@ paths:
 | Surface | `Card`, `Paper`, panels, a table, an embedded preview                | A border and `shadow="xs"`; an embedded preview has its own cue (below) |
 | Overlay | `Modal`, `Drawer`, notifications, `Popover`, `Menu`                  | `shadow="md"` or larger                                                 |
 
-`Modal` and `Drawer` (`xl`) and notifications (`lg`) carry their shadow by default. `Popover` and `Menu` default to no shadow in Mantine 9.6.2, so pass `shadow="md"` explicitly, or a dropdown lies flat on the surface it opens over.
+`Modal` and `Drawer` (`xl`) and notifications (`lg`) carry their shadow by default. `Popover` and `Menu` default to no shadow in Mantine 9.7.5, so pass `shadow="md"` explicitly, or a dropdown lies flat on the surface it opens over.
 
 ## The Page Stays the Body Colour
 
@@ -83,7 +83,7 @@ A group inside a surface uses `Paper withBorder` with no shadow, or a `gray.0` f
 
 ### Details
 
-Neither speaker's message takes a border or a shadow. The user's message is a bubble: the accent's light colour (`--mantine-primary-color-light`), at the right, with three corners rounded `lg` and the top-right corner `xs`. The assistant's message is plain text with no fill, because its replies run long and carry headings and lists; a leading `IconSparkles` in the accent marks where each message starts, so it does not run into the surrounding copy. Draw messages through one shared component in `src/shared-components/`, so every conversation separates its speakers the same way.
+Neither speaker's message takes a border or a shadow. The user's message is a bubble: the accent's light colour (`--mantine-primary-color-light`), at the right, with three corners rounded `lg` and the top-right corner `xs`. The assistant's message is plain text with no fill, because its replies run long and carry headings and lists; a leading `IconSparkles` in the accent marks where each message starts, so it does not run into the surrounding copy. Draw messages through `ChatMessage` (`src/shared-components/chat-message/`), and the box that sends them through `ChatComposer` (`src/shared-components/chat-composer/`), so every conversation separates its speakers the same way.
 
 ## Embedded Content Is a Separate Object Placed on the Page
 

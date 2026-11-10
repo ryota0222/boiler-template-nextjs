@@ -67,6 +67,7 @@ export const DataTable = <TData extends RowData>({
   getRowId,
   hasColumnVisibility,
   hasGrouping,
+  hasSearch,
   initialGroupingColumnId,
   labels,
   selectionActions,
@@ -76,6 +77,7 @@ export const DataTable = <TData extends RowData>({
   readonly getRowId: (row: TData) => string;
   readonly hasColumnVisibility: boolean;
   readonly hasGrouping: boolean;
+  readonly hasSearch: boolean;
   readonly initialGroupingColumnId: null | string;
   readonly labels: DataTableLabels<TData>;
   // 一括の操作を持たない一覧は、選択しても何もできないため、null を渡して選択の欄ごと出さない
@@ -127,6 +129,7 @@ export const DataTable = <TData extends RowData>({
         groupingColumnId={groupingColumnId}
         hasColumnVisibility={hasColumnVisibility}
         hasGrouping={hasGrouping}
+        hasSearch={hasSearch}
         labels={labels}
         onGroupingColumnIdChange={setGroupingColumnId}
         onSearchChange={setSearch}

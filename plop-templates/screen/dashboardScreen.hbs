@@ -1,0 +1,202 @@
+'use client';
+
+import type { ReactNode } from 'react';
+
+import {
+  Box,
+  Card,
+  Grid,
+  GridCol,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+  VisuallyHidden,
+} from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { ActivityTimeline } from '@template/ui/blocks/activity-timeline/ActivityTimeline';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { MetricValue } from '@template/ui/blocks/metric-value/MetricValue';
+import { PageHeader } from '@template/ui/blocks/page-header/PageHeader';
+import { SegmentedProgress } from '@template/ui/blocks/segmented-progress/SegmentedProgress';
+import { StatsGrid } from '@template/ui/blocks/stats-grid/StatsGrid';
+import Link from 'next/link';
+import { useState } from 'react';
+import { isDefined } from 'remeda';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+// 読み込み中も、カードごとに読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
+const metricSkeletonKeys = ['first', 'second', 'third', 'fourth'] as const;
+const metricSkeletonHeight = 104;
+const cardSkeletonHeight = 120;
+const columnsOnSmallScreen = 2;
+const columnsOnLargeScreen = 4;
+
+// 幅の広い画面では、進み具合を左の 2/3、最近の動きを右の 1/3 に並べる
+const fullColumnSpan = 12;
+const mainColumnSpan = 8;
+const sideColumnSpan = 4;
+
+const renderCard = ({
+  children,
+  title,
+}: {
+  readonly children: ReactNode;
+  readonly title: string;
+}): React.JSX.Element => (
+  <Card padding="md" shadow="xs" withBorder>
+    <Stack gap="md">
+      <Title order={2} size="h5">
+        {title}
+      </Title>
+      {children}
+    </Stack>
+  </Card>
+);
+
+// 数字のカードと、進み具合・最近の動きのカードを、読み込み中と読み込み後で同じ並びに置く
+const renderSections = ({
+  activities,
+  metrics,
+  progresses,
+}: {
+  readonly activities: ReactNode;
+  readonly metrics: ReactNode;
+  readonly progresses: ReactNode;
+}): React.JSX.Element => (
+  <Stack gap="lg">
+    {metrics}
+    <Grid gap="lg">
+      <GridCol span=\{{ base: fullColumnSpan, md: mainColumnSpan }}>
+        {renderCard({ children: progresses, title: '進み具合' })}
+      </GridCol>
+      <GridCol span=\{{ base: fullColumnSpan, md: sideColumnSpan }}>
+        {renderCard({ children: activities, title: '最近の動き' })}
+      </GridCol>
+    </Grid>
+  </Stack>
+);
+
+const renderLoading = (): React.JSX.Element => (
+  <Box aria-busy aria-label="{{concept}} を読み込み中" role="status">
+    {/* aria-label はライブリージョンでは読み上げられないことが多いため、同じ文言を画面外の文字でも置く */}
+    <VisuallyHidden>{{concept}} を読み込み中</VisuallyHidden>
+    {renderSections({
+      activities: <Skeleton h={cardSkeletonHeight} />,
+      metrics: (
+        <SimpleGrid cols=\{{ base: 1, lg: columnsOnLargeScreen, sm: columnsOnSmallScreen }}>
+          {metricSkeletonKeys.map((key) => (
+            <Skeleton h={metricSkeletonHeight} key={key} />
+          ))}
+        </SimpleGrid>
+      ),
+      progresses: <Skeleton h={cardSkeletonHeight} />,
+    })}
+  </Box>
+);
+
+// データのないカードも消さずに残し、まだないことを書いて、ほかのカードの位置を動かさない
+const renderProgresses = (progresses: {{queryDataTypeName}}['progresses']): React.JSX.Element =>
+  progresses.length === 0 ? (
+    <Text c="dimmed" size="sm">
+      進み具合はまだありません
+    </Text>
+  ) : (
+    <Stack gap="md">
+      {progresses.map((progress) => (
+        <SegmentedProgress
+          done={progress.done}
+          key={progress.label}
+          label={progress.label}
+          total={progress.total}
+        />
+      ))}
+    </Stack>
+  );
+
+const renderActivities = ({
+  activities,
+  now,
+}: {
+  readonly activities: {{queryDataTypeName}}['activities'];
+  readonly now: Date;
+}): React.JSX.Element =>
+  activities.length === 0 ? (
+    <Text c="dimmed" size="sm">
+      最近の動きはまだありません
+    </Text>
+  ) : (
+    <ActivityTimeline
+      items={activities.map((activity) => ({
+        at: new Date(activity.at),
+        detail: null,
+        id: activity.id,
+        title: activity.title,
+      }))}
+      label="最近の動き"
+      now={now}
+    />
+  );
+
+const renderDashboard = ({
+  dashboard,
+  now,
+}: {
+  readonly dashboard: {{queryDataTypeName}};
+  readonly now: Date;
+}): React.JSX.Element =>
+  renderSections({
+    activities: renderActivities({ activities: dashboard.activities, now }),
+    // 大きな数字の単位は数字より小さくし、数字と下端をそろえる（design-layout.md）
+    metrics: (
+      <StatsGrid
+        stats={dashboard.metrics.map((metric) => ({
+          label: metric.label,
+          note: metric.note,
+          value: <MetricValue size="lg" unit={metric.unit} value={metric.value} />,
+        }))}
+      />
+    ),
+    progresses: renderProgresses(dashboard.progresses),
+  });
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{queryOptionsCode}}});
+  // 最近の動きは、描くたびに変わらないよう画面を開いた時刻を基準に「3分前」のように出す
+  const [now] = useState(() => new Date());
+
+  return (
+    <Stack gap="xl">
+      <PageHeader
+        breadcrumbs={[]}
+        breadcrumbsLabel="現在の場所"
+        linkComponent={Link}
+        note={null}
+        primaryAction={null}
+        title="{{heading}}"
+      />
+      {isDefined(query.data) ? null : renderLoading()}
+      {query.data?.ok === false ? (
+        <ErrorBanner
+          description="時間をおいてから、もう一度読み込んでください。"
+          onRetry={() => {
+            void query.refetch();
+          }}
+          retryLabel="もう一度読み込む"
+          title="{{concept}} を読み込めませんでした"
+        />
+      ) : null}
+      {query.data?.ok === true ? renderDashboard({ dashboard: query.data.value, now }) : null}
+    </Stack>
+  );
+};

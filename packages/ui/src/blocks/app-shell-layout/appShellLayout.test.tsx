@@ -47,6 +47,8 @@ const emulateNarrowScreen = (): void => {
     (query: string) =>
       ({
         addEventListener: vi.fn(),
+        // MediaQueryList の型が古い addListener と removeListener も求めるため、使わないが形だけ置く
+        /* eslint-disable @typescript-eslint/no-deprecated */
         addListener: vi.fn(),
         dispatchEvent: vi.fn(),
         matches: true,
@@ -54,6 +56,7 @@ const emulateNarrowScreen = (): void => {
         onchange: null,
         removeEventListener: vi.fn(),
         removeListener: vi.fn(),
+        /* eslint-enable @typescript-eslint/no-deprecated */
       }) as MediaQueryList
   );
 };
@@ -75,9 +78,11 @@ it('アプリの名前がない場合、ヘッダーにアカウントのボタ�
     isNavigationFullHeight: false,
   });
 
-  const actual = screen.getByRole('banner');
+  const banner = screen.getByRole('banner');
 
-  expect(actual).toHaveTextContent(/^アカウント$/);
+  const actual = banner.textContent;
+
+  expect(actual).toBe(within(banner).getByRole('button', { name: 'アカウント' }).textContent);
 });
 
 it('navigationを渡した場合、ナビゲーションの中に描画すること', () => {

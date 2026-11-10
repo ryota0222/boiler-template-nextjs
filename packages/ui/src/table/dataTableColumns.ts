@@ -12,7 +12,7 @@ export const getLabeledColumns = <TData extends RowData>(
 }[] =>
   table.getAllLeafColumns().flatMap((column) => {
     const columnLabel = column.columnDef.meta?.label;
-    return columnLabel === undefined ? [] : [{ column, columnLabel }];
+    return columnLabel === undefined ? [] : { column, columnLabel };
   });
 
 // 列ごとの絞り込みの値は、値の一覧から選んだ場合は配列、文字を入れた場合は文字列で持つ

@@ -1,0 +1,21 @@
+
+export type {{queryDataTypeName}} = {
+  // 日時は ISO 8601 の文字列で受け取る。並べる順は新しいものから
+  readonly activities: readonly {
+    readonly at: string;
+    readonly id: string;
+    readonly title: string;
+  }[];
+  readonly metrics: readonly {
+    readonly label: string;
+    readonly note: string;
+    readonly unit: null | string;
+    readonly value: string;
+  }[];
+  readonly progresses: readonly {
+    readonly done: number;
+    readonly label: string;
+    readonly total: number;
+  }[];
+};
+

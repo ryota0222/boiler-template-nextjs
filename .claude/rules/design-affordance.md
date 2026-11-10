@@ -19,19 +19,21 @@ An element that can be operated must look operable. This is separate from `desig
 
 Colour alone fails for a reader with low vision or colour blindness, and it fails outright when the theme has no chromatic accent. `themeConfig.accentColors` is a per-app decision that can change after the component is written, so a component that depends on the accent for its only cue breaks when the theme is retuned.
 
-This is not hypothetical. Mantine's `Anchor` defaults to `underline="hover"`, so a link in body text is marked by colour alone until the pointer happens to rest on it — and a keyboard or touch user never hovers. Under a gray accent it is identical to the surrounding paragraph. An `Anchor` therefore always takes `underline="always"`.
+This is not hypothetical. Mantine's `Anchor` defaults to `underline="hover"`, so a link in body text is marked by colour alone until the pointer happens to rest on it — and a keyboard or touch user never hovers. Under a gray accent it is identical to the surrounding paragraph. `createAppTheme` therefore sets `underline: 'always'` as the `Anchor` default, so every link is underlined without passing the prop. Never override it with `underline="hover"` or `underline="never"`.
 
 ```typescript
-// Good: the element is an anchor, and it reads as a control
-<Anchor component={NextLink} href={settingsPath} underline="always">
-  設定
-</Anchor>
-
-// Bad: underlined only on hover, so colour is the only cue at rest
+// Good: the theme underlines it
 <Anchor component={NextLink} href={settingsPath}>
   設定
 </Anchor>
+
+// Bad: removes the only cue that is not colour
+<Anchor component={NextLink} href={settingsPath} underline="hover">
+  設定
+</Anchor>
 ```
+
+A `subtle` `Button` has the same problem at rest: no surface, no border, only its colour. `src/app/globals.css` therefore underlines the label of every `variant="subtle"` button that has no `leftSection` or `rightSection`, as a link is underlined; a subtle button with an icon already has a cue that is not colour. Do not remove it.
 
 In a table, the cell that opens the record is underlined, not merely coloured. A whole row that responds to a click still needs one cue inside it that says so.
 

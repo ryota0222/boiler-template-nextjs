@@ -1,0 +1,91 @@
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithUi } from '@template/ui/testing/TestRendering';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const renderScreen = (): void => {
+  renderWithUi(
+    <QueryClientProvider client={new QueryClient()}>
+      <{{componentName}}{{#if hasParameters}} parameters={ {{{sampleParametersCode}}} }{{/if}} />
+    </QueryClientProvider>,
+  );
+};
+
+const scanSampleCode = (): void => {
+  const input = screen.getByRole('textbox', { name: '{{concept}} のバーコード' });
+  fireEvent.change(input, { target: { value: '4417' } });
+  fireEvent.submit(input);
+};
+
+afterEach(() => {
+  act(() => {
+    globalThis.dispatchEvent(new Event('online'));
+  });
+  onlineManager.setOnline(true);
+});
+
+describe('{{componentName}}', () => {
+  it('まだ何も読んでいない場合、確かめた結果を表示しないこと', () => {
+    renderScreen();
+
+    const actual = screen.queryByText('読んだバーコード');
+
+    expect(actual).not.toBeInTheDocument();
+  });
+
+  it('バーコードを読んだ場合、応答を待たずに読んだバーコードを表示すること', () => {
+    renderScreen();
+
+    scanSampleCode();
+
+    const actual = screen.getByText('4417');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('バーコードを読んで応答を待っている場合、確かめていることを表示すること', async () => {
+    onlineManager.setOnline(false);
+    renderScreen();
+
+    scanSampleCode();
+
+    const actual = await screen.findByText('確かめています…');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('バーコードを読んでmutationFnが失敗のResultを返した場合、確かめられなかったことを表示すること', async () => {
+    renderScreen();
+
+    scanSampleCode();
+
+    const actual = await screen.findByText('確かめられませんでした');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('通信が切れている間にバーコードを読んだ場合、まだ記録していないことを表示すること', async () => {
+    renderScreen();
+    act(() => {
+      globalThis.dispatchEvent(new Event('offline'));
+    });
+
+    scanSampleCode();
+
+    const actual = await screen.findByText('つながったら確かめます。まだ記録していません');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('確かめた結果が出た後に次へ進むボタンを押した場合、確かめた結果を消すこと', async () => {
+    renderScreen();
+    scanSampleCode();
+    const nextButton = await screen.findByRole('button', { name: '次の {{concept}} へ' });
+    await screen.findByText('確かめられませんでした');
+
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      const actual = screen.queryByText('読んだバーコード');
+      expect(actual).not.toBeInTheDocument();
+    });
+  });
+});

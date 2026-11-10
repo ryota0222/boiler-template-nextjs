@@ -76,6 +76,12 @@ Look for these, in order of how often they occur:
 3. **Missing state** — the story set does not cover the states required by `design-states.md`
 4. **Touch target size** — icon-only controls below `size="3"` at the compact viewport, per `design-a11y.md`
 5. **Heading order** — a level skipped, or more than one `h1`
+6. **Crowding** — a label touching its value, less than 16px between a button and a link, a full-width button without the screen's side margin
+7. **Baseline and units** — side-by-side text of different sizes aligned on the centre, or a unit as large as its number (`design-layout.md`)
+8. **Copy tells** — the patterns in `design-copy.md` "Copy That Reads as Machine-Written", and guidance for an action the screen cannot perform
+9. **Feedback** — a success answered twice (in place and with a toast), or a wait shown away from where the result appears (`design-feedback.md`)
+
+When a finding comes from a shared component or a repeated pattern, fix it everywhere that pattern appears, not only in the story where it was seen.
 
 ### Step 5: Report
 

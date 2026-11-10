@@ -1,4 +1,9 @@
-import { createAppTheme } from '@template/ui/theme/createAppTheme';
+import { DEFAULT_THEME } from '@mantine/core';
+import {
+  badgeHeightMd,
+  createAppTheme,
+  resolveBadgeVariables,
+} from '@template/ui/theme/createAppTheme';
 import { expect, it } from 'vitest';
 
 const accentColors = [
@@ -68,10 +73,36 @@ it('テーマの設定を渡した場合、OS の視差効果を減らす設定�
 });
 
 it('テーマの設定を渡した場合、外側の面の影を中の面へ引き継がないよう Card と Paper の影の既定値を影なしにすること', () => {
-  const actual = createAppTheme(themeConfig).components;
+  const components = createAppTheme(themeConfig).components;
 
-  expect(actual).toStrictEqual({
-    Card: { defaultProps: { shadow: 'none' } },
-    Paper: { defaultProps: { shadow: 'none' } },
-  });
+  const actual = [components?.Card?.defaultProps, components?.Paper?.defaultProps];
+
+  expect(actual).toStrictEqual([{ shadow: 'none' }, { shadow: 'none' }]);
+});
+
+it('テーマの設定を渡した場合、リンクが色だけで示されないよう Anchor に常に下線を付けること', () => {
+  const actual = createAppTheme(themeConfig).components?.Anchor?.defaultProps;
+
+  expect(actual).toStrictEqual({ underline: 'always' });
+});
+
+it('テーマの設定を渡した場合、行が詰まらないよう Table のセルの余白を上下 sm・左右 md にすること', () => {
+  const actual = createAppTheme(themeConfig).components?.Table?.defaultProps;
+
+  expect(actual).toStrictEqual({ horizontalSpacing: 'md', verticalSpacing: 'sm' });
+});
+
+it.each([{ size: undefined }, { size: 'md' }])(
+  'Badge の大きさが $size の場合、上下に余白を作るため高さを 24px にすること',
+  ({ size }) => {
+    const actual = resolveBadgeVariables(DEFAULT_THEME, { size }, {});
+
+    expect(actual).toStrictEqual({ root: { '--badge-height': badgeHeightMd } });
+  }
+);
+
+it('Badge の大きさが md 以外の場合、高さを Mantine の既定のままにすること', () => {
+  const actual = resolveBadgeVariables(DEFAULT_THEME, { size: 'lg' }, {});
+
+  expect(actual).toStrictEqual({ root: {} });
 });

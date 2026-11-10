@@ -151,6 +151,29 @@ The system does not refer to itself as `私たち`. The interface does not addre
 'あなたの設定を保存しました';
 ```
 
+## Copy That Reads as Machine-Written
+
+- **Type**: MUST
+- **Reason**: These patterns are what make Japanese UI copy read as generated. Each one also hides information the reader needs.
+
+- Name the thing; never point with `この` / `その` when the screen does not make the referent unmistakable (`破損の棚に入れる`, not `この棚に入れる`)
+- Words that need something to compare against (`先に`, `優先`, `残り`) appear only when that something is on the screen
+- Say what and how many (`オリコンを 3 / 5 個置きました`, not `3 / 5 個置きました`)
+- Use concrete verbs. Not `処理する`, `対応する`, `包む` — write the action or the result (`箱に詰める`, `在庫にする`)
+- A back or alternative action names where it goes (`用意している箱を使う`, not `選び直す`)
+- State names are short business terms (`仕分け中`, not `物を待っている`)
+- No coaching or reassurance: `〜しましょう`, `ご安心ください`, `スムーズに`, `かんたんに`
+- No parenthetical patching and no runs of noun-ending fragments; rewrite the sentence instead
+- Helper text is one line. If it does not fit, split it into a label and a helper, or rephrase
+
+```typescript
+// Good
+<Text>破損の棚に入れて、棚をスキャン</Text>
+
+// Bad
+<Text>この棚に入れましょう（破損の場合）</Text>
+```
+
 ## Notation
 
 | Item              | Rule                                                     | Example          |

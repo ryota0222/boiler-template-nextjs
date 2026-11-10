@@ -22,3 +22,38 @@ ul {
 .mantine-Input-input {
   font-size: 16px;
 }
+
+/* Tabler の既定の線の太さ 2 は 14〜16px で文字より重く見えるため、全部のアイコンを 1.5 にそろえる。
+   CSS の指定は svg の stroke-width 属性より優先されるので、ここ 1 か所で決まる（design-icon.md） */
+.tabler-icon {
+  stroke-width: 1.5;
+}
+
+/* 必須の印は、英語圏の「*」より伝わりやすい「必須」の文字にする（design-form.md）。
+   Mantine の required が出す印（aria-hidden の span）の見た目だけを差し替えるため、
+   読み上げから外れることと、入力欄に required が付くことは変わらない */
+label[data-required] > span[aria-hidden='true'] {
+  font-size: 0;
+}
+
+label[data-required] > span[aria-hidden='true']::after {
+  background-color: var(--mantine-color-red-light);
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-error);
+  content: '必須';
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  margin-inline-start: 6px;
+  padding-inline: 4px;
+  vertical-align: 1px;
+}
+
+/* subtle のボタンは止まっているときに面も枠もなく、色だけで押せることを示すことになるため、リンクと同じく文字に下線を引く。
+   アイコンを持つボタンはアイコンが色以外の印になるため引かない（design-affordance.md） */
+.mantine-Button-root[data-variant='subtle']:not(:has(.mantine-Button-section))
+  .mantine-Button-label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

@@ -1,0 +1,110 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { expect, userEvent, within } from 'storybook/test';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const items: {{{queryValueTypeCode}}} = [
+  { id: '1', name: '見本', status: 'confirmed', updatedAt: '2026-11-10T00:00:00.000Z' },
+  { id: '2', name: '下書き', status: 'unconfirmed', updatedAt: '2026-11-01T00:00:00.000Z' },
+];
+
+// 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く。結果が null なら読み込み中のまま止まる
+const createQueryClient = (result: null | Result<{{{queryValueTypeCode}}}, ApiFailure>): QueryClient => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+  if (result !== null) {
+    queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
+  }
+
+  return queryClient;
+};
+
+const provideQueryClient =
+  (queryClient: QueryClient): Decorator =>
+  (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+
+const createQueryClientDecorator = (
+  result: null | Result<{{{queryValueTypeCode}}}, ApiFailure>,
+): Decorator => provideQueryClient(createQueryClient(result));
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    layout: 'fullscreen',
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Ideal: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: items })],
+  name: '理想状態の場合',
+};
+
+export const Selected: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: items })],
+  name: '選んだ場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole('button', { name: /^見本/u }));
+
+    await expect(canvas.getByRole('heading', { name: '見本' })).toBeVisible();
+  },
+};
+
+// 選んだ後に一覧が読み込み直され、選んだものがなくなった状態を、QueryClient の結果を差し替えて描く
+const itemsResult: Result<{{{queryValueTypeCode}}}, ApiFailure> = { ok: true, value: items };
+const remainingItemsResult: Result<{{{queryValueTypeCode}}}, ApiFailure> = {
+  ok: true,
+  value: items.filter((item) => item.id !== '1'),
+};
+const selectedGoneQueryClient = createQueryClient(itemsResult);
+
+export const SelectedGone: Story = {
+  decorators: [provideQueryClient(selectedGoneQueryClient)],
+  name: '選んだものがなくなった場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    const canvas = within(canvasElement);
+    // story を描き直したときも同じ手順で描けるよう、差し替える前の結果に戻してから選ぶ
+    selectedGoneQueryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, itemsResult);
+    await userEvent.click(await canvas.findByRole('button', { name: /^見本/u }));
+    selectedGoneQueryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, remainingItemsResult);
+
+    await expect(await canvas.findByText('選んだ {{concept}} が見つかりません')).toBeVisible();
+  },
+};
+
+export const Empty: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: [] })],
+  name: '空の場合',
+};
+
+export const Loading: Story = {
+  decorators: [createQueryClientDecorator(null)],
+  name: '読み込み中の場合',
+};
+
+export const Error: Story = {
+  decorators: [
+    createQueryClientDecorator({
+      error: { kind: 'internal', message: '読み込めませんでした' },
+      ok: false,
+    }),
+  ],
+  name: 'エラーの場合',
+};

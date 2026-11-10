@@ -95,6 +95,7 @@ Before adding or changing a screen in `src/app/` or a component in `src/features
 
 | File                   | The question it answers                                                     |
 | ---------------------- | --------------------------------------------------------------------------- |
+| `design-recipes.md`    | Which layout and which screen recipe does this screen start from            |
 | `design-ooui.md`       | What object does this screen operate on, and where does it sit in the menu  |
 | `design-layout.md`     | Where do things sit, and which spacing, type, colour, and icon tokens apply |
 | `design-hierarchy.md`  | Which of several operable elements comes first, and how are they grouped    |

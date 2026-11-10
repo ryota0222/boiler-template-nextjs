@@ -6,7 +6,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import nodePath from 'node:path';
 import { format, resolveConfig } from 'prettier';
-import { isDefined } from 'remeda';
+import { isDefined, isNonNullish } from 'remeda';
 import ts from 'typescript';
 import tseslint from 'typescript-eslint';
 import { z } from 'zod';
@@ -369,12 +369,12 @@ const listTopLevelVariableDeclarations = ({
         (statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ??
           false)
     )
-    .flatMap((statement) => [...statement.declarationList.declarations]);
+    .flatMap((statement) => statement.declarationList.declarations);
 
 const listDeclarationNames = (
   declarations: readonly (ts.ObjectLiteralElementLike | ts.TypeElement)[]
 ): readonly string[] =>
-  declarations.flatMap(({ name }) => (isDefined(name) && ts.isIdentifier(name) ? [name.text] : []));
+  declarations.flatMap(({ name }) => (isDefined(name) && ts.isIdentifier(name) ? name.text : []));
 
 const findReturnedObjectInBlock = (body: ts.ConciseBody): null | ts.ObjectLiteralExpression => {
   if (!ts.isBlock(body)) {
@@ -1176,15 +1176,13 @@ const buildAppendAction = ({
   unique: false,
 });
 
-const buildNamedImports = ({
-  isType,
+const buildValueImports = ({
   module,
   names,
 }: {
-  readonly isType: boolean;
   readonly module: string;
   readonly names: readonly string[];
-}): readonly NamedImport[] => names.map((name) => ({ isType, module, name }));
+}): readonly NamedImport[] => names.map((name) => ({ isType: false, module, name }));
 
 const resultTypeImports: readonly NamedImport[] = [
   { isType: true, module: '@/entities/apiFailure', name: 'ApiFailure' },
@@ -1211,8 +1209,7 @@ const buildControllerImports = ({
           module: '@/gateways/requestInputGateway',
           name: 'createReadingRequestInput',
         },
-        ...buildNamedImports({
-          isType: false,
+        ...buildValueImports({
           module: '@/presenters/apiResponsePresenter',
           names: ['presentFailure', 'presentSuccess'],
         }),
@@ -1244,8 +1241,7 @@ const buildApiFileAppendings = ({
   return [
     {
       namedImports: [
-        ...buildNamedImports({
-          isType: false,
+        ...buildValueImports({
           module: 'vitest',
           names: [
             'expect',
@@ -1280,7 +1276,7 @@ const buildApiFileAppendings = ({
     },
     {
       namedImports: [
-        ...buildNamedImports({ isType: false, module: 'vitest', names: ['expect', 'it', 'vi'] }),
+        ...buildValueImports({ module: 'vitest', names: ['expect', 'it', 'vi'] }),
         {
           isType: false,
           module: `@/controllers/${templateData.controllerFileName}`,
@@ -1366,9 +1362,7 @@ const findDynamicSegmentConflicts = ({
   return readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
     const existingName = routeParameterDirectoryPattern.exec(entry.name)?.[1];
     return existingName !== parameterName && isDefined(existingName) && entry.isDirectory()
-      ? [
-          `${directory}/${entry.name} があるため、同じ場所の動的な区切りは {${existingName}} にしてください`,
-        ]
+      ? `${directory}/${entry.name} があるため、同じ場所の動的な区切りは {${existingName}} にしてください`
       : [];
   });
 };
@@ -1475,8 +1469,20 @@ const createBuildingApiActions =
     });
   };
 
-const screenKindSchema = z.enum(['blank', 'collection', 'detail', 'form'], {
-  error: 'kind は blank・collection・detail・form のどれかで指定してください',
+const screenKinds = [
+  'blank',
+  'collection',
+  'detail',
+  'form',
+  'split',
+  'dashboard',
+  'chat',
+  'task-step',
+  'settings',
+] as const;
+
+const screenKindSchema = z.enum(screenKinds, {
+  error: `kind は ${screenKinds.join('・')} のどれかで指定してください`,
 });
 
 // /api の下は Route Handler の場所で、画面の page.tsx を置くと API の経路と重なるため
@@ -1506,44 +1512,144 @@ type MetadataTitleFormat =
   | { readonly applicationName: string; readonly hasTemplate: false }
   | { readonly hasTemplate: true };
 
+type ScreenApiFile = {
+  readonly exportNames: readonly string[];
+  readonly optionsImportName: 'mutationOptions' | 'queryOptions';
+  readonly path: string;
+  readonly templateNames: readonly string[];
+};
+
 type ScreenFile = {
   readonly path: string;
   readonly templateName: string;
 };
 
 type ScreenFilePaths = {
-  readonly apiFile: string;
+  readonly apiFiles: readonly ScreenApiFile[];
   readonly newFiles: readonly ScreenFile[];
   readonly page: string;
 };
 
 type ScreenKind = z.infer<typeof screenKindSchema>;
 
+type ScreenKindDefinition = {
+  readonly hasValidation: boolean;
+  readonly headingSuffix: string;
+  readonly mutation: null | {
+    readonly resultTypeSuffix: null | string;
+    readonly valuesTypeSuffix: string;
+  };
+  // container はアプリの枠の中で Container に収め、fullHeight は画面の高さを埋め、frameless は枠の部品に任せて包まない
+  readonly pageFrame: 'container' | 'frameless' | 'fullHeight';
+  readonly query: null | {
+    readonly dataTypeSuffix: string;
+    readonly isList: boolean;
+  };
+};
+
+// kind ごとの違いはこの表に集める。雛形の名前は kind から決まり、画面は <kind>Screen、stories は <kind>Stories、
+// テストは <kind>ScreenTest、API の型は <kind>QueryTypes・<kind>MutationTypes（kind は camelCase）
+const screenKindDefinitions: Readonly<Record<ScreenKind, ScreenKindDefinition>> = {
+  blank: {
+    hasValidation: false,
+    headingSuffix: '',
+    mutation: null,
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'BlankItem', isList: true },
+  },
+  chat: {
+    hasValidation: false,
+    headingSuffix: ' について聞く',
+    // 質問を送って回答を受け取るため、送信は form と同じく mutation にする
+    mutation: { resultTypeSuffix: 'ChatReply', valuesTypeSuffix: 'ChatRequest' },
+    pageFrame: 'container',
+    query: null,
+  },
+  collection: {
+    hasValidation: false,
+    headingSuffix: ' の一覧',
+    mutation: null,
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'CollectionRow', isList: true },
+  },
+  dashboard: {
+    hasValidation: false,
+    headingSuffix: ' の概要',
+    mutation: null,
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'Dashboard', isList: false },
+  },
+  detail: {
+    hasValidation: false,
+    headingSuffix: ' の詳細',
+    // 1 つか 2 つの値を InlineEdit でその場で直すため、読み込みの query と保存の mutation を両方書き出す
+    mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'DetailChanges' },
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'Detail', isList: false },
+  },
+  form: {
+    hasValidation: true,
+    headingSuffix: ' の入力',
+    mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'FormValues' },
+    pageFrame: 'container',
+    query: null,
+  },
+  settings: {
+    hasValidation: false,
+    headingSuffix: ' の設定',
+    // 値を InlineEdit と Checkbox でその場で保存するため、読み込みの query と保存の mutation を両方書き出す
+    mutation: { resultTypeSuffix: null, valuesTypeSuffix: 'SettingsChanges' },
+    pageFrame: 'container',
+    query: { dataTypeSuffix: 'Settings', isList: false },
+  },
+  split: {
+    hasValidation: false,
+    headingSuffix: ' の一覧',
+    mutation: null,
+    // 左の一覧と右の詳細がそれぞれ縦に流れるよう、画面の高さを埋める
+    pageFrame: 'fullHeight',
+    query: { dataTypeSuffix: 'SplitItem', isList: true },
+  },
+  'task-step': {
+    hasValidation: false,
+    headingSuffix: ' の作業',
+    // 読んだバーコードを確かめるため、送信は form と同じく mutation にする
+    mutation: { resultTypeSuffix: 'TaskStepCheck', valuesTypeSuffix: 'TaskStepScan' },
+    // HandheldLayout が main とヘッダー・フッターを持つため、アプリの枠の Container に入れない
+    pageFrame: 'frameless',
+    query: null,
+  },
+};
+
 type ScreenTemplateData = {
   readonly componentImportPath: string;
   readonly componentName: string;
   readonly concept: string;
-  readonly dataTypeName: string;
   readonly featureDirectory: string;
-  readonly hasEmptyStory: boolean;
-  readonly hasNotFoundStory: boolean;
   readonly hasParameters: boolean;
-  readonly hasRowsSelectedStory: boolean;
   readonly heading: string;
-  readonly idealValueCode: string;
+  readonly isFramelessPage: boolean;
+  readonly isFullHeightPage: boolean;
   readonly kind: ScreenKind;
+  readonly kindTemplatePrefix: string;
   readonly metadataDescriptionCode: string;
   readonly metadataTitleCode: string;
+  readonly mutationOptionsCode: string;
   readonly mutationOptionsName: string;
+  readonly mutationResultTypeCode: string;
+  readonly mutationResultTypeName: string;
+  readonly mutationValuesTypeName: string;
   readonly parametersTypeCode: string;
+  readonly pathCode: string;
+  readonly queryDataTypeName: string;
+  readonly queryOptionsCode: string;
   readonly queryOptionsName: string;
-  readonly sampleOptionsCode: string;
+  readonly queryValueTypeCode: string;
   readonly sampleParametersCode: string;
-  readonly screenOptionsCode: string;
+  readonly sampleQueryOptionsCode: string;
   readonly validateFunctionName: string;
   readonly validationFileName: string;
   readonly validationImportPath: string;
-  readonly valueTypeCode: string;
 };
 
 const layoutPath = 'src/app/layout.tsx';
@@ -1580,22 +1686,6 @@ const readMetadataTitleFormat = (destinationRoot: string): Result<MetadataTitleF
     : createTitleFailure(' metadata の title のオブジェクトに template がない');
 };
 
-const headingSuffixByKind: Readonly<Record<ScreenKind, string>> = {
-  blank: '',
-  collection: ' の一覧',
-  detail: ' の詳細',
-  form: ' の入力',
-};
-
-const dataTypeSuffixByKind: Readonly<Record<ScreenKind, string>> = {
-  blank: 'BlankItem',
-  collection: 'CollectionRow',
-  detail: 'Detail',
-  form: 'FormValues',
-};
-
-const sampleItemCode = "{ id: '1', name: '見本' }";
-
 const buildParameterFields = (
   parameterNames: readonly string[]
 ): { readonly sampleParametersCode: string; readonly typeCode: string } => ({
@@ -1613,6 +1703,45 @@ const withParameters = ({
   readonly name: string;
 }): string => (hasParameters ? `${name}(${argumentCode})` : name);
 
+const buildScreenTypeNames = ({
+  conceptPascalCase,
+  definition,
+}: {
+  readonly conceptPascalCase: string;
+  readonly definition: ScreenKindDefinition;
+}): Pick<
+  ScreenTemplateData,
+  | 'mutationResultTypeCode'
+  | 'mutationResultTypeName'
+  | 'mutationValuesTypeName'
+  | 'queryDataTypeName'
+  | 'queryValueTypeCode'
+> => {
+  const queryDataTypeName = `${conceptPascalCase}${definition.query?.dataTypeSuffix ?? ''}`;
+  const mutationResultTypeName = isNonNullish(definition.mutation?.resultTypeSuffix)
+    ? `${conceptPascalCase}${definition.mutation.resultTypeSuffix}`
+    : '';
+  return {
+    mutationResultTypeCode: mutationResultTypeName === '' ? 'null' : mutationResultTypeName,
+    mutationResultTypeName,
+    mutationValuesTypeName: `${conceptPascalCase}${definition.mutation?.valuesTypeSuffix ?? ''}`,
+    queryDataTypeName,
+    queryValueTypeCode:
+      definition.query?.isList === true ? `readonly ${queryDataTypeName}[]` : queryDataTypeName,
+  };
+};
+
+// 画面の中から自分の URL を指すためのコード。動的な区切りは画面が受け取る parameters の値で埋める
+const buildPathCode = (path: string): string =>
+  path.includes('[')
+    ? `\`${path
+        .split('/')
+        .map((segment) =>
+          segment.startsWith('[') ? `\${parameters.${segment.slice(1, -1)}}` : segment
+        )
+        .join('/')}\``
+    : `'${path}'`;
+
 const buildScreenTemplateData = ({
   answers,
   titleFormat,
@@ -1620,59 +1749,95 @@ const buildScreenTemplateData = ({
   readonly answers: z.infer<typeof screenAnswersSchema>;
   readonly titleFormat: MetadataTitleFormat;
 }): ScreenTemplateData => {
+  const definition = screenKindDefinitions[answers.kind];
   const conceptPascalCase = toPascalCaseFromKebabCase(answers.concept);
   const conceptCamelCase = decapitalize(conceptPascalCase);
-  const kindPascalCase = capitalize(answers.kind);
+  const kindPascalCase = toPascalCaseFromKebabCase(answers.kind);
   const parameterNames = listParameterNames({ path: answers.path, pattern: dynamicSegmentPattern });
   const hasParameters = parameterNames.length > 0;
   const parameterFields = buildParameterFields(parameterNames);
   const componentName = `${conceptPascalCase}${kindPascalCase}Screen`;
   const featureDirectory = `src/features/${answers.concept}/${answers.concept}-${answers.kind}-screen`;
-  const dataTypeName = `${conceptPascalCase}${dataTypeSuffixByKind[answers.kind]}`;
-  const heading = `${answers.concept}${headingSuffixByKind[answers.kind]}`;
-  const hasItems = answers.kind === 'blank' || answers.kind === 'collection';
+  const heading = `${answers.concept}${definition.headingSuffix}`;
   const queryOptionsName = `${conceptCamelCase}${kindPascalCase}QueryOptions`;
-  const mutationOptionsName = `${conceptCamelCase}FormMutationOptions`;
+  const mutationOptionsName = `${conceptCamelCase}${kindPascalCase}MutationOptions`;
   const validationFileName = `${conceptCamelCase}FormValidation`;
   return {
+    ...buildScreenTypeNames({ conceptPascalCase, definition }),
     componentImportPath: `@/${featureDirectory.replace(/^src\//, '')}/${componentName}`,
     componentName,
     concept: answers.concept,
-    dataTypeName,
     featureDirectory,
-    hasEmptyStory: hasItems,
-    hasNotFoundStory: answers.kind === 'detail',
     hasParameters,
-    hasRowsSelectedStory: answers.kind === 'collection',
     heading,
-    idealValueCode: hasItems ? `[${sampleItemCode}]` : sampleItemCode,
+    isFramelessPage: definition.pageFrame === 'frameless',
+    isFullHeightPage: definition.pageFrame === 'fullHeight',
     kind: answers.kind,
+    kindTemplatePrefix: decapitalize(kindPascalCase),
     metadataDescriptionCode: JSON.stringify(heading),
     metadataTitleCode: JSON.stringify(
       titleFormat.hasTemplate ? heading : `${heading} | ${titleFormat.applicationName}`
     ),
+    mutationOptionsCode: withParameters({
+      argumentCode: 'parameters',
+      hasParameters,
+      name: mutationOptionsName,
+    }),
     mutationOptionsName,
     parametersTypeCode: parameterFields.typeCode,
+    pathCode: buildPathCode(answers.path),
+    queryOptionsCode: withParameters({
+      argumentCode: 'parameters',
+      hasParameters,
+      name: queryOptionsName,
+    }),
     queryOptionsName,
-    sampleOptionsCode: withParameters({
+    sampleParametersCode: parameterFields.sampleParametersCode,
+    sampleQueryOptionsCode: withParameters({
       argumentCode: parameterFields.sampleParametersCode,
       hasParameters,
       name: queryOptionsName,
     }),
-    sampleParametersCode: parameterFields.sampleParametersCode,
-    screenOptionsCode: withParameters({
-      argumentCode: 'parameters',
-      hasParameters,
-      name: answers.kind === 'form' ? mutationOptionsName : queryOptionsName,
-    }),
     validateFunctionName: `validate${conceptPascalCase}Form`,
     validationFileName,
     validationImportPath: `@/${featureDirectory.replace(/^src\//, '')}/${validationFileName}`,
-    valueTypeCode: hasItems ? `readonly ${dataTypeName}[]` : dataTypeName,
   };
 };
 
 const appDirectory = 'src/app';
+
+const buildScreenApiFiles = (templateData: ScreenTemplateData): readonly ScreenApiFile[] => {
+  const definition = screenKindDefinitions[templateData.kind];
+  const apiDirectory = `src/api/${templateData.concept}`;
+  return [
+    ...(definition.query === null
+      ? []
+      : [
+          {
+            exportNames: [templateData.queryOptionsName, templateData.queryDataTypeName],
+            optionsImportName: 'queryOptions' as const,
+            path: `${apiDirectory}/queries.ts`,
+            templateNames: [`${templateData.kindTemplatePrefix}QueryTypes`, 'query'],
+          },
+        ]),
+    ...(definition.mutation === null
+      ? []
+      : [
+          {
+            exportNames: [
+              templateData.mutationOptionsName,
+              templateData.mutationValuesTypeName,
+              ...(templateData.mutationResultTypeName === ''
+                ? []
+                : [templateData.mutationResultTypeName]),
+            ],
+            optionsImportName: 'mutationOptions' as const,
+            path: `${apiDirectory}/mutations.ts`,
+            templateNames: [`${templateData.kindTemplatePrefix}MutationTypes`, 'mutation'],
+          },
+        ]),
+  ];
+};
 
 const buildScreenFilePaths = ({
   path,
@@ -1682,23 +1847,22 @@ const buildScreenFilePaths = ({
   readonly templateData: ScreenTemplateData;
 }): ScreenFilePaths => {
   const componentBase = `${templateData.featureDirectory}/${templateData.componentName}`;
-  const isForm = templateData.kind === 'form';
   const validationBase = `${templateData.featureDirectory}/${templateData.validationFileName}`;
   const page = `${appDirectory}${path}/page.tsx`;
   return {
-    apiFile: `src/api/${templateData.concept}/${isForm ? 'mutations' : 'queries'}.ts`,
+    apiFiles: buildScreenApiFiles(templateData),
     newFiles: [
       { path: page, templateName: 'page' },
-      { path: `${componentBase}.tsx`, templateName: `${templateData.kind}Screen` },
+      { path: `${componentBase}.tsx`, templateName: `${templateData.kindTemplatePrefix}Screen` },
       {
         path: `${componentBase}.stories.tsx`,
-        templateName: isForm ? 'formStories' : 'queryStories',
+        templateName: `${templateData.kindTemplatePrefix}Stories`,
       },
       {
         path: `${templateData.featureDirectory}/${decapitalize(templateData.componentName)}.test.tsx`,
-        templateName: isForm ? 'formScreenTest' : 'queryScreenTest',
+        templateName: `${templateData.kindTemplatePrefix}ScreenTest`,
       },
-      ...(isForm
+      ...(screenKindDefinitions[templateData.kind].hasValidation
         ? [
             { path: `${validationBase}.ts`, templateName: 'formValidation' },
             { path: `${validationBase}.test.ts`, templateName: 'formValidationTest' },
@@ -1708,20 +1872,6 @@ const buildScreenFilePaths = ({
     page,
   };
 };
-
-const buildApiFileImports = (kind: ScreenKind): readonly NamedImport[] => [
-  {
-    isType: false,
-    module: '@tanstack/react-query',
-    name: kind === 'form' ? 'mutationOptions' : 'queryOptions',
-  },
-  ...resultTypeImports,
-];
-
-const listApiFileExportNames = (templateData: ScreenTemplateData): readonly string[] =>
-  templateData.kind === 'form'
-    ? [templateData.mutationOptionsName, templateData.dataTypeName]
-    : [templateData.queryOptionsName, templateData.dataTypeName];
 
 const routeGroupNamePattern = /^\(.+\)$/;
 
@@ -1751,32 +1901,28 @@ const listSameUrlFiles = ({
 const findApiFileConflicts = ({
   apiFile,
   destinationRoot,
-  templateData,
 }: {
-  readonly apiFile: string;
+  readonly apiFile: ScreenApiFile;
   readonly destinationRoot: string;
-  readonly templateData: ScreenTemplateData;
 }): readonly string[] => {
-  const apiFileContent = readExistingFile({ destinationRoot, path: apiFile });
+  const apiFileContent = readExistingFile({ destinationRoot, path: apiFile.path });
   return apiFileContent === null
     ? []
-    : listApiFileExportNames(templateData)
+    : apiFile.exportNames
         .filter((name) =>
           new RegExp(String.raw`export (const|type) ${name}\b`).test(apiFileContent)
         )
-        .map((name) => `${apiFile}: ${name} は既に定義されています`);
+        .map((name) => `${apiFile.path}: ${name} は既に定義されています`);
 };
 
 const findScreenConflicts = ({
   destinationRoot,
   files,
   path,
-  templateData,
 }: {
   readonly destinationRoot: string;
   readonly files: ScreenFilePaths;
   readonly path: string;
-  readonly templateData: ScreenTemplateData;
 }): readonly string[] => [
   ...files.newFiles
     .filter(({ path: newFilePath }) => existsSync(nodePath.resolve(destinationRoot, newFilePath)))
@@ -1784,10 +1930,41 @@ const findScreenConflicts = ({
   ...listSameUrlFiles({ destinationRoot, page: files.page, path }).map(
     (sameUrlFile) => `${sameUrlFile} があるため、同じ URL に画面を置けません`
   ),
-  ...findApiFileConflicts({ apiFile: files.apiFile, destinationRoot, templateData }),
+  ...files.apiFiles.flatMap((apiFile) => findApiFileConflicts({ apiFile, destinationRoot })),
 ];
 
 const screenTemplateDirectory = 'plop-templates/screen';
+
+const buildApiFileActions = ({
+  apiFile,
+  destinationRoot,
+  templateData,
+}: {
+  readonly apiFile: ScreenApiFile;
+  readonly destinationRoot: string;
+  readonly templateData: ScreenTemplateData;
+}): ActionType[] => [
+  createEnsuringFile({
+    absolutePath: nodePath.resolve(destinationRoot, apiFile.path),
+    path: apiFile.path,
+  }),
+  createAddingNamedImports({
+    absolutePath: nodePath.resolve(destinationRoot, apiFile.path),
+    namedImports: [
+      { isType: false, module: '@tanstack/react-query', name: apiFile.optionsImportName },
+      ...resultTypeImports,
+    ],
+    path: apiFile.path,
+  }),
+  ...apiFile.templateNames.map((templateName) =>
+    buildAppendAction({
+      path: apiFile.path,
+      templateData,
+      templateDirectory: screenTemplateDirectory,
+      templateName,
+    })
+  ),
+];
 
 const buildScreenActions = ({
   destinationRoot,
@@ -1806,24 +1983,12 @@ const buildScreenActions = ({
       templateName,
     })
   ),
-  createEnsuringFile({
-    absolutePath: nodePath.resolve(destinationRoot, files.apiFile),
-    path: files.apiFile,
-  }),
-  createAddingNamedImports({
-    absolutePath: nodePath.resolve(destinationRoot, files.apiFile),
-    namedImports: buildApiFileImports(templateData.kind),
-    path: files.apiFile,
-  }),
-  buildAppendAction({
-    path: files.apiFile,
-    templateData,
-    templateDirectory: screenTemplateDirectory,
-    templateName: templateData.kind === 'form' ? 'mutation' : 'query',
-  }),
+  ...files.apiFiles.flatMap((apiFile) =>
+    buildApiFileActions({ apiFile, destinationRoot, templateData })
+  ),
   createFormatting({
     destinationRoot,
-    paths: [...files.newFiles.map(({ path }) => path), files.apiFile],
+    paths: [...files.newFiles.map(({ path }) => path), ...files.apiFiles.map(({ path }) => path)],
   }),
 ];
 
@@ -1845,12 +2010,7 @@ const createBuildingScreenActions =
       titleFormat: titleFormatResult.value,
     });
     const files = buildScreenFilePaths({ path: parsed.data.path, templateData });
-    const conflicts = findScreenConflicts({
-      destinationRoot,
-      files,
-      path: parsed.data.path,
-      templateData,
-    });
+    const conflicts = findScreenConflicts({ destinationRoot, files, path: parsed.data.path });
     if (conflicts.length > 0) {
       return [
         createRejecting(
@@ -1908,7 +2068,7 @@ const buildGeneratorDefinitions = (destinationRoot: string): readonly GeneratorD
         schema: conceptSchema,
       },
       {
-        message: 'kind（blank・collection・detail・form）',
+        message: `kind（${screenKinds.join('・')}）`,
         name: 'kind',
         schema: screenKindSchema,
       },

@@ -1,0 +1,94 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { expect, userEvent, within } from 'storybook/test';
+
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+// 送信の結果を story の間で持ち越さないよう、story ごとに QueryClient を作る
+const createQueryClientDecorator = (): Decorator => {
+  const queryClient = new QueryClient();
+  return (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+};
+
+const scanCode = async (canvasElement: HTMLElement): Promise<void> => {
+  await userEvent.type(
+    within(canvasElement).getByRole('textbox', { name: '{{concept}} のバーコード' }),
+    '4417{Enter}',
+  );
+};
+
+// 通信が切れた状態で終えた story の後に、次の story を通信がある状態で描く
+const restoreOnline = (): void => {
+  globalThis.dispatchEvent(new Event('online'));
+};
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    layout: 'fullscreen',
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Ideal: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '理想状態の場合',
+};
+
+// 確かめる mutation は、TanStack Query が通信が切れていると見なす間は送られずに待つため、確かめている途中を描ける
+export const Pending: Story = {
+  beforeEach: () => {
+    onlineManager.setOnline(false);
+    return () => {
+      onlineManager.setOnline(true);
+    };
+  },
+  decorators: [createQueryClientDecorator()],
+  name: '確かめている場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await scanCode(canvasElement);
+
+    await expect(await within(canvasElement).findByText('確かめています…')).toBeInTheDocument();
+  },
+};
+
+// エンドポイントをつなぐまでの mutation は失敗を返すため、読むと確かめられなかったことが帯に出る。
+// 次へ進むボタンが押せる状態の色の対比も axe に確かめさせる（design-states.md）
+export const Failure: Story = {
+  decorators: [createQueryClientDecorator()],
+  name: '確かめられなかった場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await scanCode(canvasElement);
+
+    await expect(
+      await within(canvasElement).findByRole('button', { name: '次の {{concept}} へ' }),
+    ).toBeEnabled();
+  },
+};
+
+// 画面の上の帯と、確かめた結果の帯の両方に、通信が切れていることを出す
+export const Offline: Story = {
+  beforeEach: () => restoreOnline,
+  decorators: [createQueryClientDecorator()],
+  name: '通信が切れている場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    globalThis.dispatchEvent(new Event('offline'));
+    await scanCode(canvasElement);
+
+    await expect(
+      await within(canvasElement).findByText('つながったら確かめます。まだ記録していません'),
+    ).toBeVisible();
+  },
+};

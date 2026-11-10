@@ -1,0 +1,239 @@
+'use client';
+
+import type { StatusTone } from '@template/ui/blocks/status-badge/StatusBadge';
+
+import {
+  Box,
+  EmptyState,
+  EmptyStateDescription,
+  EmptyStateTitle,
+  Group,
+  NavLink,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { CollectionSkeleton } from '@template/ui/blocks/collection-skeleton/CollectionSkeleton';
+import { DetailCard } from '@template/ui/blocks/detail-card/DetailCard';
+import { EmptyCollection } from '@template/ui/blocks/empty-collection/EmptyCollection';
+import { ErrorBanner } from '@template/ui/blocks/error-banner/ErrorBanner';
+import { formatRelativeTime, RelativeTime } from '@template/ui/blocks/relative-time/RelativeTime';
+import { SplitLayout } from '@template/ui/blocks/split-layout/SplitLayout';
+import { StatusBadge } from '@template/ui/blocks/status-badge/StatusBadge';
+import { useState } from 'react';
+import { isDefined } from 'remeda';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+
+// 状態は色だけで伝えないよう、StatusBadge の形の違うアイコンと文言で出す（design-icon.md）
+const statusBadges: Readonly<
+  Record<{{queryDataTypeName}}['status'], { readonly label: string; readonly tone: StatusTone }>
+> = {
+  confirmed: { label: '確認済み', tone: 'done' },
+  unconfirmed: { label: '未確認', tone: 'awaiting' },
+};
+
+const skeletonRowCount = 5;
+
+const renderStatusBadge = ({
+  size,
+  status,
+}: {
+  readonly size: 'md' | 'sm';
+  readonly status: {{queryDataTypeName}}['status'];
+}): React.JSX.Element => (
+  <StatusBadge size={size} tone={statusBadges[status].tone}>
+    {statusBadges[status].label}
+  </StatusBadge>
+);
+
+const renderList = ({
+  items,
+  nameFilter,
+  now,
+  onNameFilterChange,
+  onSelect,
+  selectedID,
+}: {
+  readonly items: readonly {{queryDataTypeName}}[];
+  readonly nameFilter: string;
+  readonly now: Date;
+  readonly onNameFilterChange: (nameFilter: string) => void;
+  readonly onSelect: (id: string) => void;
+  readonly selectedID: null | string;
+}): React.JSX.Element => {
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(nameFilter.trim().toLowerCase()),
+  );
+
+  return (
+    <Stack gap="md" p="md">
+      <Title order={1} size="h3">
+        {{heading}}
+      </Title>
+      <TextInput
+        label="名前で探す"
+        onChange={(event) => {
+          onNameFilterChange(event.currentTarget.value);
+        }}
+        value={nameFilter}
+      />
+      {filteredItems.length === 0 ? (
+        <Text c="dimmed" size="sm">
+          条件に一致する{{concept}}はありません
+        </Text>
+      ) : (
+        <Box component="ul" m={0} p={0} style=\{{ listStyle: 'none' }}>
+          {filteredItems.map((item) => (
+            <li key={item.id}>
+              {/* 選んでも一覧を描き直さないよう、選んだことは active と aria-current で示す（design-collection.md） */}
+              <NavLink
+                active={item.id === selectedID}
+                aria-current={item.id === selectedID}
+                component="button"
+                description={`更新 ${formatRelativeTime({ now, value: new Date(item.updatedAt) })}`}
+                label={item.name}
+                onClick={() => {
+                  onSelect(item.id);
+                }}
+                rightSection={renderStatusBadge({ size: 'sm', status: item.status })}
+              />
+            </li>
+          ))}
+        </Box>
+      )}
+    </Stack>
+  );
+};
+
+const renderDetail = ({
+  items,
+  now,
+  selectedID,
+}: {
+  readonly items: readonly {{queryDataTypeName}}[];
+  readonly now: Date;
+  readonly selectedID: null | string;
+}): React.JSX.Element => {
+  if (selectedID === null) {
+    return (
+      <EmptyState>
+        <EmptyStateTitle order={2}>{{concept}} を選んでいません</EmptyStateTitle>
+        <EmptyStateDescription>左の一覧から選ぶと、ここに詳細を表示します</EmptyStateDescription>
+      </EmptyState>
+    );
+  }
+
+  // 選んだ後にほかの人が削除すると一覧から消えるため、空の詳細ではなく見つからないことを出す
+  const selectedItem = items.find((item) => item.id === selectedID);
+  if (!isDefined(selectedItem)) {
+    return (
+      <EmptyState>
+        <EmptyStateTitle order={2}>選んだ {{concept}} が見つかりません</EmptyStateTitle>
+        <EmptyStateDescription>
+          削除されたか、一覧から外れました。左の一覧からほかの {{concept}} を選んでください
+        </EmptyStateDescription>
+      </EmptyState>
+    );
+  }
+
+  return (
+    <Stack gap="lg">
+      <Group gap="sm">
+        <Title order={2} size="h3">
+          {selectedItem.name}
+        </Title>
+        {renderStatusBadge({ size: 'md', status: selectedItem.status })}
+      </Group>
+      <DetailCard
+        action={null}
+        items={[
+          {
+            label: '更新日',
+            value: <RelativeTime now={now} value={new Date(selectedItem.updatedAt)} />,
+          },
+        ]}
+        title="基本情報"
+      />
+    </Stack>
+  );
+};
+
+{{#if hasParameters}}
+export const {{componentName}} = ({
+  parameters,
+}: {
+  readonly parameters: {{{parametersTypeCode}}};
+}): React.JSX.Element => {
+{{else}}
+export const {{componentName}} = (): React.JSX.Element => {
+{{/if}}
+  const query = useQuery({{{queryOptionsCode}}});
+  const [selectedID, setSelectedID] = useState<null | string>(null);
+  const [nameFilter, setNameFilter] = useState('');
+  // 更新日は、描くたびに変わらないよう画面を開いた時刻を基準に「3分前」のように出す
+  const [now] = useState(() => new Date());
+  // 読み込み中は左の一覧の場所に読み込み後と同じ大きさの骨組みを出し、データが届いたときに配置がずれないようにする
+  if (!isDefined(query.data)) {
+    return (
+      <SplitLayout
+        detail={null}
+        list={<CollectionSkeleton loadingLabel="{{concept}} を読み込み中" rowCount={skeletonRowCount} />}
+        listLabel="{{heading}}"
+      />
+    );
+  }
+
+  if (!query.data.ok) {
+    return (
+      <Stack gap="xl" p="xl">
+        <Title order={1} size="h3">
+          {{heading}}
+        </Title>
+        <ErrorBanner
+          description="時間をおいてから、もう一度読み込んでください。"
+          onRetry={() => {
+            void query.refetch();
+          }}
+          retryLabel="もう一度読み込む"
+          title="{{concept}} を読み込めませんでした"
+        />
+      </Stack>
+    );
+  }
+
+  if (query.data.value.length === 0) {
+    return (
+      <Stack gap="xl" p="xl">
+        <Title order={1} size="h3">
+          {{heading}}
+        </Title>
+        <EmptyCollection
+          empty=\{{
+            action: null,
+            description: '{{concept}} が届くと、ここに一覧で表示されます',
+            title: '{{concept}} はまだありません',
+          }}
+          filtered={null}
+        />
+      </Stack>
+    );
+  }
+
+  return (
+    <SplitLayout
+      detail={renderDetail({ items: query.data.value, now, selectedID })}
+      list={renderList({
+        items: query.data.value,
+        nameFilter,
+        now,
+        onNameFilterChange: setNameFilter,
+        onSelect: setSelectedID,
+        selectedID,
+      })}
+      listLabel="{{heading}}"
+    />
+  );
+};

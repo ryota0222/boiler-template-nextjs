@@ -1,0 +1,54 @@
+/* 文字 1 行ぶんの高さと、届く値のおよその幅を先に取り、値が届いたときに文が動かないようにする */
+.root {
+  display: inline-block;
+  height: 1em;
+  position: relative;
+  vertical-align: -0.125em;
+}
+
+.shimmer {
+  /* 灰色だけだと止まった枠に見えるため、光の芯に主色を薄く混ぜる */
+  --pending-base: var(--mantine-color-gray-1);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 14%,
+    var(--mantine-color-gray-0)
+  );
+
+  background-color: var(--pending-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--pending-base) 0%,
+    var(--pending-glow) 50%,
+    var(--pending-base) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--mantine-radius-sm);
+  inset: 0;
+  position: absolute;
+}
+
+[data-mantine-color-scheme='dark'] .shimmer {
+  --pending-base: var(--mantine-color-dark-6);
+  --pending-glow: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 24%,
+    var(--mantine-color-dark-6)
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shimmer {
+    animation: pending-value 1.3s linear infinite;
+  }
+}
+
+@keyframes pending-value {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

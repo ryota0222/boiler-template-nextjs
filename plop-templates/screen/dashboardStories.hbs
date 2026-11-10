@@ -1,0 +1,82 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const dashboard: {{queryDataTypeName}} = {
+  activities: [{ at: '2026-11-10T00:00:00.000Z', id: '1', title: '見本を登録しました' }],
+  metrics: [
+    { label: '今月の{{concept}}', note: '先月より12件多い', unit: '件', value: '128' },
+    { label: '確認待ち', note: '今日の16時まで', unit: '件', value: '6' },
+  ],
+  progresses: [
+    { done: 6, label: '確認済み', total: 18 },
+    { done: 3, label: '発送済み', total: 5 },
+  ],
+};
+
+// 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く。結果が null なら読み込み中のまま止まる
+const createQueryClientDecorator = (
+  result: null | Result<{{{queryValueTypeCode}}}, ApiFailure>,
+): Decorator => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+  if (result !== null) {
+    queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
+  }
+
+  return (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+};
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Ideal: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: dashboard })],
+  name: '理想状態の場合',
+};
+
+// データのないカードは消さずに、まだないことを書いて残す
+export const NoData: Story = {
+  decorators: [
+    createQueryClientDecorator({
+      ok: true,
+      value: { ...dashboard, activities: [], progresses: [] },
+    }),
+  ],
+  name: 'データがないカードの場合',
+};
+
+export const Loading: Story = {
+  decorators: [createQueryClientDecorator(null)],
+  name: '読み込み中の場合',
+};
+
+export const Error: Story = {
+  decorators: [
+    createQueryClientDecorator({
+      error: { kind: 'internal', message: '読み込めませんでした' },
+      ok: false,
+    }),
+  ],
+  name: 'エラーの場合',
+};

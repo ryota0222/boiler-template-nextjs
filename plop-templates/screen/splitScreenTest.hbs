@@ -1,0 +1,96 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderWithUi } from '@template/ui/testing/TestRendering';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const items: {{{queryValueTypeCode}}} = [
+  { id: '1', name: '見本', status: 'confirmed', updatedAt: '2026-11-10T00:00:00.000Z' },
+  { id: '2', name: '下書き', status: 'unconfirmed', updatedAt: '2026-11-01T00:00:00.000Z' },
+];
+
+const renderScreen = (queryClient: QueryClient): void => {
+  renderWithUi(
+    <QueryClientProvider client={queryClient}>
+      <{{componentName}}{{#if hasParameters}} parameters={ {{{sampleParametersCode}}} }{{/if}} />
+    </QueryClientProvider>,
+  );
+};
+
+// 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く
+const createSettledQueryClient = (result: Result<{{{queryValueTypeCode}}}, ApiFailure>): QueryClient => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+  queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
+  return queryClient;
+};
+
+describe('{{componentName}}', () => {
+  it('queryFnが失敗のResultを返してもう一度読み込むボタンを押した場合、queryFnをもう一度呼ぶこと', async () => {
+    const queryClient = new QueryClient();
+    renderScreen(queryClient);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'もう一度読み込む' }));
+
+    const expected = 2;
+    await waitFor(() => {
+      const actual = queryClient.getQueryState({{{sampleQueryOptionsCode}}}.queryKey)?.dataUpdateCount;
+      expect(actual).toBe(expected);
+    });
+  });
+
+  it('何も選んでいない場合、選んでいないことを右に表示すること', () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: items }));
+
+    const actual = screen.getByText('{{concept}} を選んでいません');
+
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('一覧の項目を押した場合、その項目の詳細を右に表示すること', () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: items }));
+
+    fireEvent.click(screen.getByRole('button', { name: /^見本/u }));
+
+    const actual = screen.getByRole('heading', { name: '見本' });
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('選んだ項目が読み込み直した一覧からなくなった場合、見つからないことを右に表示すること', async () => {
+    const queryClient = createSettledQueryClient({ ok: true, value: items });
+    renderScreen(queryClient);
+    fireEvent.click(screen.getByRole('button', { name: /^見本/u }));
+    const remainingItemsResult: Result<{{{queryValueTypeCode}}}, ApiFailure> = {
+      ok: true,
+      value: items.filter((item) => item.id !== '1'),
+    };
+
+    queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, remainingItemsResult);
+
+    const actual = await screen.findByText('選んだ {{concept}} が見つかりません');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('名前で探す欄にどの項目にも合わない名前を入れた場合、条件に一致するものがないことを表示すること', () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: items }));
+
+    fireEvent.change(screen.getByRole('textbox', { name: '名前で探す' }), {
+      target: { value: '一致しない名前' },
+    });
+
+    const actual = screen.getByText('条件に一致する{{concept}}はありません');
+    expect(actual).toBeInTheDocument();
+  });
+
+  it('queryのdataが空の配列のResultの場合、まだないことを表示すること', () => {
+    renderScreen(createSettledQueryClient({ ok: true, value: [] }));
+
+    const actual = screen.getByText('{{concept}} はまだありません');
+
+    expect(actual).toBeInTheDocument();
+  });
+});

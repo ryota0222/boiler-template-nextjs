@@ -1,4 +1,4 @@
-import type { {{dataTypeName}} } from '@/api/{{concept}}/mutations';
+import type { {{mutationValuesTypeName}} } from '@/api/{{concept}}/mutations';
 
 const nameMaxLength = 100;
 
@@ -13,7 +13,7 @@ const validateName = (name: string): null | string => {
 };
 
 export const {{validateFunctionName}} = (
-  values: {{dataTypeName}},
+  values: {{mutationValuesTypeName}},
 ): { readonly name: null | string } => ({
   name: validateName(values.name),
 });

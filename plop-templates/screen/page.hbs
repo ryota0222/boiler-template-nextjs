@@ -1,6 +1,12 @@
 import type { Metadata } from 'next';
 
+{{#if isFullHeightPage}}
+import { Box } from '@mantine/core';
+{{else}}
+{{#unless isFramelessPage}}
 import { Container } from '@mantine/core';
+{{/unless}}
+{{/if}}
 
 import { {{componentName}} } from '{{{componentImportPath}}}';
 
@@ -9,26 +15,34 @@ export const metadata: Metadata = {
   title: {{{metadataTitleCode}}},
 };
 
+{{#if isFullHeightPage}}
+// 左右がそれぞれの中で縦に流れるよう、画面の高さから AppShell のヘッダーの分を引いた高さに収める
+{{/if}}
+{{#if isFramelessPage}}
+// 枠の部品が main とヘッダー・フッターを自分で持つため、ここでは包まない
+{{/if}}
 {{#if hasParameters}}
 const Page = async ({
   params,
 }: {
   readonly params: Promise<{{{parametersTypeCode}}}>;
 }): Promise<React.JSX.Element> => (
-  <main>
-    <Container py="xl">
-      <{{componentName}} parameters={await params} />
-    </Container>
-  </main>
-);
 {{else}}
 const Page = (): React.JSX.Element => (
+{{/if}}
+{{#if isFramelessPage}}
+  <{{componentName}}{{#if hasParameters}} parameters={await params}{{/if}} />
+{{else if isFullHeightPage}}
+  <Box component="main" h="calc(100dvh - var(--app-shell-header-offset, 0rem))">
+    <{{componentName}}{{#if hasParameters}} parameters={await params}{{/if}} />
+  </Box>
+{{else}}
   <main>
     <Container py="xl">
-      <{{componentName}} />
+      <{{componentName}}{{#if hasParameters}} parameters={await params}{{/if}} />
     </Container>
   </main>
-);
 {{/if}}
+);
 
 export default Page;

@@ -1,4 +1,5 @@
 import { notifications } from '@mantine/notifications';
+import { IconAlertCircle } from '@tabler/icons-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderWithUi } from '@template/ui/testing/TestRendering';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
@@ -94,6 +95,7 @@ describe('TodoList', () => {
     await waitFor(() => {
       expect(notifications.show).toHaveBeenCalledWith({
         color: 'red',
+        icon: <IconAlertCircle aria-hidden size={20} />,
         message: '指定した Todo がありません',
         title: 'Todo を更新できませんでした',
       });

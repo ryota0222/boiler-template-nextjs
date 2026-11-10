@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
+import '@mantine/dropzone/styles.css';
 import '@mantine/notifications/styles.css';
 import { ColorSchemeScript } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
@@ -23,6 +25,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   description: 'Next.js App Router アプリケーションのテンプレート',
+  // 業務アプリは検索に載せない（robots.ts と next.config.ts の X-Robots-Tag と組で効かせる）
+  robots: { follow: false, index: false },
   title: 'Next.js Template',
 };
 

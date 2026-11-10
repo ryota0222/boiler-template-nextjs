@@ -12,7 +12,7 @@ const collectionAnswers = {
   path: '/inventory-items',
 };
 
-// 4 種類を、動的な区切りのないパスとあるパスの両方で生成する。inventory-item は generator が作った queries.ts へ、
+// どの kind も、動的な区切りのないパスとあるパスの両方で生成する。inventory-item は generator が作った queries.ts へ、
 // shipment は手で書いた queries.ts と mutations.ts（import が一部だけある）へ、todo は
 // Todo の参考実装の queries.ts（同じモジュールの import を既に持つ）へ追記する
 const generationCases = [
@@ -44,6 +44,46 @@ const generationCases = [
   {
     answers: { concept: 'shipment', kind: 'blank', path: '/shipments/[id]/summary' },
     name: '動的な区切りを持つblank',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'split', path: '/inventory-items/queue' },
+    name: 'split',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'split', path: '/shipments/[id]/queue' },
+    name: '動的な区切りを持つsplit',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'dashboard', path: '/inventory-items/overview' },
+    name: 'dashboard',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'dashboard', path: '/shipments/[id]/overview' },
+    name: '動的な区切りを持つdashboard',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'chat', path: '/inventory-items/assistant' },
+    name: 'chat',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'chat', path: '/shipments/[id]/assistant' },
+    name: '動的な区切りを持つchat',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'task-step', path: '/inventory-items/packing' },
+    name: 'task-step',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'task-step', path: '/shipments/[id]/packing' },
+    name: '動的な区切りを持つtask-step',
+  },
+  {
+    answers: { concept: 'inventory-item', kind: 'settings', path: '/inventory-items/settings' },
+    name: 'settings',
+  },
+  {
+    answers: { concept: 'shipment', kind: 'settings', path: '/shipments/[id]/settings' },
+    name: '動的な区切りを持つsettings',
   },
   {
     answers: { concept: 'todo', kind: 'blank', path: '/todos/[id]/summary' },
@@ -79,19 +119,24 @@ const writeFileIn = async ({
 
 const layoutPath = 'src/app/layout.tsx';
 
+const layoutDescriptionCode =
+  "  description: 'Next.js App Router アプリケーションのテンプレート',\n";
+
 const layoutTitleCode = "  title: 'Next.js Template',\n";
 
-const rewriteLayoutTitle = async ({
+const rewriteLayoutCode = async ({
+  code,
   directory,
-  title,
+  replacement,
 }: {
+  readonly code: string;
   readonly directory: string;
-  readonly title: string;
+  readonly replacement: string;
 }): Promise<void> => {
   const content = await readFile(nodePath.resolve(directory, layoutPath), 'utf8');
   await writeFile(
     nodePath.resolve(directory, layoutPath),
-    content.replace(layoutTitleCode, () => title)
+    content.replace(code, () => replacement)
   );
 };
 
@@ -126,10 +171,12 @@ beforeAll(async () => {
   await Promise.all(
     handwrittenApiFiles.map((file) => writeFileIn({ ...file, directory: generatedDirectory }))
   );
-  // 入れ子の openGraph.title をアプリの名前と取り違えないことも確かめるため、metadata の title より前に置く
-  await rewriteLayoutTitle({
+  // 入れ子の openGraph.title をアプリの名前と取り違えないことも確かめるため、metadata の title より前に置く。
+  // title の直前に差し込むと、間に robots などのキーがあるときに ESLint のキーの並び順に引っかかるため、description の直後に置く
+  await rewriteLayoutCode({
+    code: layoutDescriptionCode,
     directory: generatedDirectory,
-    title: `  openGraph: { title: '共有用の名前' },\n${layoutTitleCode}`,
+    replacement: `${layoutDescriptionCode}  openGraph: { title: '共有用の名前' },\n`,
   });
   for (const { answers, name } of generationCases) {
     const { failures } = await runGenerator({
@@ -158,9 +205,10 @@ beforeAll(async () => {
   });
 
   await copyProjectInto(templatedLayoutDirectory);
-  await rewriteLayoutTitle({
+  await rewriteLayoutCode({
+    code: layoutTitleCode,
     directory: templatedLayoutDirectory,
-    title:
+    replacement:
       "  title: {\n    default: 'Next.js Template',\n    template: '%s | Next.js Template',\n  },\n",
   });
   await runGenerator({
@@ -170,7 +218,11 @@ beforeAll(async () => {
   });
 
   await copyProjectInto(untitledLayoutDirectory);
-  await rewriteLayoutTitle({ directory: untitledLayoutDirectory, title: '' });
+  await rewriteLayoutCode({
+    code: layoutTitleCode,
+    directory: untitledLayoutDirectory,
+    replacement: '',
+  });
 });
 
 const runInGeneratedDirectory = ({
@@ -218,6 +270,7 @@ it.each([
       'src/features/inventory-item/inventory-item-detail-screen/InventoryItemDetailScreen.stories.tsx',
       'src/features/inventory-item/inventory-item-detail-screen/inventoryItemDetailScreen.test.tsx',
       'src/api/inventory-item/queries.ts',
+      'src/api/inventory-item/mutations.ts',
     ],
   },
   {
@@ -227,6 +280,57 @@ it.each([
       'src/features/inventory-item/inventory-item-blank-screen/InventoryItemBlankScreen.tsx',
       'src/features/inventory-item/inventory-item-blank-screen/InventoryItemBlankScreen.stories.tsx',
       'src/features/inventory-item/inventory-item-blank-screen/inventoryItemBlankScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+    ],
+  },
+  {
+    kind: 'chat',
+    paths: [
+      'src/app/inventory-items/assistant/page.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/InventoryItemChatScreen.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/InventoryItemChatScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-chat-screen/inventoryItemChatScreen.test.tsx',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
+    kind: 'settings',
+    paths: [
+      'src/app/inventory-items/settings/page.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/InventoryItemSettingsScreen.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/InventoryItemSettingsScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-settings-screen/inventoryItemSettingsScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
+    kind: 'task-step',
+    paths: [
+      'src/app/inventory-items/packing/page.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/InventoryItemTaskStepScreen.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/InventoryItemTaskStepScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-task-step-screen/inventoryItemTaskStepScreen.test.tsx',
+      'src/api/inventory-item/mutations.ts',
+    ],
+  },
+  {
+    kind: 'dashboard',
+    paths: [
+      'src/app/inventory-items/overview/page.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/InventoryItemDashboardScreen.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/InventoryItemDashboardScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-dashboard-screen/inventoryItemDashboardScreen.test.tsx',
+      'src/api/inventory-item/queries.ts',
+    ],
+  },
+  {
+    kind: 'split',
+    paths: [
+      'src/app/inventory-items/queue/page.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/InventoryItemSplitScreen.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/InventoryItemSplitScreen.stories.tsx',
+      'src/features/inventory-item/inventory-item-split-screen/inventoryItemSplitScreen.test.tsx',
       'src/api/inventory-item/queries.ts',
     ],
   },
@@ -257,6 +361,9 @@ it.each([
       'inventoryItemCollectionQueryOptions',
       'inventoryItemDetailQueryOptions',
       'inventoryItemBlankQueryOptions',
+      'inventoryItemSplitQueryOptions',
+      'inventoryItemDashboardQueryOptions',
+      'inventoryItemSettingsQueryOptions',
     ],
     path: 'src/api/inventory-item/queries.ts',
   },
@@ -270,7 +377,21 @@ it.each([
     path: 'src/api/shipment/queries.ts',
   },
   {
-    names: ['ShipmentFailure', 'shipmentFormMutationOptions', 'ShipmentFormValues'],
+    names: [
+      'ShipmentFailure',
+      'shipmentDetailMutationOptions',
+      'ShipmentDetailChanges',
+      'shipmentFormMutationOptions',
+      'ShipmentFormValues',
+      'shipmentChatMutationOptions',
+      'ShipmentChatRequest',
+      'ShipmentChatReply',
+      'shipmentTaskStepMutationOptions',
+      'ShipmentTaskStepScan',
+      'ShipmentTaskStepCheck',
+      'shipmentSettingsMutationOptions',
+      'ShipmentSettingsChanges',
+    ],
     path: 'src/api/shipment/mutations.ts',
   },
   {

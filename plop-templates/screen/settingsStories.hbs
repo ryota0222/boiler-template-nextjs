@@ -1,0 +1,116 @@
+import type { Decorator, Meta, StoryObj } from '@storybook/nextjs-vite';
+
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+
+import type { ApiFailure } from '@/entities/apiFailure';
+import type { Result } from '@/entities/result';
+
+import { type {{queryDataTypeName}}, {{queryOptionsName}} } from '@/api/{{concept}}/queries';
+import { {{componentName}} } from '{{{componentImportPath}}}';
+
+const settings: {{queryDataTypeName}} = { isNotified: true, name: '見本' };
+
+// 取得を止めた QueryClient に結果を入れておき、API を呼ばずに各状態を描く。結果が null なら読み込み中のまま止まる
+const createQueryClientDecorator = (
+  result: null | Result<{{{queryValueTypeCode}}}, ApiFailure>,
+): Decorator => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { enabled: false } } });
+  if (result !== null) {
+    queryClient.setQueryData({{{sampleQueryOptionsCode}}}.queryKey, result);
+  }
+
+  return (Story): React.JSX.Element => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+};
+
+const saveName = async (canvasElement: HTMLElement): Promise<void> => {
+  const canvas = within(canvasElement);
+  await userEvent.click(canvas.getByRole('button', { name: '直す' }));
+  await userEvent.click(canvas.getByRole('button', { name: '保存する' }));
+};
+
+const meta = {
+{{#if hasParameters}}
+  args: { parameters: {{{sampleParametersCode}}} },
+{{/if}}
+  component: {{componentName}},
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
+} satisfies Meta<typeof {{componentName}}>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Ideal: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: settings })],
+  name: '理想状態の場合',
+};
+
+// 保存の mutation は、TanStack Query が通信が切れていると見なす間は送られずに待つため、保存している途中を描ける
+export const Saving: Story = {
+  beforeEach: () => {
+    onlineManager.setOnline(false);
+    return () => {
+      onlineManager.setOnline(true);
+    };
+  },
+  decorators: [createQueryClientDecorator({ ok: true, value: settings })],
+  name: '保存している場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await saveName(canvasElement);
+
+    await expect(
+      await within(canvasElement).findByRole('button', { name: '保存しています…' }),
+    ).toBeDisabled();
+  },
+};
+
+// エンドポイントをつなぐまでの mutation は失敗を返すため、保存すると失敗の説明が入力欄の下に出る
+export const SaveFailed: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: settings })],
+  name: '保存に失敗した場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await saveName(canvasElement);
+
+    await expect(
+      await within(canvasElement).findByRole('textbox', { name: '名前' }),
+    ).toHaveAttribute('aria-invalid', 'true');
+  },
+};
+
+export const DeletionOpened: Story = {
+  decorators: [createQueryClientDecorator({ ok: true, value: settings })],
+  name: '削除の確認を開いた場合',
+  play: async ({ canvasElement }): Promise<void> => {
+    await userEvent.click(
+      within(canvasElement).getByRole('button', { name: '{{concept}} を削除する' }),
+    );
+
+    // Modal は開くときに透明から現れるため、現れきってから axe に確かめさせる
+    const dialog = await within(canvasElement.ownerDocument.body).findByRole('dialog');
+    await waitFor(async () => {
+      await expect(getComputedStyle(dialog).opacity).toBe('1');
+    });
+  },
+};
+
+export const Loading: Story = {
+  decorators: [createQueryClientDecorator(null)],
+  name: '読み込み中の場合',
+};
+
+export const Error: Story = {
+  decorators: [
+    createQueryClientDecorator({
+      error: { kind: 'internal', message: '読み込めませんでした' },
+      ok: false,
+    }),
+  ],
+  name: 'エラーの場合',
+};

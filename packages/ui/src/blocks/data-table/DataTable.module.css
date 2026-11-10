@@ -8,3 +8,13 @@
 .table :where(thead th, tbody td) {
   border-bottom: calc(0.0625rem * var(--mantine-scale)) solid var(--table-border-color);
 }
+
+/* 見出しの行を中身の行と見分けるため、見出しのセルに背景を敷く。
+   行のホバーの色（明るい画面で gray-1、暗い画面で dark-5）と重ならない 1 段階手前の色にする */
+.table thead th {
+  background-color: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme='dark'] .table thead th {
+  background-color: var(--mantine-color-dark-6);
+}

@@ -10,6 +10,7 @@ const failureKindSchema = z.enum([
   'internal',
   'invalid-input',
   'invalid-response',
+  'maintenance',
   'network-failed',
   'not-found',
 ]);

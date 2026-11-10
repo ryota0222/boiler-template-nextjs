@@ -42,6 +42,7 @@ export default defineConfig(
       '*.config.ts',
       '*.config.mjs',
       '*.cjs',
+      '.claude/skills/**/*.mjs',
     ],
   },
   {
@@ -58,6 +59,9 @@ export default defineConfig(
       'unicorn/filename-case': 'off',
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/no-null': 'off',
+      // unicorn 79 から、if で早く return したあとに return が続く形も三項演算子にするよう求める。
+      // Result は if (!result.ok) で絞って早く返す決まり（coding-standards.md）のため、この規則は使わない
+      'unicorn/prefer-ternary': 'off',
     },
   },
   {
@@ -327,6 +331,13 @@ export default defineConfig(
     rules: {
       'unicorn/max-nested-calls': 'off',
       'unicorn/no-non-function-verb-prefix': 'off',
+    },
+  },
+  {
+    // Mantine のテーマの vars（部品の CSS 変数を決める関数）は、引数の数と順序（theme, props）がライブラリ側で固定されている
+    files: ['packages/ui/src/theme/**/*.ts'],
+    rules: {
+      'max-params': ['error', { max: 2 }],
     },
   },
   {
