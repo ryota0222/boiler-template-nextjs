@@ -89,11 +89,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/detect-feedback.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/secretlint-prompt.sh",
             "timeout": 15
           }
@@ -130,11 +125,6 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lint-and-test.sh",
             "timeout": 120
-          },
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/record-rejection.sh",
-            "timeout": 10
           },
           {
             "type": "command",
