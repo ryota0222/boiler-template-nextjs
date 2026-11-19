@@ -54,7 +54,7 @@ pnpm run db:generate
 
 `pnpm test:generators` runs the `generators` project (`generators/*.generators.test.ts`) on its own; see Code Generators below.
 
-The `PostToolUse` hook and the pre-push git hook both run `pnpm test` — the project-scoped command above — so neither the everyday edit loop nor pushing needs Docker. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there, and the generator suite in `test-generators`.
+The pre-push git hook runs `pnpm test` — the project-scoped command above — so pushing does not need Docker. The `PostToolUse` hook (`.claude/hooks/lint-and-test.sh`) keeps the edit loop fast instead: after Claude Code edits a `.ts` or `.tsx` file it runs ESLint and Prettier on that file and only the `unit` tests that import it (`vitest related --project unit --passWithNoTests`), in parallel, which takes about 5 to 10 seconds; the whole suite and the Storybook project wait for `pnpm test`. CI runs the database-backed suite in its own job (`pnpm run test:db`), with Postgres provisioned there, and the generator suite in `test-generators`.
 
 ## CI Cost
 
@@ -226,11 +226,11 @@ Only npm tarballs pass through it. The two `postinstall` downloads — Chromium 
 
 Storybook stories in `src/` and `packages/ui` are checked by axe-core. `serious` and `critical` violations fail the test suite, and `color-contrast` is measured at 3:1 (`.claude/rules/design-a11y.md`).
 
-| Mechanism                                                         | Scope                                                                                    |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `a11y.test: 'error'` in `.storybook/preview.tsx`                  | Turns axe violations into test failures                                                  |
-| `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                                                       |
-| `PostToolUse` hook -> `lint-and-test.sh`                          | Runs `vitest run --project unit --project storybook` after every file Claude Code writes |
+| Mechanism                                                         | Scope                                                                                                           |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `a11y.test: 'error'` in `.storybook/preview.tsx`                  | Turns axe violations into test failures                                                                         |
+| `storybook` project in `vitest.config.ts` (Playwright + Chromium) | Renders every story on `pnpm test`                                                                              |
+| pre-push git hook -> `pnpm test`                                  | Runs the Storybook project before every push; the `PostToolUse` hook runs only the related `unit` tests, not it |
 
 A component state with no story is never checked. See `.claude/rules/stories.md` for which states require a story. Page-level properties (the page title, `lang`) are checked by the e2e tests instead: every page an e2e test visits runs axe through `e2e/helpers/accessibilityChecking.ts` (`.claude/rules/e2e-test-standards.md`).
 
